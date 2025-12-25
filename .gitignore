@@ -1,24 +1,11 @@
 # Binaries
 /bin/
-/build/
-/dist/
 *.exe
 *.out
 
-# Go
+# Go test artifacts
 *.test
 *.cover
-/go.sum
-
-# Vendor
-/vendor/
-
-# Generated files
-/gen/
-/pb/
-
-# Protobuf
-*.pb.go
 
 # IDE
 .idea/
@@ -31,4 +18,5 @@
 # Logs
 *.log
 
-*.env
+# Env
+.env
