@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package price.v1;
+
+option go_package = "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/gen/price/v1;pricev1";
+
+import "google/protobuf/timestamp.proto";
+
+service PriceService {
+  rpc ValuateTransactionsBatch(ValuateTransactionsBatchRequest)
+      returns (ValuateTransactionsBatchResponse);
+
+  rpc UpsertTenantSymbolOverride(UpsertTenantSymbolOverrideRequest)
+      returns (UpsertTenantSymbolOverrideResponse);
+}
+
+message AssetAmount {
+  string symbol = 1;
+  string amount = 2; // decimal as string
+}
+
+message AssetFiat {
+  string symbol = 1;
+  string fiat = 2; // decimal as string
+}
+
+message MoneyLeg {
+  repeated AssetAmount assets = 1;
+}
+
+message FiatLeg {
+  repeated AssetFiat assets = 1;
+}
+
+message TxToValuate {
+  string tx_id = 1;
+  google.protobuf.Timestamp time_utc = 2;
+  MoneyLeg in_money = 3;
+  MoneyLeg out_money = 4;
+  MoneyLeg fee_money = 5;
+}
+
+enum AssetErrorCode {
+  ASSET_ERROR_CODE_UNSPECIFIED = 0;
+  ASSET_UNKNOWN = 1;
+  ASSET_AMBIGUOUS = 2;
+  RATE_NOT_FOUND = 3;
+  PROVIDER_ERROR = 4;
+}
+
+message CoinCandidate {
+  string coin_id = 1;
+  string name = 2;
+}
+
+message AssetError {
+  string symbol = 1;
+  AssetErrorCode code = 2;
+  string message = 3;
+  repeated CoinCandidate candidates = 4;
+}
+
+message ValuatedTx {
+  string tx_id = 1;
+  FiatLeg in_fiat = 2;
+  FiatLeg out_fiat = 3;
+  FiatLeg fee_fiat = 4;
+  repeated AssetError errors = 5;
+}
+
+message ValuateTransactionsBatchRequest {
+  string tenant_id = 1;
+  string source = 2;
+  string fiat_currency = 3;
+  repeated TxToValuate transactions = 4;
+}
+
+message ValuateTransactionsBatchResponse {
+  repeated ValuatedTx transactions = 1;
+}
+
+message UpsertTenantSymbolOverrideRequest {
+  string tenant_id = 1;
+  string source = 2;
+  string symbol = 3;
+  string coin_id = 4;
+}
+
+message UpsertTenantSymbolOverrideResponse {}
