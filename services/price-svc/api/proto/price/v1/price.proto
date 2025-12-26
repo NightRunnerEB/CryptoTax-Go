@@ -14,30 +14,22 @@ service PriceService {
       returns (UpsertTenantSymbolOverrideResponse);
 }
 
-message AssetAmount {
+message MoneyLeg {
   string symbol = 1;
   string amount = 2; // decimal as string
 }
 
-message AssetFiat {
+message FiatLeg {
   string symbol = 1;
   string fiat = 2; // decimal as string
-}
-
-message MoneyLeg {
-  repeated AssetAmount assets = 1;
-}
-
-message FiatLeg {
-  repeated AssetFiat assets = 1;
 }
 
 message TxToValuate {
   string tx_id = 1;
   google.protobuf.Timestamp time_utc = 2;
-  MoneyLeg in_money = 3;
-  MoneyLeg out_money = 4;
-  MoneyLeg fee_money = 5;
+  optional MoneyLeg in_money = 3;
+  optional MoneyLeg out_money = 4;
+  optional MoneyLeg fee_money = 5;
 }
 
 enum AssetErrorCode {
@@ -62,9 +54,9 @@ message AssetError {
 
 message ValuatedTx {
   string tx_id = 1;
-  FiatLeg in_fiat = 2;
-  FiatLeg out_fiat = 3;
-  FiatLeg fee_fiat = 4;
+  optional FiatLeg in_fiat = 2;
+  optional FiatLeg out_fiat = 3;
+  optional FiatLeg fee_fiat = 4;
   repeated AssetError errors = 5;
 }
 
