@@ -2,46 +2,12 @@ package redis
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
 type Option func(*redis.Options)
-
-// IMPORTANT:
-//
-//	WithURL MUST be applied BEFORE any other Option.
-//	Applying WithURL after other options will overwrite previously configured values.
-func WithURL(url string) Option {
-	return func(opt *redis.Options) {
-		parsed, err := redis.ParseURL(url)
-		if err != nil {
-			panic(fmt.Errorf("redis.ParseURL failed: %w", err))
-		}
-
-		*opt = *parsed
-	}
-}
-
-func WithAddr(addr string) Option {
-	return func(opt *redis.Options) {
-		opt.Addr = addr
-	}
-}
-
-func WithPassword(password string) Option {
-	return func(opt *redis.Options) {
-		opt.Password = password
-	}
-}
-
-func WithDB(db int) Option {
-	return func(opt *redis.Options) {
-		opt.DB = db
-	}
-}
 
 func WithPoolSize(n int) Option {
 	return func(opt *redis.Options) {
