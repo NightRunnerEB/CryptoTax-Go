@@ -6,15 +6,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
-	_defaultMaxPoolSize    = 1
-	_defaultConnAttempts   = 10
-	_defaultConnTimeout    = 3 * time.Second
-	_defaultAttemptTimeout = 3 * time.Second
+    _defaultMaxPoolSize    = 10
+    _defaultConnAttempts   = 3
+    _defaultConnTimeout    = 5 * time.Second
+    _defaultAttemptTimeout = 2 * time.Second
 )
 
 type Postgres struct {
@@ -23,8 +23,7 @@ type Postgres struct {
 	connTimeout    time.Duration
 	attemptTimeout time.Duration
 
-	Pool    *pgxpool.Pool
-	Builder squirrel.StatementBuilderType
+	Pool *pgxpool.Pool
 }
 
 func New(url string, opts ...Option) (*Postgres, error) {
@@ -39,7 +38,6 @@ func New(url string, opts ...Option) (*Postgres, error) {
 		opt(pg)
 	}
 
-	pg.Builder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	poolConfig, err := pgxpool.ParseConfig(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse Postgres pool config: %w", err)
@@ -70,4 +68,17 @@ func (p *Postgres) Close() {
 	if p.Pool != nil {
 		p.Pool.Close()
 	}
+}
+
+func (p *Postgres) WithTx(ctx context.Context, fn func(ctx context.Context, tx pgx.Tx) error) error {
+	tx, err := p.Pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	if err := fn(ctx, tx); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
