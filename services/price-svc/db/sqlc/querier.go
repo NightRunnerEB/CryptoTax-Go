@@ -9,13 +9,13 @@ import (
 )
 
 type Querier interface {
-	DeleteTenantSymbolOverride(ctx context.Context, arg DeleteTenantSymbolOverrideParams) error
+	DeleteTenantSymbol(ctx context.Context, arg DeleteTenantSymbolParams) error
 	GetHistoricalPrice(ctx context.Context, arg GetHistoricalPriceParams) (HistoricalPrice, error)
 	GetHistoricalPricesBatch(ctx context.Context, arg GetHistoricalPricesBatchParams) ([]GetHistoricalPricesBatchRow, error)
-	GetTenantSymbolOverridesBySymbols(ctx context.Context, arg GetTenantSymbolOverridesBySymbolsParams) ([]TenantSymbolOverride, error)
-	ListTenantSymbolOverridesBySource(ctx context.Context, arg ListTenantSymbolOverridesBySourceParams) ([]TenantSymbolOverride, error)
+	GetTenantSymbols(ctx context.Context, arg GetTenantSymbolsParams) ([]TenantSymbol, error)
+	ListTenantSymbolsBySource(ctx context.Context, arg ListTenantSymbolsBySourceParams) ([]TenantSymbol, error)
 	UpsertHistoricalPrice(ctx context.Context, arg UpsertHistoricalPriceParams) error
-	UpsertTenantSymbolOverride(ctx context.Context, arg UpsertTenantSymbolOverrideParams) error
+	UpsertTenantSymbol(ctx context.Context, arg UpsertTenantSymbolParams) error
 }
 
 var _ Querier = (*Queries)(nil)

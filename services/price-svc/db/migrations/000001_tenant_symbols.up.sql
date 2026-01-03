@@ -1,4 +1,4 @@
-CREATE TABLE tenant_symbol_overrides (
+CREATE TABLE tenant_symbols (
     tenant_id uuid NOT NULL,
     source text NOT NULL,
     symbol text NOT NULL,
@@ -8,4 +8,4 @@ CREATE TABLE tenant_symbol_overrides (
     PRIMARY KEY (tenant_id, source, symbol)
 );
 
-CREATE INDEX idx_tso_coin_id ON tenant_symbol_overrides (coin_id);
+CREATE INDEX idx_tso_coin_id ON tenant_symbols (coin_id);

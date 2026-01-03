@@ -20,7 +20,7 @@ type HistoricalPrice struct {
 	FetchedAt      time.Time      `json:"fetched_at"`
 }
 
-type TenantSymbolOverride struct {
+type TenantSymbol struct {
 	TenantID  uuid.UUID `json:"tenant_id"`
 	Source    string    `json:"source"`
 	Symbol    string    `json:"symbol"`
