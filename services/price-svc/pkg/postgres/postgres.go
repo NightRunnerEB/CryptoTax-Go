@@ -70,6 +70,10 @@ func (p *Postgres) Close() {
 	}
 }
 
+func (p *Postgres) ConnPool() *pgxpool.Pool {
+	return p.Pool
+}
+
 func (p *Postgres) WithTx(ctx context.Context, fn func(ctx context.Context, tx pgx.Tx) error) error {
 	tx, err := p.Pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {

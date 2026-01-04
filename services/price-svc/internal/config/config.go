@@ -11,6 +11,10 @@ import (
 
 type (
 	Config struct {
+		App  App
+		Log  Log
+		PG   PG
+		GRPC GRPC
 	}
 
 	App struct {
