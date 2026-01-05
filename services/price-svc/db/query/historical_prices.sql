@@ -20,16 +20,15 @@ WITH keys AS (
     USING (ord)
 )
 SELECT
-  k.coin_id,
-  k.bucket_start_utc,
+  hp.coin_id,
   hp.fiat_currency,
+  hp.bucket_start_utc,
   hp.source_profile,
   hp.rate,
-  hp.fetched_at,
-  (hp.coin_id IS NOT NULL) AS found
-FROM keys k
-LEFT JOIN historical_prices hp
+  hp.fetched_at
+FROM historical_prices hp
+JOIN keys k
   ON hp.coin_id = k.coin_id
  AND hp.bucket_start_utc = k.bucket_start_utc
- AND hp.fiat_currency = $3
- AND hp.source_profile = $4;
+WHERE hp.fiat_currency = $3
+  AND hp.source_profile = $4;

@@ -55,19 +55,18 @@ WITH keys AS (
     USING (ord)
 )
 SELECT
-  k.coin_id,
-  k.bucket_start_utc,
+  hp.coin_id,
   hp.fiat_currency,
+  hp.bucket_start_utc,
   hp.source_profile,
   hp.rate,
-  hp.fetched_at,
-  (hp.coin_id IS NOT NULL) AS found
-FROM keys k
-LEFT JOIN historical_prices hp
+  hp.fetched_at
+FROM historical_prices hp
+JOIN keys k
   ON hp.coin_id = k.coin_id
  AND hp.bucket_start_utc = k.bucket_start_utc
- AND hp.fiat_currency = $3
- AND hp.source_profile = $4
+WHERE hp.fiat_currency = $3
+  AND hp.source_profile = $4
 `
 
 type GetHistoricalPricesBatchParams struct {
@@ -77,17 +76,7 @@ type GetHistoricalPricesBatchParams struct {
 	SourceProfile string      `json:"source_profile"`
 }
 
-type GetHistoricalPricesBatchRow struct {
-	CoinID         interface{}        `json:"coin_id"`
-	BucketStartUtc interface{}        `json:"bucket_start_utc"`
-	FiatCurrency   pgtype.Text        `json:"fiat_currency"`
-	SourceProfile  pgtype.Text        `json:"source_profile"`
-	Rate           pgtype.Numeric     `json:"rate"`
-	FetchedAt      pgtype.Timestamptz `json:"fetched_at"`
-	Found          interface{}        `json:"found"`
-}
-
-func (q *Queries) GetHistoricalPricesBatch(ctx context.Context, arg GetHistoricalPricesBatchParams) ([]GetHistoricalPricesBatchRow, error) {
+func (q *Queries) GetHistoricalPricesBatch(ctx context.Context, arg GetHistoricalPricesBatchParams) ([]HistoricalPrice, error) {
 	rows, err := q.db.Query(ctx, getHistoricalPricesBatch,
 		arg.Column1,
 		arg.Column2,
@@ -98,17 +87,16 @@ func (q *Queries) GetHistoricalPricesBatch(ctx context.Context, arg GetHistorica
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetHistoricalPricesBatchRow{}
+	items := []HistoricalPrice{}
 	for rows.Next() {
-		var i GetHistoricalPricesBatchRow
+		var i HistoricalPrice
 		if err := rows.Scan(
 			&i.CoinID,
-			&i.BucketStartUtc,
 			&i.FiatCurrency,
+			&i.BucketStartUtc,
 			&i.SourceProfile,
 			&i.Rate,
 			&i.FetchedAt,
-			&i.Found,
 		); err != nil {
 			return nil, err
 		}
