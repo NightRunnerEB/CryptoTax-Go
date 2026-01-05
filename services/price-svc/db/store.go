@@ -1,43 +1,51 @@
 package db
 
 import (
+	"context"
+
 	sqlc "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/postgres"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Store defines all functions to execute db queries and transactions
 type Store interface {
 	sqlc.Querier
-	// SomeTx(ctx context.Context, arg SomeTxParams) (SomeTxResult, error)
+	ExecTx(ctx context.Context, fn func(q *sqlc.Queries) error) error
+	// SomeTx(ctx context.Context, arg SomeTxParams) (SomeTxResult, error) - sqlc генерирует 1 метод на запрос, а если нужно несколько запросов в транзакции, то можно это делать здесь
 }
 
 type PGStore struct {
-	*postgres.Postgres
 	*sqlc.Queries
+	pool *pgxpool.Pool
 }
 
-// NewStore creates a new store
 func NewStore(pg *postgres.Postgres) Store {
 	return &PGStore{
-		Postgres: pg,
-		Queries:  sqlc.New(pg.ConnPool()),
+		pool:    pg.Pool,
+		Queries: sqlc.New(pg.Pool),
 	}
 }
 
-// func (store *PGStore) execTx(ctx context.Context, fn func(*sqlc.Querier) error) error {
-// 	tx, err := store.connPool.Begin(ctx)
-// 	if err != nil {
-// 		return err
-// 	}
+/*
+Example of transaction usage:
+	err := store.ExecTx(ctx, func(q *sqlc.Queries) error {
+		if err := q.UpsertTenantSymbol(ctx, params1); err != nil { return err }
+		if err := q.UpsertHistoricalPrice(ctx, params2); err != nil { return err }
+		return nil
+	})
+*/
+func (s *PGStore) ExecTx(ctx context.Context, fn func(q *sqlc.Queries) error) error {
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
 
-// 	q := sqlc.New(tx)
-// 	err = fn(q)
-// 	if err != nil {
-// 		if rbErr := tx.Rollback(ctx); rbErr != nil {
-// 			return fmt.Errorf("tx err: %v, rb err: %v", err, rbErr)
-// 		}
-// 		return err
-// 	}
-
-// 	return tx.Commit(ctx)
-// }
+	qtx := s.Queries.WithTx(tx)
+	if err := fn(qtx); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
