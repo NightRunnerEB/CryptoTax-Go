@@ -16,12 +16,12 @@ func NewHistoricalPriceRepo(pg *postgres.Postgres) domain.HistoricalPriceRepo {
 	return &historicalPriceRepository{pg}
 }
 
-func (r *historicalPriceRepository) GetBatch(ctx context.Context, coinIDs []string, bucketStarts []time.Time, fiatCurrency, sourceProfile string) ([]domain.HistoricalPrice, error) {
+func (r *historicalPriceRepository) GetBatch(ctx context.Context, coinIDs []string, bucketStarts []time.Time) ([]domain.HistoricalPrice, error) {
 	// Implementation goes here
 	return nil, nil
 }
 
-func (r *historicalPriceRepository) Get(ctx context.Context, coinID, fiatCurrency, sourceProfile string, bucketStartUTC time.Time) (domain.HistoricalPrice, error) {
+func (r *historicalPriceRepository) Get(ctx context.Context, coinID string, bucketStartUTC time.Time) (domain.HistoricalPrice, error) {
 	// Implementation goes here
 	return domain.HistoricalPrice{}, nil
 }
