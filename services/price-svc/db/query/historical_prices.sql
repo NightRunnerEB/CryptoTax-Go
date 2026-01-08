@@ -1,16 +1,14 @@
 -- name: UpsertHistoricalPrice :exec
-INSERT INTO historical_prices (coin_id, fiat_currency, bucket_start_utc, source_profile, rate)
-VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (coin_id, fiat_currency, bucket_start_utc, source_profile)
-DO UPDATE SET rate = EXCLUDED.rate, fetched_at = now();
+INSERT INTO historical_prices (coin_id, bucket_start_utc, price_usd)
+VALUES ($1, $2, $3)
+ON CONFLICT (coin_id, bucket_start_utc)
+DO UPDATE SET price_usd = EXCLUDED.price_usd, fetched_at = now();
 
 -- name: GetHistoricalPrice :one
-SELECT coin_id, fiat_currency, bucket_start_utc, source_profile, rate, fetched_at
+SELECT coin_id, bucket_start_utc, price_usd, fetched_at
 FROM historical_prices
 WHERE coin_id = $1
-  AND fiat_currency = $2
-  AND bucket_start_utc = $3
-  AND source_profile = $4;
+  AND bucket_start_utc = $2;
 
 -- name: GetHistoricalPricesBatch :many
 WITH keys AS (
@@ -21,14 +19,11 @@ WITH keys AS (
 )
 SELECT
   hp.coin_id,
-  hp.fiat_currency,
   hp.bucket_start_utc,
-  hp.source_profile,
-  hp.rate,
+  hp.price_usd,
   hp.fetched_at
 FROM historical_prices hp
 JOIN keys k
   ON hp.coin_id = k.coin_id
  AND hp.bucket_start_utc = k.bucket_start_utc
-WHERE hp.fiat_currency = $3
-  AND hp.source_profile = $4;
+WHERE hp.bucket_start_utc = $2;
