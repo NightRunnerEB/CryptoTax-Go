@@ -11,18 +11,12 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type DayResolution struct {
-	CoinID             string      `json:"coin_id"`
-	DayUtc             pgtype.Date `json:"day_utc"`
-	GranularitySeconds int32       `json:"granularity_seconds"`
-	UpdatedAt          time.Time   `json:"updated_at"`
-}
-
 type HistoricalPrice struct {
-	CoinID         string         `json:"coin_id"`
-	BucketStartUtc time.Time      `json:"bucket_start_utc"`
-	PriceUsd       pgtype.Numeric `json:"price_usd"`
-	FetchedAt      time.Time      `json:"fetched_at"`
+	CoinID             string         `json:"coin_id"`
+	BucketStartUtc     time.Time      `json:"bucket_start_utc"`
+	PriceUsd           pgtype.Numeric `json:"price_usd"`
+	GranularitySeconds int32          `json:"granularity_seconds"`
+	FetchedAt          time.Time      `json:"fetched_at"`
 }
 
 type TenantSymbol struct {

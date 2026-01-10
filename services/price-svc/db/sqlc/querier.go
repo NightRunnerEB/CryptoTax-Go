@@ -9,7 +9,7 @@ import (
 )
 
 type Querier interface {
-	DeleteTenantSymbol(ctx context.Context, arg DeleteTenantSymbolParams) error
+	DeleteTenantSymbol(ctx context.Context, arg DeleteTenantSymbolParams) (int64, error)
 	GetHistoricalPrice(ctx context.Context, arg GetHistoricalPriceParams) (HistoricalPrice, error)
 	GetHistoricalPricesBatch(ctx context.Context, arg GetHistoricalPricesBatchParams) ([]HistoricalPrice, error)
 	GetTenantSymbols(ctx context.Context, arg GetTenantSymbolsParams) ([]TenantSymbol, error)

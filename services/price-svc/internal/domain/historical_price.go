@@ -8,9 +8,10 @@ import (
 )
 
 type HistoricalPrice struct {
-	CoinID         string          `json:"coin_id"`
-	BucketStartUtc time.Time       `json:"bucket_start_utc"`
-	PriceUsd       decimal.Decimal `json:"price_usd"`
+	CoinID             string          `json:"coin_id"`
+	BucketStartUtc     time.Time       `json:"bucket_start_utc"`
+	GranularitySeconds int             `json:"granularity_seconds"`
+	PriceUsd           decimal.Decimal `json:"price_usd"`
 }
 
 type HistoricalPriceUseCase interface {

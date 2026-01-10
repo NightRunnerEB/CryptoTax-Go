@@ -13,7 +13,7 @@ import (
 )
 
 const getHistoricalPrice = `-- name: GetHistoricalPrice :one
-SELECT coin_id, bucket_start_utc, price_usd, fetched_at
+SELECT coin_id, bucket_start_utc, price_usd, granularity_seconds, fetched_at
 FROM historical_prices
 WHERE coin_id = $1
   AND bucket_start_utc = $2
@@ -31,6 +31,7 @@ func (q *Queries) GetHistoricalPrice(ctx context.Context, arg GetHistoricalPrice
 		&i.CoinID,
 		&i.BucketStartUtc,
 		&i.PriceUsd,
+		&i.GranularitySeconds,
 		&i.FetchedAt,
 	)
 	return i, err
@@ -47,21 +48,21 @@ SELECT
   hp.coin_id,
   hp.bucket_start_utc,
   hp.price_usd,
+  hp.granularity_seconds,
   hp.fetched_at
 FROM historical_prices hp
 JOIN keys k
   ON hp.coin_id = k.coin_id
  AND hp.bucket_start_utc = k.bucket_start_utc
-WHERE hp.bucket_start_utc = $2
 `
 
 type GetHistoricalPricesBatchParams struct {
-	Column1        []string  `json:"column_1"`
-	BucketStartUtc time.Time `json:"bucket_start_utc"`
+	Column1 []string    `json:"column_1"`
+	Column2 []time.Time `json:"column_2"`
 }
 
 func (q *Queries) GetHistoricalPricesBatch(ctx context.Context, arg GetHistoricalPricesBatchParams) ([]HistoricalPrice, error) {
-	rows, err := q.db.Query(ctx, getHistoricalPricesBatch, arg.Column1, arg.BucketStartUtc)
+	rows, err := q.db.Query(ctx, getHistoricalPricesBatch, arg.Column1, arg.Column2)
 	if err != nil {
 		return nil, err
 	}
@@ -73,6 +74,7 @@ func (q *Queries) GetHistoricalPricesBatch(ctx context.Context, arg GetHistorica
 			&i.CoinID,
 			&i.BucketStartUtc,
 			&i.PriceUsd,
+			&i.GranularitySeconds,
 			&i.FetchedAt,
 		); err != nil {
 			return nil, err
@@ -86,19 +88,29 @@ func (q *Queries) GetHistoricalPricesBatch(ctx context.Context, arg GetHistorica
 }
 
 const upsertHistoricalPrice = `-- name: UpsertHistoricalPrice :exec
-INSERT INTO historical_prices (coin_id, bucket_start_utc, price_usd)
-VALUES ($1, $2, $3)
+INSERT INTO historical_prices (coin_id, bucket_start_utc, price_usd, granularity_seconds, fetched_at)
+VALUES ($1, $2, $3, $4, now())
 ON CONFLICT (coin_id, bucket_start_utc)
-DO UPDATE SET price_usd = EXCLUDED.price_usd, fetched_at = now()
+DO UPDATE SET
+  price_usd = EXCLUDED.price_usd,
+  granularity_seconds = EXCLUDED.granularity_seconds,
+  fetched_at = now()
+WHERE EXCLUDED.granularity_seconds < historical_prices.granularity_seconds
 `
 
 type UpsertHistoricalPriceParams struct {
-	CoinID         string         `json:"coin_id"`
-	BucketStartUtc time.Time      `json:"bucket_start_utc"`
-	PriceUsd       pgtype.Numeric `json:"price_usd"`
+	CoinID             string         `json:"coin_id"`
+	BucketStartUtc     time.Time      `json:"bucket_start_utc"`
+	PriceUsd           pgtype.Numeric `json:"price_usd"`
+	GranularitySeconds int32          `json:"granularity_seconds"`
 }
 
 func (q *Queries) UpsertHistoricalPrice(ctx context.Context, arg UpsertHistoricalPriceParams) error {
-	_, err := q.db.Exec(ctx, upsertHistoricalPrice, arg.CoinID, arg.BucketStartUtc, arg.PriceUsd)
+	_, err := q.db.Exec(ctx, upsertHistoricalPrice,
+		arg.CoinID,
+		arg.BucketStartUtc,
+		arg.PriceUsd,
+		arg.GranularitySeconds,
+	)
 	return err
 }

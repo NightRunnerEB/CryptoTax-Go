@@ -18,6 +18,6 @@ WHERE tenant_id = $1
   AND source = $2
 ORDER BY symbol ASC;
 
--- name: DeleteTenantSymbol :exec
+-- name: DeleteTenantSymbol :execrows
 DELETE FROM tenant_symbols
 WHERE tenant_id = $1 AND source = $2 AND symbol = $3;

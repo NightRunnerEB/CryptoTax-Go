@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const deleteTenantSymbol = `-- name: DeleteTenantSymbol :exec
+const deleteTenantSymbol = `-- name: DeleteTenantSymbol :execrows
 DELETE FROM tenant_symbols
 WHERE tenant_id = $1 AND source = $2 AND symbol = $3
 `
@@ -22,9 +22,12 @@ type DeleteTenantSymbolParams struct {
 	Symbol   string    `json:"symbol"`
 }
 
-func (q *Queries) DeleteTenantSymbol(ctx context.Context, arg DeleteTenantSymbolParams) error {
-	_, err := q.db.Exec(ctx, deleteTenantSymbol, arg.TenantID, arg.Source, arg.Symbol)
-	return err
+func (q *Queries) DeleteTenantSymbol(ctx context.Context, arg DeleteTenantSymbolParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteTenantSymbol, arg.TenantID, arg.Source, arg.Symbol)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getTenantSymbols = `-- name: GetTenantSymbols :many
