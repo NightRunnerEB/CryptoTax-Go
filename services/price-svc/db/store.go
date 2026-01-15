@@ -30,6 +30,7 @@ func NewStore(pg *postgres.Postgres) Store {
 
 /*
 Example of transaction usage:
+
 	err := store.ExecTx(ctx, func(q *sqlc.Queries) error {
 		if err := q.UpsertTenantSymbol(ctx, params1); err != nil { return err }
 		if err := q.UpsertHistoricalPrice(ctx, params2); err != nil { return err }

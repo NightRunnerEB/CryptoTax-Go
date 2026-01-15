@@ -17,7 +17,7 @@ WHERE tenant_id = $1 AND source = $2 AND symbol = $3
 `
 
 type DeleteTenantSymbolParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
+	TenantID uuid.UUID `json:"tenantId"`
 	Source   string    `json:"source"`
 	Symbol   string    `json:"symbol"`
 }
@@ -39,9 +39,9 @@ WHERE tenant_id = $1
 `
 
 type GetTenantSymbolsParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
+	TenantID uuid.UUID `json:"tenantId"`
 	Source   string    `json:"source"`
-	Column3  []string  `json:"column_3"`
+	Column3  []string  `json:"column3"`
 }
 
 func (q *Queries) GetTenantSymbols(ctx context.Context, arg GetTenantSymbolsParams) ([]TenantSymbol, error) {
@@ -50,7 +50,7 @@ func (q *Queries) GetTenantSymbols(ctx context.Context, arg GetTenantSymbolsPara
 		return nil, err
 	}
 	defer rows.Close()
-	items := []TenantSymbol{}
+	var items []TenantSymbol
 	for rows.Next() {
 		var i TenantSymbol
 		if err := rows.Scan(
@@ -80,7 +80,7 @@ ORDER BY symbol ASC
 `
 
 type ListTenantSymbolsBySourceParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
+	TenantID uuid.UUID `json:"tenantId"`
 	Source   string    `json:"source"`
 }
 
@@ -90,7 +90,7 @@ func (q *Queries) ListTenantSymbolsBySource(ctx context.Context, arg ListTenantS
 		return nil, err
 	}
 	defer rows.Close()
-	items := []TenantSymbol{}
+	var items []TenantSymbol
 	for rows.Next() {
 		var i TenantSymbol
 		if err := rows.Scan(
@@ -119,10 +119,10 @@ DO UPDATE SET coin_id = EXCLUDED.coin_id, updated_at = now()
 `
 
 type UpsertTenantSymbolParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
+	TenantID uuid.UUID `json:"tenantId"`
 	Source   string    `json:"source"`
 	Symbol   string    `json:"symbol"`
-	CoinID   string    `json:"coin_id"`
+	CoinID   string    `json:"coinId"`
 }
 
 func (q *Queries) UpsertTenantSymbol(ctx context.Context, arg UpsertTenantSymbolParams) error {

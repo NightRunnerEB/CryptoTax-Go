@@ -5,25 +5,23 @@
 package db
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type HistoricalPrice struct {
-	CoinID             string         `json:"coin_id"`
-	BucketStartUtc     time.Time      `json:"bucket_start_utc"`
-	PriceUsd           pgtype.Numeric `json:"price_usd"`
-	GranularitySeconds int32          `json:"granularity_seconds"`
-	FetchedAt          time.Time      `json:"fetched_at"`
+	CoinID             string             `json:"coinId"`
+	BucketStartUtc     pgtype.Timestamptz `json:"bucketStartUtc"`
+	PriceUsd           pgtype.Numeric     `json:"priceUsd"`
+	GranularitySeconds int32              `json:"granularitySeconds"`
+	FetchedAt          pgtype.Timestamptz `json:"fetchedAt"`
 }
 
 type TenantSymbol struct {
-	TenantID  uuid.UUID `json:"tenant_id"`
-	Source    string    `json:"source"`
-	Symbol    string    `json:"symbol"`
-	CoinID    string    `json:"coin_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	TenantID  uuid.UUID          `json:"tenantId"`
+	Source    string             `json:"source"`
+	Symbol    string             `json:"symbol"`
+	CoinID    string             `json:"coinId"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
 }

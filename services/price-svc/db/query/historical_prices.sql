@@ -16,18 +16,19 @@ WHERE coin_id = $1
 
 -- name: GetHistoricalPricesBatch :many
 WITH keys AS (
-  SELECT c.coin_id, b.bucket_start_utc
+  SELECT c.coin_id, b.bucket_start_utc, c.ord
   FROM unnest($1::text[]) WITH ORDINALITY AS c(coin_id, ord)
   JOIN unnest($2::timestamptz[]) WITH ORDINALITY AS b(bucket_start_utc, ord)
     USING (ord)
 )
 SELECT
-  hp.coin_id,
-  hp.bucket_start_utc,
-  hp.price_usd,
-  hp.granularity_seconds,
-  hp.fetched_at
-FROM historical_prices hp
-JOIN keys k
+  k.coin_id::text                        AS coin_id,
+  k.bucket_start_utc::timestamptz        AS bucket_start_utc,
+  hp.price_usd                           AS price_usd,
+  hp.granularity_seconds                 AS granularity_seconds,
+  hp.fetched_at                          AS fetched_at
+FROM keys k
+LEFT JOIN historical_prices hp
   ON hp.coin_id = k.coin_id
- AND hp.bucket_start_utc = k.bucket_start_utc;
+ AND hp.bucket_start_utc = k.bucket_start_utc
+ORDER BY k.ord;

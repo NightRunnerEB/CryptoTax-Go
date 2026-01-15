@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -20,8 +19,8 @@ WHERE coin_id = $1
 `
 
 type GetHistoricalPriceParams struct {
-	CoinID         string    `json:"coin_id"`
-	BucketStartUtc time.Time `json:"bucket_start_utc"`
+	CoinID         string             `json:"coinId"`
+	BucketStartUtc pgtype.Timestamptz `json:"bucketStartUtc"`
 }
 
 func (q *Queries) GetHistoricalPrice(ctx context.Context, arg GetHistoricalPriceParams) (HistoricalPrice, error) {
@@ -39,37 +38,46 @@ func (q *Queries) GetHistoricalPrice(ctx context.Context, arg GetHistoricalPrice
 
 const getHistoricalPricesBatch = `-- name: GetHistoricalPricesBatch :many
 WITH keys AS (
-  SELECT c.coin_id, b.bucket_start_utc
+  SELECT c.coin_id, b.bucket_start_utc, c.ord
   FROM unnest($1::text[]) WITH ORDINALITY AS c(coin_id, ord)
   JOIN unnest($2::timestamptz[]) WITH ORDINALITY AS b(bucket_start_utc, ord)
     USING (ord)
 )
 SELECT
-  hp.coin_id,
-  hp.bucket_start_utc,
-  hp.price_usd,
-  hp.granularity_seconds,
-  hp.fetched_at
-FROM historical_prices hp
-JOIN keys k
+  k.coin_id::text                        AS coin_id,
+  k.bucket_start_utc::timestamptz        AS bucket_start_utc,
+  hp.price_usd                           AS price_usd,
+  hp.granularity_seconds                 AS granularity_seconds,
+  hp.fetched_at                          AS fetched_at
+FROM keys k
+LEFT JOIN historical_prices hp
   ON hp.coin_id = k.coin_id
  AND hp.bucket_start_utc = k.bucket_start_utc
+ORDER BY k.ord
 `
 
 type GetHistoricalPricesBatchParams struct {
-	Column1 []string    `json:"column_1"`
-	Column2 []time.Time `json:"column_2"`
+	Column1 []string             `json:"column1"`
+	Column2 []pgtype.Timestamptz `json:"column2"`
 }
 
-func (q *Queries) GetHistoricalPricesBatch(ctx context.Context, arg GetHistoricalPricesBatchParams) ([]HistoricalPrice, error) {
+type GetHistoricalPricesBatchRow struct {
+	CoinID             string             `json:"coinId"`
+	BucketStartUtc     pgtype.Timestamptz `json:"bucketStartUtc"`
+	PriceUsd           pgtype.Numeric     `json:"priceUsd"`
+	GranularitySeconds *int32             `json:"granularitySeconds"`
+	FetchedAt          pgtype.Timestamptz `json:"fetchedAt"`
+}
+
+func (q *Queries) GetHistoricalPricesBatch(ctx context.Context, arg GetHistoricalPricesBatchParams) ([]GetHistoricalPricesBatchRow, error) {
 	rows, err := q.db.Query(ctx, getHistoricalPricesBatch, arg.Column1, arg.Column2)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []HistoricalPrice{}
+	var items []GetHistoricalPricesBatchRow
 	for rows.Next() {
-		var i HistoricalPrice
+		var i GetHistoricalPricesBatchRow
 		if err := rows.Scan(
 			&i.CoinID,
 			&i.BucketStartUtc,
@@ -99,10 +107,10 @@ WHERE EXCLUDED.granularity_seconds < historical_prices.granularity_seconds
 `
 
 type UpsertHistoricalPriceParams struct {
-	CoinID             string         `json:"coin_id"`
-	BucketStartUtc     time.Time      `json:"bucket_start_utc"`
-	PriceUsd           pgtype.Numeric `json:"price_usd"`
-	GranularitySeconds int32          `json:"granularity_seconds"`
+	CoinID             string             `json:"coinId"`
+	BucketStartUtc     pgtype.Timestamptz `json:"bucketStartUtc"`
+	PriceUsd           pgtype.Numeric     `json:"priceUsd"`
+	GranularitySeconds int32              `json:"granularitySeconds"`
 }
 
 func (q *Queries) UpsertHistoricalPrice(ctx context.Context, arg UpsertHistoricalPriceParams) error {
