@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	sqlc "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
@@ -10,17 +11,35 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+func mapHistoricalPriceRowDBToDomain(h sqlc.GetHistoricalPricesBatchRow) (domain.HistoricalPrice, error) {
+	price, err := numericToDecimal(h.PriceUsd)
+	if err != nil {
+		return domain.HistoricalPrice{}, err
+	}
+
+	granularitySeconds := int(*h.GranularitySeconds)
+
+	return domain.HistoricalPrice{
+		CoinID:             h.CoinID,
+		Time:               h.BucketStartUtc.Time, // guaranteed to be valid
+		PriceUsd:           &price,
+		GranularitySeconds: &granularitySeconds,
+	}, nil
+}
+
 func mapHistoricalPriceDBToDomain(h sqlc.HistoricalPrice) (domain.HistoricalPrice, error) {
 	price, err := numericToDecimal(h.PriceUsd)
 	if err != nil {
 		return domain.HistoricalPrice{}, err
 	}
 
+	granularitySeconds := int(h.GranularitySeconds)
+
 	return domain.HistoricalPrice{
 		CoinID:             h.CoinID,
-		BucketStartUtc:     h.BucketStartUtc,
-		PriceUsd:           price,
-		GranularitySeconds: int(h.GranularitySeconds),
+		Time:               h.BucketStartUtc.Time, // guaranteed to be valid
+		PriceUsd:           &price,
+		GranularitySeconds: &granularitySeconds,
 	}, nil
 }
 
@@ -52,10 +71,21 @@ func numericToDecimal(n pgtype.Numeric) (decimal.Decimal, error) {
 	return decimal.NewFromBigInt(bi, n.Exp), nil
 }
 
-func decimalToNumeric(d decimal.Decimal) (pgtype.Numeric, error) {
+func decimalToNumeric(d *decimal.Decimal) (pgtype.Numeric, error) {
 	var n pgtype.Numeric
 	if err := n.Scan(d.String()); err != nil {
 		return pgtype.Numeric{}, err
 	}
 	return n, nil
+}
+
+func toTimestamptzSlice(times []time.Time) []pgtype.Timestamptz {
+	res := make([]pgtype.Timestamptz, len(times))
+	for i, t := range times {
+		res[i] = pgtype.Timestamptz{
+			Time:  t,
+			Valid: true,
+		}
+	}
+	return res
 }
