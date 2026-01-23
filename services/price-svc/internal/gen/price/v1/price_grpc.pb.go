@@ -27,7 +27,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PriceServiceClient interface {
+	// Valuates batch of transactions and returns calculated prices.
 	ValuateTransactionsBatch(ctx context.Context, in *ValuateTransactionsRequest, opts ...grpc.CallOption) (*ValuateTransactionsResponse, error)
+	// Creates or updates tenant symbol.
 	UpsertTenantSymbol(ctx context.Context, in *UpsertTenantSymbolRequest, opts ...grpc.CallOption) (*UpsertTenantSymbolResponse, error)
 }
 
@@ -63,7 +65,9 @@ func (c *priceServiceClient) UpsertTenantSymbol(ctx context.Context, in *UpsertT
 // All implementations must embed UnimplementedPriceServiceServer
 // for forward compatibility.
 type PriceServiceServer interface {
+	// Valuates batch of transactions and returns calculated prices.
 	ValuateTransactionsBatch(context.Context, *ValuateTransactionsRequest) (*ValuateTransactionsResponse, error)
+	// Creates or updates tenant symbol.
 	UpsertTenantSymbol(context.Context, *UpsertTenantSymbolRequest) (*UpsertTenantSymbolResponse, error)
 	mustEmbedUnimplementedPriceServiceServer()
 }
