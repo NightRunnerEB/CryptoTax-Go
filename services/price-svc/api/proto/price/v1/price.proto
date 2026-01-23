@@ -7,9 +7,11 @@ option go_package = "github.com/NightRunner/CryptoTax-Go/services/price-svc/inte
 import "google/protobuf/timestamp.proto";
 
 service PriceService {
+  // Valuates batch of transactions and returns calculated prices.
   rpc ValuateTransactionsBatch(ValuateTransactionsRequest)
       returns (ValuateTransactionsResponse);
 
+  // Creates or updates tenant symbol.
   rpc UpsertTenantSymbol(UpsertTenantSymbolRequest)
       returns (UpsertTenantSymbolResponse);
 }
@@ -20,7 +22,6 @@ message MoneyLeg {
 }
 
 message FiatLeg {
-  string symbol = 1;
   string fiat = 2; // decimal as string
 }
 
