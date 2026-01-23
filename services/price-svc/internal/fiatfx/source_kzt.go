@@ -49,18 +49,18 @@ func NewKZTSource(httpClient *http.Client) FXSource {
 	}
 }
 
-func (s *KZTSource) Currency() Currency {
-	return KZT
-}
-
-func (s *KZTSource) Schedule() Schedule {
-	return s.schedule
-}
+func (s *KZTSource) Currency() Currency { return KZT }
+func (s *KZTSource) Schedule() Schedule { return s.schedule }
 
 func (s *KZTSource) Get(key time.Time) (Rate, bool) {
 	return s.store.Get(dateKeyISO(key))
 }
 
+/*
+У Национального Банка Казахстана нет API для получения исторических курсов валют на период, только по датам.
+Поэтому тянунь постоянно курс на каждый день в отдельности с 2013 будет очень плохо.
+Нужно добавить либо кэширование в БД или в начале считывать csv файл с курсами валют на максимально большой период и потом уже догонять по датам.
+*/
 func (s *KZTSource) Update(ctx context.Context) error {
 	loc := s.schedule.Loc
 	now := time.Now().In(loc)

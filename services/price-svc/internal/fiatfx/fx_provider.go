@@ -9,11 +9,6 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 )
 
-type FXKey struct {
-	Day      string
-	Currency Currency
-}
-
 type FXProvider struct {
 	registry *FXSourceRegistry
 }
@@ -56,11 +51,9 @@ func (r *FXProvider) runSource(ctx context.Context, src FXSource) {
 }
 
 func (r *FXProvider) GetUSDtoFiatRate(ctx context.Context, day time.Time, currency string) (domain.Fiat, error) {
-	fiat := Currency(currency)
-
-	source, ok := r.registry.GetSource(fiat)
+	source, ok := r.registry.GetSource(currency)
 	if !ok {
-		return domain.Fiat{}, fmt.Errorf("GetUSDtoFiatRate: no source for currency %s", fiat)
+		return domain.Fiat{}, fmt.Errorf("GetUSDtoFiatRate: no source for currency %s", currency)
 	}
 
 	if rate, ok := source.Get(day); ok {
@@ -73,5 +66,5 @@ func (r *FXProvider) GetUSDtoFiatRate(ctx context.Context, day time.Time, curren
 	// 	return domain.Fiat{}, fmt.Errorf("GetUSDtoFiatRate: source update failed: %w", err)
 	// }
 
-	return domain.Fiat{}, fmt.Errorf("GetUSDtoFiatRate: no rate for currency %s at day %s", fiat, day.Format("2006-01-02"))
+	return domain.Fiat{}, fmt.Errorf("GetUSDtoFiatRate: no rate for currency %s at day %s", currency, day.Format("2006-01-02"))
 }

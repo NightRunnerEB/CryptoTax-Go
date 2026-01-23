@@ -28,7 +28,7 @@ const (
 // defaultFrom is the start point for the very first sync (when lastDate is empty).
 // After the first successful run we use lastDate+1 as "from".
 // Use a constant to avoid requesting "all history" if lastDate wasn't persisted.
-var defaultFrom = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+var defaultFrom = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
 // dynamicValCurs models CBR XML_dynamic.asp response.
 type dynamicValCurs struct {
