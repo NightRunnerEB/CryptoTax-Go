@@ -13,9 +13,9 @@ type FXProvider struct {
 	registry *FXSourceRegistry
 }
 
-func NewFXProvider() domain.FXProvider {
+func NewFXProvider(registry *FXSourceRegistry) domain.FXProvider {
 	return &FXProvider{
-		registry: NewFXRegistry(),
+		registry: registry,
 	}
 }
 

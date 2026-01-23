@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -19,9 +20,10 @@ type Cache interface {
 
 type Redis struct {
 	client *redis.Client
+	jitter time.Duration
 }
 
-func New(url string, opts ...Option) (Cache, error) {
+func New(url string, jitter time.Duration, opts ...Option) (Cache, error) {
 	redisConfig, err := redis.ParseURL(url)
 
 	if err != nil {
@@ -35,14 +37,14 @@ func New(url string, opts ...Option) (Cache, error) {
 	client := redis.NewClient(redisConfig)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-    defer cancel()
+	defer cancel()
 
 	if err := client.Ping(ctx).Err(); err != nil {
 		_ = client.Close()
 		return nil, fmt.Errorf("redis ping failed: %w", err)
 	}
 
-	return &Redis{client: client}, nil
+	return &Redis{client: client, jitter: jitter}, nil
 }
 
 func (r *Redis) Close() error {
@@ -62,6 +64,7 @@ func (r *Redis) Get(ctx context.Context, key string) (string, bool, error) {
 }
 
 func (r *Redis) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	ttl = ttlWithJitter(ttl, r.jitter)
 	if err := r.client.Set(ctx, key, value, ttl).Err(); err != nil {
 		return err
 	}
@@ -79,6 +82,16 @@ func (r *Redis) Del(ctx context.Context, keys ...string) error {
 	}
 
 	return nil
+}
+
+// ttlJitterRandom returns base TTL + random up to maxJitter.
+// Example usage: base=5min, maxJitter=30s
+func ttlWithJitter(base, maxJitter time.Duration) time.Duration {
+	if maxJitter <= 0 {
+		return base
+	}
+	delta := time.Duration(rand.Int63n(int64(maxJitter)))
+	return base + delta
 }
 
 // Note: Use carefully in prod
