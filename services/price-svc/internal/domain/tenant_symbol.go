@@ -14,11 +14,11 @@ type TenantSymbol struct {
 }
 
 type TenantSymbolUseCase interface {
-	Upsert(s TenantSymbol) error
-	Delete(tenantID uuid.UUID, source, symbol string) error
+	Upsert(ctx context.Context, s TenantSymbol) error
+	Delete(ctx context.Context, tenantID uuid.UUID, source, symbol string) error
 
-	GetList(tenantID uuid.UUID, source string, symbols []string) ([]TenantSymbol, error)
-	GetListBySource(tenantID uuid.UUID, source string) ([]TenantSymbol, error)
+	GetList(ctx context.Context, tenantID uuid.UUID, source string, symbols []string) ([]TenantSymbol, error)
+	GetListBySource(ctx context.Context, tenantID uuid.UUID, source string) ([]TenantSymbol, error)
 }
 
 type TenantSymbolRepo interface {

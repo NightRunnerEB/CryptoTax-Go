@@ -8,19 +8,37 @@ import (
 )
 
 type HistoricalPrice struct {
-	CoinID             string          `json:"coin_id"`
-	BucketStartUtc     time.Time       `json:"bucket_start_utc"`
-	GranularitySeconds int             `json:"granularity_seconds"`
-	PriceUsd           decimal.Decimal `json:"price_usd"`
+	CoinID             string           `json:"coin_id"`
+	Time               time.Time        `json:"bucket_start_utc"`
+	PriceUsd           *decimal.Decimal `json:"price_usd"`
+	GranularitySeconds *int             `json:"granularity_seconds"`
 }
 
+type PriceKey struct {
+	CoinID         string
+	BucketStartUtc time.Time
+}
+
+type Fiat = decimal.Decimal
+type Rate = decimal.Decimal
+
 type HistoricalPriceUseCase interface {
-	GetHistoricalPrices(ctx context.Context, coinIDs []string, bucket_start_utc []time.Time) ([]HistoricalPrice, error)
+	GetHistoricalPrices(ctx context.Context, fiatCurrency string, priceKeys []PriceKey) ([]Fiat, error)
 }
 
 type HistoricalPriceRepo interface {
 	Upsert(ctx context.Context, p HistoricalPrice) error
-	Get(ctx context.Context, coinID string, bucket_start_utc time.Time) (HistoricalPrice, error)
+	UpsertBatch(ctx context.Context, prices []HistoricalPrice) error
 
-	GetBatch(ctx context.Context, coinIDs []string, bucket_start_utc []time.Time) ([]HistoricalPrice, error)
+	Get(ctx context.Context, coinID string, bucketStartUtc time.Time) (HistoricalPrice, error)
+	GetBatch(ctx context.Context, priceKeys []PriceKey) ([]HistoricalPrice, error)
+}
+
+type FXProvider interface {
+	Start(context.Context) error
+	GetUSDtoFiatRate(ctx context.Context, day time.Time, fiat string) (Fiat, error)
+}
+
+type CoinIdResolver interface {
+	Resolve(symbol string) (string, error)
 }
