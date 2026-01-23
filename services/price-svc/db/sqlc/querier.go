@@ -15,6 +15,7 @@ type Querier interface {
 	GetTenantSymbols(ctx context.Context, arg GetTenantSymbolsParams) ([]TenantSymbol, error)
 	ListTenantSymbolsBySource(ctx context.Context, arg ListTenantSymbolsBySourceParams) ([]TenantSymbol, error)
 	UpsertHistoricalPrice(ctx context.Context, arg UpsertHistoricalPriceParams) error
+	UpsertHistoricalPricesBatch(ctx context.Context, arg UpsertHistoricalPricesBatchParams) error
 	UpsertTenantSymbol(ctx context.Context, arg UpsertTenantSymbolParams) error
 }
 
