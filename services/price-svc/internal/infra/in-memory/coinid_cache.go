@@ -24,12 +24,12 @@ type coinIdFile struct {
 func NewCoinIdCache(path string) (*CoinIdCache, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("coinid: read file: %w", err)
+		return nil, err
 	}
 
 	var f coinIdFile
 	if err := yaml.Unmarshal(b, &f); err != nil {
-		return nil, fmt.Errorf("coinid: parse yaml: %w", err)
+		return nil, err
 	}
 
 	m := make(map[Symbol]CoinID, len(f.Coins))
