@@ -7,9 +7,9 @@ import (
 )
 
 type CoinListItem struct {
-	ID        string            `json:"id"`
-	Symbol    string            `json:"symbol"`
-	Name      string            `json:"name"`
+	ID     string `json:"id"`
+	Symbol string `json:"symbol"`
+	Name   string `json:"name"`
 }
 
 func (c *CGClient) CoinsList(ctx context.Context, includePlatform bool) ([]CoinListItem, error) {

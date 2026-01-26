@@ -7,30 +7,33 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"golang.org/x/time/rate"
 )
 
 type CGClient struct {
-	baseURL *url.URL
-	apiKey  string
+	baseURL           *url.URL
+	apiKey            string
+	granularityPolicy GranularityPolicy
 
 	httpClient *http.Client
 	limiter    *rate.Limiter
 }
 
-func NewCGClient(baseURL, apiKey string, rateLimitPerMin int) (*CGClient, error) {
-	u, err := url.Parse(baseURL)
+func NewCGClient(cgConfig CGConfig) (*CGClient, error) {
+	u, err := url.Parse(cgConfig.BaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid baseURL: %w", err)
 	}
 
-	limiter := rate.NewLimiter(rate.Limit(rateLimitPerMin)/60, rateLimitPerMin)
+	limiter := rate.NewLimiter(rate.Limit(cgConfig.RateLimitPerMin)/60, cgConfig.RateLimitPerMin)
 	return &CGClient{
-		baseURL:    u,
-		apiKey:     apiKey,
-		httpClient: &http.Client{},
-		limiter:    limiter,
+		baseURL:           u,
+		apiKey:            cgConfig.APIKey,
+		granularityPolicy: cgConfig.GranularityPolicy,
+		httpClient:        &http.Client{},
+		limiter:           limiter,
 	}, nil
 }
 
@@ -94,4 +97,16 @@ func (c *CGClient) doJSON(ctx context.Context, method, path string, q url.Values
 		return fmt.Errorf("json unmarshal: %w; body=%s", err, string(body))
 	}
 	return nil
+}
+
+func (c *CGClient) GetGranularitySeconds(txTimeUTC, nowUTC time.Time) time.Duration {
+	age := nowUTC.Sub(txTimeUTC)
+	switch {
+	case age < c.granularityPolicy["5minutes"]:
+		return 300 * time.Second
+	case age < c.granularityPolicy["1hour"]:
+		return 3600 * time.Second
+	default:
+		return 86400 * time.Second
+	}
 }
