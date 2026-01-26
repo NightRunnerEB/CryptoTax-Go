@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS tenant_symbol_overrides;
+DROP TABLE IF EXISTS tenant_symbols;
