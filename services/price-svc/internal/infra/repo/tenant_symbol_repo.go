@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/db"
-	sqlc "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
+	db "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	"github.com/google/uuid"
 )
@@ -32,7 +31,7 @@ func (r *tenantSymbolRepository) Upsert(ctx context.Context, s domain.TenantSymb
 		return fmt.Errorf("Upsert: coinID is empty")
 	}
 
-	if err := r.store.UpsertTenantSymbol(ctx, sqlc.UpsertTenantSymbolParams{
+	if err := r.store.UpsertTenantSymbol(ctx, db.UpsertTenantSymbolParams{
 		TenantID: s.TenantID,
 		Source:   s.Source,
 		Symbol:   s.Symbol,
@@ -55,7 +54,7 @@ func (r *tenantSymbolRepository) Delete(ctx context.Context, tenantID uuid.UUID,
 		return fmt.Errorf("Delete: symbol is empty")
 	}
 
-	rowsAffected, err := r.store.DeleteTenantSymbol(ctx, sqlc.DeleteTenantSymbolParams{
+	rowsAffected, err := r.store.DeleteTenantSymbol(ctx, db.DeleteTenantSymbolParams{
 		TenantID: tenantID,
 		Source:   source,
 		Symbol:   symbol,
@@ -87,7 +86,7 @@ func (r *tenantSymbolRepository) GetList(
 		return []domain.TenantSymbol{}, nil
 	}
 
-	rows, err := r.store.GetTenantSymbols(ctx, sqlc.GetTenantSymbolsParams{
+	rows, err := r.store.GetTenantSymbols(ctx, db.GetTenantSymbolsParams{
 		TenantID: tenantID,
 		Source:   source,
 		Column3:  symbols,
@@ -115,7 +114,7 @@ func (r *tenantSymbolRepository) GetListBySource(
 		return nil, fmt.Errorf("GetListBySource: source is empty")
 	}
 
-	rows, err := r.store.ListTenantSymbolsBySource(ctx, sqlc.ListTenantSymbolsBySourceParams{
+	rows, err := r.store.ListTenantSymbolsBySource(ctx, db.ListTenantSymbolsBySourceParams{
 		TenantID: tenantID,
 		Source:   source,
 	})

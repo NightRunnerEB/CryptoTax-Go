@@ -11,10 +11,10 @@ import (
 )
 
 const (
-    _defaultMaxPoolSize    = 10
-    _defaultConnAttempts   = 3
-    _defaultConnTimeout    = 5 * time.Second
-    _defaultAttemptTimeout = 2 * time.Second
+	_defaultMaxPoolSize    = 10
+	_defaultConnAttempts   = 3
+	_defaultConnTimeout    = 5 * time.Second
+	_defaultAttemptTimeout = 2 * time.Second
 )
 
 type Postgres struct {
@@ -26,7 +26,7 @@ type Postgres struct {
 	Pool *pgxpool.Pool
 }
 
-func New(url string, opts ...Option) (*Postgres, error) {
+func New(ctx context.Context, url string, opts ...Option) (*Postgres, error) {
 	pg := &Postgres{
 		maxPoolSize:    _defaultMaxPoolSize,
 		connAttempts:   _defaultConnAttempts,
@@ -46,7 +46,7 @@ func New(url string, opts ...Option) (*Postgres, error) {
 	poolConfig.MaxConns = int32(pg.maxPoolSize)
 
 	for pg.connAttempts > 0 {
-		ctx, cancel := context.WithTimeout(context.Background(), pg.connTimeout)
+		ctx, cancel := context.WithTimeout(ctx, pg.connTimeout)
 		pg.Pool, err = pgxpool.NewWithConfig(ctx, poolConfig)
 		cancel()
 

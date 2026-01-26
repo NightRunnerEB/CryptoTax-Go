@@ -19,143 +19,143 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PriceService_ValuateTransactionsBatch_FullMethodName = "/price.v1.PriceService/ValuateTransactionsBatch"
-	PriceService_UpsertTenantSymbol_FullMethodName       = "/price.v1.PriceService/UpsertTenantSymbol"
+	Price_ValuateTransactionsBatch_FullMethodName = "/price.v1.Price/ValuateTransactionsBatch"
+	Price_UpsertTenantSymbol_FullMethodName       = "/price.v1.Price/UpsertTenantSymbol"
 )
 
-// PriceServiceClient is the client API for PriceService service.
+// PriceClient is the client API for Price service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PriceServiceClient interface {
+type PriceClient interface {
 	// Valuates batch of transactions and returns calculated prices.
 	ValuateTransactionsBatch(ctx context.Context, in *ValuateTransactionsRequest, opts ...grpc.CallOption) (*ValuateTransactionsResponse, error)
 	// Creates or updates tenant symbol.
 	UpsertTenantSymbol(ctx context.Context, in *UpsertTenantSymbolRequest, opts ...grpc.CallOption) (*UpsertTenantSymbolResponse, error)
 }
 
-type priceServiceClient struct {
+type priceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPriceServiceClient(cc grpc.ClientConnInterface) PriceServiceClient {
-	return &priceServiceClient{cc}
+func NewPriceClient(cc grpc.ClientConnInterface) PriceClient {
+	return &priceClient{cc}
 }
 
-func (c *priceServiceClient) ValuateTransactionsBatch(ctx context.Context, in *ValuateTransactionsRequest, opts ...grpc.CallOption) (*ValuateTransactionsResponse, error) {
+func (c *priceClient) ValuateTransactionsBatch(ctx context.Context, in *ValuateTransactionsRequest, opts ...grpc.CallOption) (*ValuateTransactionsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ValuateTransactionsResponse)
-	err := c.cc.Invoke(ctx, PriceService_ValuateTransactionsBatch_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Price_ValuateTransactionsBatch_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *priceServiceClient) UpsertTenantSymbol(ctx context.Context, in *UpsertTenantSymbolRequest, opts ...grpc.CallOption) (*UpsertTenantSymbolResponse, error) {
+func (c *priceClient) UpsertTenantSymbol(ctx context.Context, in *UpsertTenantSymbolRequest, opts ...grpc.CallOption) (*UpsertTenantSymbolResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpsertTenantSymbolResponse)
-	err := c.cc.Invoke(ctx, PriceService_UpsertTenantSymbol_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Price_UpsertTenantSymbol_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PriceServiceServer is the server API for PriceService service.
-// All implementations must embed UnimplementedPriceServiceServer
+// PriceServer is the server API for Price service.
+// All implementations must embed UnimplementedPriceServer
 // for forward compatibility.
-type PriceServiceServer interface {
+type PriceServer interface {
 	// Valuates batch of transactions and returns calculated prices.
 	ValuateTransactionsBatch(context.Context, *ValuateTransactionsRequest) (*ValuateTransactionsResponse, error)
 	// Creates or updates tenant symbol.
 	UpsertTenantSymbol(context.Context, *UpsertTenantSymbolRequest) (*UpsertTenantSymbolResponse, error)
-	mustEmbedUnimplementedPriceServiceServer()
+	mustEmbedUnimplementedPriceServer()
 }
 
-// UnimplementedPriceServiceServer must be embedded to have
+// UnimplementedPriceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedPriceServiceServer struct{}
+type UnimplementedPriceServer struct{}
 
-func (UnimplementedPriceServiceServer) ValuateTransactionsBatch(context.Context, *ValuateTransactionsRequest) (*ValuateTransactionsResponse, error) {
+func (UnimplementedPriceServer) ValuateTransactionsBatch(context.Context, *ValuateTransactionsRequest) (*ValuateTransactionsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ValuateTransactionsBatch not implemented")
 }
-func (UnimplementedPriceServiceServer) UpsertTenantSymbol(context.Context, *UpsertTenantSymbolRequest) (*UpsertTenantSymbolResponse, error) {
+func (UnimplementedPriceServer) UpsertTenantSymbol(context.Context, *UpsertTenantSymbolRequest) (*UpsertTenantSymbolResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpsertTenantSymbol not implemented")
 }
-func (UnimplementedPriceServiceServer) mustEmbedUnimplementedPriceServiceServer() {}
-func (UnimplementedPriceServiceServer) testEmbeddedByValue()                      {}
+func (UnimplementedPriceServer) mustEmbedUnimplementedPriceServer() {}
+func (UnimplementedPriceServer) testEmbeddedByValue()               {}
 
-// UnsafePriceServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PriceServiceServer will
+// UnsafePriceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PriceServer will
 // result in compilation errors.
-type UnsafePriceServiceServer interface {
-	mustEmbedUnimplementedPriceServiceServer()
+type UnsafePriceServer interface {
+	mustEmbedUnimplementedPriceServer()
 }
 
-func RegisterPriceServiceServer(s grpc.ServiceRegistrar, srv PriceServiceServer) {
-	// If the following call panics, it indicates UnimplementedPriceServiceServer was
+func RegisterPriceServer(s grpc.ServiceRegistrar, srv PriceServer) {
+	// If the following call panics, it indicates UnimplementedPriceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&PriceService_ServiceDesc, srv)
+	s.RegisterService(&Price_ServiceDesc, srv)
 }
 
-func _PriceService_ValuateTransactionsBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Price_ValuateTransactionsBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ValuateTransactionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PriceServiceServer).ValuateTransactionsBatch(ctx, in)
+		return srv.(PriceServer).ValuateTransactionsBatch(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PriceService_ValuateTransactionsBatch_FullMethodName,
+		FullMethod: Price_ValuateTransactionsBatch_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PriceServiceServer).ValuateTransactionsBatch(ctx, req.(*ValuateTransactionsRequest))
+		return srv.(PriceServer).ValuateTransactionsBatch(ctx, req.(*ValuateTransactionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PriceService_UpsertTenantSymbol_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Price_UpsertTenantSymbol_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpsertTenantSymbolRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PriceServiceServer).UpsertTenantSymbol(ctx, in)
+		return srv.(PriceServer).UpsertTenantSymbol(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PriceService_UpsertTenantSymbol_FullMethodName,
+		FullMethod: Price_UpsertTenantSymbol_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PriceServiceServer).UpsertTenantSymbol(ctx, req.(*UpsertTenantSymbolRequest))
+		return srv.(PriceServer).UpsertTenantSymbol(ctx, req.(*UpsertTenantSymbolRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// PriceService_ServiceDesc is the grpc.ServiceDesc for PriceService service.
+// Price_ServiceDesc is the grpc.ServiceDesc for Price service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var PriceService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "price.v1.PriceService",
-	HandlerType: (*PriceServiceServer)(nil),
+var Price_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "price.v1.Price",
+	HandlerType: (*PriceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "ValuateTransactionsBatch",
-			Handler:    _PriceService_ValuateTransactionsBatch_Handler,
+			Handler:    _Price_ValuateTransactionsBatch_Handler,
 		},
 		{
 			MethodName: "UpsertTenantSymbol",
-			Handler:    _PriceService_UpsertTenantSymbol_Handler,
+			Handler:    _Price_UpsertTenantSymbol_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

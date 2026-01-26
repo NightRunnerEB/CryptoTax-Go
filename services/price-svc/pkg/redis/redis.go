@@ -23,7 +23,7 @@ type Redis struct {
 	jitter time.Duration
 }
 
-func New(url string, jitter time.Duration, opts ...Option) (Cache, error) {
+func New(ctx context.Context, url string, jitter time.Duration, opts ...Option) (Cache, error) {
 	redisConfig, err := redis.ParseURL(url)
 
 	if err != nil {
@@ -36,7 +36,7 @@ func New(url string, jitter time.Duration, opts ...Option) (Cache, error) {
 
 	client := redis.NewClient(redisConfig)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 	if err := client.Ping(ctx).Err(); err != nil {

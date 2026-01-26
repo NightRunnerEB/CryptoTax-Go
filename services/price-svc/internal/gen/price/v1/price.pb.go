@@ -445,88 +445,6 @@ func (x *ValuatedTx) GetErrors() []*AssetError {
 	return nil
 }
 
-type FiatLegResult struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Result:
-	//
-	//	*FiatLegResult_Value
-	//	*FiatLegResult_Error
-	Result        isFiatLegResult_Result `protobuf_oneof:"result"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FiatLegResult) Reset() {
-	*x = FiatLegResult{}
-	mi := &file_price_v1_price_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FiatLegResult) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FiatLegResult) ProtoMessage() {}
-
-func (x *FiatLegResult) ProtoReflect() protoreflect.Message {
-	mi := &file_price_v1_price_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FiatLegResult.ProtoReflect.Descriptor instead.
-func (*FiatLegResult) Descriptor() ([]byte, []int) {
-	return file_price_v1_price_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *FiatLegResult) GetResult() isFiatLegResult_Result {
-	if x != nil {
-		return x.Result
-	}
-	return nil
-}
-
-func (x *FiatLegResult) GetValue() *FiatLeg {
-	if x != nil {
-		if x, ok := x.Result.(*FiatLegResult_Value); ok {
-			return x.Value
-		}
-	}
-	return nil
-}
-
-func (x *FiatLegResult) GetError() *AssetError {
-	if x != nil {
-		if x, ok := x.Result.(*FiatLegResult_Error); ok {
-			return x.Error
-		}
-	}
-	return nil
-}
-
-type isFiatLegResult_Result interface {
-	isFiatLegResult_Result()
-}
-
-type FiatLegResult_Value struct {
-	Value *FiatLeg `protobuf:"bytes,1,opt,name=value,proto3,oneof"`
-}
-
-type FiatLegResult_Error struct {
-	Error *AssetError `protobuf:"bytes,2,opt,name=error,proto3,oneof"`
-}
-
-func (*FiatLegResult_Value) isFiatLegResult_Result() {}
-
-func (*FiatLegResult_Error) isFiatLegResult_Result() {}
-
 type ValuateTransactionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
@@ -539,7 +457,7 @@ type ValuateTransactionsRequest struct {
 
 func (x *ValuateTransactionsRequest) Reset() {
 	*x = ValuateTransactionsRequest{}
-	mi := &file_price_v1_price_proto_msgTypes[7]
+	mi := &file_price_v1_price_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -551,7 +469,7 @@ func (x *ValuateTransactionsRequest) String() string {
 func (*ValuateTransactionsRequest) ProtoMessage() {}
 
 func (x *ValuateTransactionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_price_v1_price_proto_msgTypes[7]
+	mi := &file_price_v1_price_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -564,7 +482,7 @@ func (x *ValuateTransactionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValuateTransactionsRequest.ProtoReflect.Descriptor instead.
 func (*ValuateTransactionsRequest) Descriptor() ([]byte, []int) {
-	return file_price_v1_price_proto_rawDescGZIP(), []int{7}
+	return file_price_v1_price_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ValuateTransactionsRequest) GetTenantId() string {
@@ -604,7 +522,7 @@ type ValuateTransactionsResponse struct {
 
 func (x *ValuateTransactionsResponse) Reset() {
 	*x = ValuateTransactionsResponse{}
-	mi := &file_price_v1_price_proto_msgTypes[8]
+	mi := &file_price_v1_price_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -616,7 +534,7 @@ func (x *ValuateTransactionsResponse) String() string {
 func (*ValuateTransactionsResponse) ProtoMessage() {}
 
 func (x *ValuateTransactionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_price_v1_price_proto_msgTypes[8]
+	mi := &file_price_v1_price_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -629,7 +547,7 @@ func (x *ValuateTransactionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValuateTransactionsResponse.ProtoReflect.Descriptor instead.
 func (*ValuateTransactionsResponse) Descriptor() ([]byte, []int) {
-	return file_price_v1_price_proto_rawDescGZIP(), []int{8}
+	return file_price_v1_price_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ValuateTransactionsResponse) GetTransactions() []*ValuatedTx {
@@ -651,7 +569,7 @@ type UpsertTenantSymbolRequest struct {
 
 func (x *UpsertTenantSymbolRequest) Reset() {
 	*x = UpsertTenantSymbolRequest{}
-	mi := &file_price_v1_price_proto_msgTypes[9]
+	mi := &file_price_v1_price_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -663,7 +581,7 @@ func (x *UpsertTenantSymbolRequest) String() string {
 func (*UpsertTenantSymbolRequest) ProtoMessage() {}
 
 func (x *UpsertTenantSymbolRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_price_v1_price_proto_msgTypes[9]
+	mi := &file_price_v1_price_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -676,7 +594,7 @@ func (x *UpsertTenantSymbolRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertTenantSymbolRequest.ProtoReflect.Descriptor instead.
 func (*UpsertTenantSymbolRequest) Descriptor() ([]byte, []int) {
-	return file_price_v1_price_proto_rawDescGZIP(), []int{9}
+	return file_price_v1_price_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpsertTenantSymbolRequest) GetTenantId() string {
@@ -715,7 +633,7 @@ type UpsertTenantSymbolResponse struct {
 
 func (x *UpsertTenantSymbolResponse) Reset() {
 	*x = UpsertTenantSymbolResponse{}
-	mi := &file_price_v1_price_proto_msgTypes[10]
+	mi := &file_price_v1_price_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -727,7 +645,7 @@ func (x *UpsertTenantSymbolResponse) String() string {
 func (*UpsertTenantSymbolResponse) ProtoMessage() {}
 
 func (x *UpsertTenantSymbolResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_price_v1_price_proto_msgTypes[10]
+	mi := &file_price_v1_price_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -740,7 +658,7 @@ func (x *UpsertTenantSymbolResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertTenantSymbolResponse.ProtoReflect.Descriptor instead.
 func (*UpsertTenantSymbolResponse) Descriptor() ([]byte, []int) {
-	return file_price_v1_price_proto_rawDescGZIP(), []int{10}
+	return file_price_v1_price_proto_rawDescGZIP(), []int{9}
 }
 
 var File_price_v1_price_proto protoreflect.FileDescriptor
@@ -785,11 +703,7 @@ const file_price_v1_price_proto_rawDesc = "" +
 	"\n" +
 	"\b_in_fiatB\v\n" +
 	"\t_out_fiatB\v\n" +
-	"\t_fee_fiat\"r\n" +
-	"\rFiatLegResult\x12)\n" +
-	"\x05value\x18\x01 \x01(\v2\x11.price.v1.FiatLegH\x00R\x05value\x12,\n" +
-	"\x05error\x18\x02 \x01(\v2\x14.price.v1.AssetErrorH\x00R\x05errorB\b\n" +
-	"\x06result\"\xb1\x01\n" +
+	"\t_fee_fiat\"\xb1\x01\n" +
 	"\x1aValuateTransactionsRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12#\n" +
@@ -808,8 +722,8 @@ const file_price_v1_price_proto_rawDesc = "" +
 	"\rASSET_UNKNOWN\x10\x01\x12\x13\n" +
 	"\x0fASSET_AMBIGUOUS\x10\x02\x12\x12\n" +
 	"\x0eRATE_NOT_FOUND\x10\x03\x12\x12\n" +
-	"\x0ePROVIDER_ERROR\x10\x042\xd8\x01\n" +
-	"\fPriceService\x12g\n" +
+	"\x0ePROVIDER_ERROR\x10\x042\xd1\x01\n" +
+	"\x05Price\x12g\n" +
 	"\x18ValuateTransactionsBatch\x12$.price.v1.ValuateTransactionsRequest\x1a%.price.v1.ValuateTransactionsResponse\x12_\n" +
 	"\x12UpsertTenantSymbol\x12#.price.v1.UpsertTenantSymbolRequest\x1a$.price.v1.UpsertTenantSymbolResponseBVZTgithub.com/NightRunner/CryptoTax-Go/services/price-svc/internal/gen/price/v1;pricev1b\x06proto3"
 
@@ -826,7 +740,7 @@ func file_price_v1_price_proto_rawDescGZIP() []byte {
 }
 
 var file_price_v1_price_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_price_v1_price_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_price_v1_price_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_price_v1_price_proto_goTypes = []any{
 	(AssetErrorCode)(0),                 // 0: price.v1.AssetErrorCode
 	(*MoneyLeg)(nil),                    // 1: price.v1.MoneyLeg
@@ -835,15 +749,14 @@ var file_price_v1_price_proto_goTypes = []any{
 	(*CoinCandidate)(nil),               // 4: price.v1.CoinCandidate
 	(*AssetError)(nil),                  // 5: price.v1.AssetError
 	(*ValuatedTx)(nil),                  // 6: price.v1.ValuatedTx
-	(*FiatLegResult)(nil),               // 7: price.v1.FiatLegResult
-	(*ValuateTransactionsRequest)(nil),  // 8: price.v1.ValuateTransactionsRequest
-	(*ValuateTransactionsResponse)(nil), // 9: price.v1.ValuateTransactionsResponse
-	(*UpsertTenantSymbolRequest)(nil),   // 10: price.v1.UpsertTenantSymbolRequest
-	(*UpsertTenantSymbolResponse)(nil),  // 11: price.v1.UpsertTenantSymbolResponse
-	(*timestamppb.Timestamp)(nil),       // 12: google.protobuf.Timestamp
+	(*ValuateTransactionsRequest)(nil),  // 7: price.v1.ValuateTransactionsRequest
+	(*ValuateTransactionsResponse)(nil), // 8: price.v1.ValuateTransactionsResponse
+	(*UpsertTenantSymbolRequest)(nil),   // 9: price.v1.UpsertTenantSymbolRequest
+	(*UpsertTenantSymbolResponse)(nil),  // 10: price.v1.UpsertTenantSymbolResponse
+	(*timestamppb.Timestamp)(nil),       // 11: google.protobuf.Timestamp
 }
 var file_price_v1_price_proto_depIdxs = []int32{
-	12, // 0: price.v1.TxToValuate.time_utc:type_name -> google.protobuf.Timestamp
+	11, // 0: price.v1.TxToValuate.time_utc:type_name -> google.protobuf.Timestamp
 	1,  // 1: price.v1.TxToValuate.in_money:type_name -> price.v1.MoneyLeg
 	1,  // 2: price.v1.TxToValuate.out_money:type_name -> price.v1.MoneyLeg
 	1,  // 3: price.v1.TxToValuate.fee_money:type_name -> price.v1.MoneyLeg
@@ -853,19 +766,17 @@ var file_price_v1_price_proto_depIdxs = []int32{
 	2,  // 7: price.v1.ValuatedTx.out_fiat:type_name -> price.v1.FiatLeg
 	2,  // 8: price.v1.ValuatedTx.fee_fiat:type_name -> price.v1.FiatLeg
 	5,  // 9: price.v1.ValuatedTx.errors:type_name -> price.v1.AssetError
-	2,  // 10: price.v1.FiatLegResult.value:type_name -> price.v1.FiatLeg
-	5,  // 11: price.v1.FiatLegResult.error:type_name -> price.v1.AssetError
-	3,  // 12: price.v1.ValuateTransactionsRequest.transactions:type_name -> price.v1.TxToValuate
-	6,  // 13: price.v1.ValuateTransactionsResponse.transactions:type_name -> price.v1.ValuatedTx
-	8,  // 14: price.v1.PriceService.ValuateTransactionsBatch:input_type -> price.v1.ValuateTransactionsRequest
-	10, // 15: price.v1.PriceService.UpsertTenantSymbol:input_type -> price.v1.UpsertTenantSymbolRequest
-	9,  // 16: price.v1.PriceService.ValuateTransactionsBatch:output_type -> price.v1.ValuateTransactionsResponse
-	11, // 17: price.v1.PriceService.UpsertTenantSymbol:output_type -> price.v1.UpsertTenantSymbolResponse
-	16, // [16:18] is the sub-list for method output_type
-	14, // [14:16] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	3,  // 10: price.v1.ValuateTransactionsRequest.transactions:type_name -> price.v1.TxToValuate
+	6,  // 11: price.v1.ValuateTransactionsResponse.transactions:type_name -> price.v1.ValuatedTx
+	7,  // 12: price.v1.Price.ValuateTransactionsBatch:input_type -> price.v1.ValuateTransactionsRequest
+	9,  // 13: price.v1.Price.UpsertTenantSymbol:input_type -> price.v1.UpsertTenantSymbolRequest
+	8,  // 14: price.v1.Price.ValuateTransactionsBatch:output_type -> price.v1.ValuateTransactionsResponse
+	10, // 15: price.v1.Price.UpsertTenantSymbol:output_type -> price.v1.UpsertTenantSymbolResponse
+	14, // [14:16] is the sub-list for method output_type
+	12, // [12:14] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_price_v1_price_proto_init() }
@@ -875,17 +786,13 @@ func file_price_v1_price_proto_init() {
 	}
 	file_price_v1_price_proto_msgTypes[2].OneofWrappers = []any{}
 	file_price_v1_price_proto_msgTypes[5].OneofWrappers = []any{}
-	file_price_v1_price_proto_msgTypes[6].OneofWrappers = []any{
-		(*FiatLegResult_Value)(nil),
-		(*FiatLegResult_Error)(nil),
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_price_v1_price_proto_rawDesc), len(file_price_v1_price_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

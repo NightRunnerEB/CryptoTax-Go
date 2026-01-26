@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/db"
-	sqlc "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
+	db "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -33,7 +32,7 @@ func (r *historicalPriceRepository) GetBatch(ctx context.Context, priceKeys []do
 		bucketStarts = append(bucketStarts, k.BucketStartUtc)
 	}
 
-	rows, err := r.store.GetHistoricalPricesBatch(ctx, sqlc.GetHistoricalPricesBatchParams{
+	rows, err := r.store.GetHistoricalPricesBatch(ctx, db.GetHistoricalPricesBatchParams{
 		Column1: coinIDs,
 		Column2: toTimestamptzSlice(bucketStarts),
 	})
@@ -58,7 +57,7 @@ func (r *historicalPriceRepository) Get(ctx context.Context, coinID string, buck
 		return domain.HistoricalPrice{}, fmt.Errorf("Get: coinID is empty")
 	}
 
-	row, err := r.store.GetHistoricalPrice(ctx, sqlc.GetHistoricalPriceParams{
+	row, err := r.store.GetHistoricalPrice(ctx, db.GetHistoricalPriceParams{
 		CoinID:         coinID,
 		BucketStartUtc: pgtype.Timestamptz{Time: bucketStartUTC, Valid: true},
 	})
@@ -87,7 +86,7 @@ func (r *historicalPriceRepository) Upsert(ctx context.Context, p domain.Histori
 		return fmt.Errorf("Upsert: invalid PriceUSD: %w", err)
 	}
 
-	if err := r.store.UpsertHistoricalPrice(ctx, sqlc.UpsertHistoricalPriceParams{
+	if err := r.store.UpsertHistoricalPrice(ctx, db.UpsertHistoricalPriceParams{
 		CoinID:             p.CoinID,
 		BucketStartUtc:     pgtype.Timestamptz{Time: p.Time, Valid: true},
 		PriceUsd:           priceNumeric,
@@ -130,7 +129,7 @@ func (r *historicalPriceRepository) UpsertBatch(
 
 	if err := r.store.UpsertHistoricalPricesBatch(
 		ctx,
-		sqlc.UpsertHistoricalPricesBatchParams{
+		db.UpsertHistoricalPricesBatchParams{
 			Column1: coinIDs,
 			Column2: bucketStarts,
 			Column3: priceNums,

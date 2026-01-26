@@ -6,7 +6,7 @@ option go_package = "github.com/NightRunner/CryptoTax-Go/services/price-svc/inte
 
 import "google/protobuf/timestamp.proto";
 
-service PriceService {
+service Price {
   // Valuates batch of transactions and returns calculated prices.
   rpc ValuateTransactionsBatch(ValuateTransactionsRequest)
       returns (ValuateTransactionsResponse);

@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"math/big"
 	"time"
 
@@ -12,33 +11,31 @@ import (
 )
 
 func mapHistoricalPriceRowDBToDomain(h sqlc.GetHistoricalPricesBatchRow) (domain.HistoricalPrice, error) {
-	price, err := numericToDecimal(h.PriceUsd)
-	if err != nil {
-		return domain.HistoricalPrice{}, err
-	}
+	price := numericToDecimal(h.PriceUsd)
 
-	granularitySeconds := int(*h.GranularitySeconds)
+	var gsPtr *int
+	if h.GranularitySeconds != nil {
+		gs := int(*h.GranularitySeconds)
+		gsPtr = &gs
+	}
 
 	return domain.HistoricalPrice{
 		CoinID:             h.CoinID,
 		Time:               h.BucketStartUtc.Time, // guaranteed to be valid
-		PriceUsd:           &price,
-		GranularitySeconds: &granularitySeconds,
+		PriceUsd:           price,
+		GranularitySeconds: gsPtr,
 	}, nil
 }
 
 func mapHistoricalPriceDBToDomain(h sqlc.HistoricalPrice) (domain.HistoricalPrice, error) {
-	price, err := numericToDecimal(h.PriceUsd)
-	if err != nil {
-		return domain.HistoricalPrice{}, err
-	}
+	price := numericToDecimal(h.PriceUsd)
 
 	granularitySeconds := int(h.GranularitySeconds)
 
 	return domain.HistoricalPrice{
 		CoinID:             h.CoinID,
 		Time:               h.BucketStartUtc.Time, // guaranteed to be valid
-		PriceUsd:           &price,
+		PriceUsd:           price,
 		GranularitySeconds: &granularitySeconds,
 	}, nil
 }
@@ -52,15 +49,9 @@ func mapTenantSymbolDBToDomain(s sqlc.TenantSymbol) domain.TenantSymbol {
 	}
 }
 
-func numericToDecimal(n pgtype.Numeric) (decimal.Decimal, error) {
+func numericToDecimal(n pgtype.Numeric) *decimal.Decimal {
 	if !n.Valid {
-		return decimal.Zero, fmt.Errorf("NULL numeric")
-	}
-	if n.NaN {
-		return decimal.Zero, fmt.Errorf("cannot convert NaN to decimal")
-	}
-	if n.InfinityModifier != 0 {
-		return decimal.Zero, fmt.Errorf("cannot convert Infinity to decimal")
+		return nil
 	}
 
 	bi := n.Int
@@ -68,7 +59,9 @@ func numericToDecimal(n pgtype.Numeric) (decimal.Decimal, error) {
 		bi = big.NewInt(0)
 	}
 
-	return decimal.NewFromBigInt(bi, n.Exp), nil
+	result := decimal.NewFromBigInt(bi, n.Exp)
+
+	return &result
 }
 
 func decimalToNumeric(d *decimal.Decimal) (pgtype.Numeric, error) {

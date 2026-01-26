@@ -5,66 +5,68 @@ import (
 	"os"
 	"time"
 
-	"github.com/caarlos0/env/v11"
+	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/coingecko"
+	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
 )
 
 type (
 	Config struct {
-		App  App
-		Log  Log
-		PG   PG
-		GRPC GRPC
+		App      App                `yaml:"app"`
+		Log      Log                `yaml:"log"`
+		PG       PG                 `yaml:"postgres"`
+		GRPC     GRPC               `yaml:"grpc"`
+		Redis    Redis              `yaml:"redis"`
+		CG       coingecko.CGConfig `yaml:"coingecko"`
+		Resolver Resolver           `yaml:"resolver"`
 	}
 
 	App struct {
-		Name    string `env:"APP_NAME" envDefault:"price-svc"`
-		Version string `env:"APP_VERSION,required"`
-		Env     string `env:"APP_ENV" envDefault:"dev"`
-	}
-
-	PG struct {
-		URL            string        `env:"DATABASE_URL,required"`
-		PoolMax        int           `env:"DB_MAX_CONNS" envDefault:"10"`
-		ConnectTimeout time.Duration `env:"DB_CONN_TIMEOUT" envDefault:"3s"`
-		AttemptTimeout time.Duration `env:"DB_ATTEMPT_TIMEOUT" envDefault:"1s"`
-	}
-
-	RedisConfig struct {
-		RedisURL string        `env:"REDIS_URL,required"`
-		PoolMax  int           `env:"REDIS_POOL_MAX" envDefault:"4"`
-		Skew     time.Duration `env:"REDIS_SKEW_SECS" envDefault:"5s"`
-	}
-
-	GRPC struct {
-		Addr string `env:"GRPC_ADDR" envDefault:":8091"`
+		Name    string `yaml:"name"`
+		Env     string `yaml:"env"`
+		Version string `env:"APP_VERSION" env-required:"true"`
 	}
 
 	Log struct {
-		Level string `env:"LOG_LEVEL" envDefault:"info"`
+		Level string `yaml:"level"`
 	}
 
-	// Metrics struct {
-	// 	Enabled bool `env:"METRICS_ENABLED" envDefault:"true"`
-	// }
+	GRPC struct {
+		Addr string `yaml:"addr"`
+	}
 
-	// Swagger struct {
-	// 	Enabled bool `env:"SWAGGER_ENABLED" envDefault:"false"`
-	// }
+	PG struct {
+		URL            string        `env:"DATABASE_URL" env-required:"true"`
+		PoolMax        int           `yaml:"pool_max"`
+		ConnectTimeout time.Duration `yaml:"conn_timeout"`
+		AttemptTimeout time.Duration `yaml:"attempt_timeout"`
+		ConnAttempts   int           `yaml:"conn_attempts"`
+	}
+
+	Redis struct {
+		RedisURL string        `env:"REDIS_URL" env-required:"true"`
+		PoolMax  int           `yaml:"pool_max"`
+		Jitter   time.Duration `yaml:"jitter"`
+	}
+
+	Resolver struct {
+		Path string `yaml:"path"`
+	}
 )
 
 func NewConfig() (*Config, error) {
 	if os.Getenv("APP_ENV") != "prod" {
-		if err := godotenv.Load(); err != nil {
-			return nil, fmt.Errorf("failed to load .env file: %w", err)
-		}
+		_ = godotenv.Load()
 	}
 
-	cfg := &Config{}
+	var cfg Config
 
-	if err := env.Parse(cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse config: %w", err)
+	if err := cleanenv.ReadConfig("config.yaml", &cfg); err != nil {
+		return nil, fmt.Errorf("read config.yaml: %w", err)
+	}
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		return nil, fmt.Errorf("read env: %w", err)
 	}
 
-	return cfg, nil
+	return &cfg, nil
 }
