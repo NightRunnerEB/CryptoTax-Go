@@ -1,0 +1,15 @@
+# Source: CoinGecko
+# Updated: 2026-01-21
+
+coins:
+  - symbol: BTC
+    coin_id: bitcoin
+
+  - symbol: ETH
+    coin_id: ethereum
+
+  - symbol: USDT
+    coin_id: tether
+
+  - symbol: BNB
+    coin_id: binancecoin

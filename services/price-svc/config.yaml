@@ -1,0 +1,32 @@
+app:
+  name: "price-svc"
+  env: "dev"
+
+log:
+  level: "info"
+
+grpc:
+  addr: "0.0.0.0:8093"
+
+resolver:
+  path: assets.yaml
+
+postgres:
+  pool_max: 10
+  conn_attempts: 3
+  conn_timeout: 2s
+  attempt_timeout: 5s
+
+redis:
+  pool_max: 4
+  jitter_secs: 120
+
+coingecko:
+  base_url: "https://api.coingecko.com/api/v3"
+  currency: "usd"
+  request_timeout: 10s
+  rate_limit_per_min: 30
+  granularity_policy:
+    5minutes: 86400s
+    1hour: 7776000s
+    1day: 7776000s
