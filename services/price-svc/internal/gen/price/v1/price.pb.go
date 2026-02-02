@@ -25,28 +25,25 @@ const (
 type AssetErrorCode int32
 
 const (
-	AssetErrorCode_ASSET_ERROR_CODE_UNSPECIFIED AssetErrorCode = 0
-	AssetErrorCode_ASSET_UNKNOWN                AssetErrorCode = 1
-	AssetErrorCode_ASSET_AMBIGUOUS              AssetErrorCode = 2
-	AssetErrorCode_RATE_NOT_FOUND               AssetErrorCode = 3
-	AssetErrorCode_PROVIDER_ERROR               AssetErrorCode = 4
+	AssetErrorCode_ASSET_UNKNOWN   AssetErrorCode = 0
+	AssetErrorCode_ASSET_AMBIGUOUS AssetErrorCode = 1
+	AssetErrorCode_RATE_NOT_FOUND  AssetErrorCode = 2
+	AssetErrorCode_PROVIDER_ERROR  AssetErrorCode = 3
 )
 
 // Enum value maps for AssetErrorCode.
 var (
 	AssetErrorCode_name = map[int32]string{
-		0: "ASSET_ERROR_CODE_UNSPECIFIED",
-		1: "ASSET_UNKNOWN",
-		2: "ASSET_AMBIGUOUS",
-		3: "RATE_NOT_FOUND",
-		4: "PROVIDER_ERROR",
+		0: "ASSET_UNKNOWN",
+		1: "ASSET_AMBIGUOUS",
+		2: "RATE_NOT_FOUND",
+		3: "PROVIDER_ERROR",
 	}
 	AssetErrorCode_value = map[string]int32{
-		"ASSET_ERROR_CODE_UNSPECIFIED": 0,
-		"ASSET_UNKNOWN":                1,
-		"ASSET_AMBIGUOUS":              2,
-		"RATE_NOT_FOUND":               3,
-		"PROVIDER_ERROR":               4,
+		"ASSET_UNKNOWN":   0,
+		"ASSET_AMBIGUOUS": 1,
+		"RATE_NOT_FOUND":  2,
+		"PROVIDER_ERROR":  3,
 	}
 )
 
@@ -131,7 +128,8 @@ func (x *MoneyLeg) GetAmount() string {
 
 type FiatLeg struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Fiat          string                 `protobuf:"bytes,2,opt,name=fiat,proto3" json:"fiat,omitempty"` // decimal as string
+	Fiat          string                 `protobuf:"bytes,1,opt,name=fiat,proto3" json:"fiat,omitempty"` // decimal as string
+	Error         *AssetError            `protobuf:"bytes,2,opt,name=error,proto3,oneof" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -171,6 +169,13 @@ func (x *FiatLeg) GetFiat() string {
 		return x.Fiat
 	}
 	return ""
+}
+
+func (x *FiatLeg) GetError() *AssetError {
+	if x != nil {
+		return x.Error
+	}
+	return nil
 }
 
 type TxToValuate struct {
@@ -305,7 +310,6 @@ type AssetError struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Symbol        string                 `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Code          AssetErrorCode         `protobuf:"varint,2,opt,name=code,proto3,enum=price.v1.AssetErrorCode" json:"code,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
 	Candidates    []*CoinCandidate       `protobuf:"bytes,4,rep,name=candidates,proto3" json:"candidates,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -352,14 +356,7 @@ func (x *AssetError) GetCode() AssetErrorCode {
 	if x != nil {
 		return x.Code
 	}
-	return AssetErrorCode_ASSET_ERROR_CODE_UNSPECIFIED
-}
-
-func (x *AssetError) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
+	return AssetErrorCode_ASSET_UNKNOWN
 }
 
 func (x *AssetError) GetCandidates() []*CoinCandidate {
@@ -375,7 +372,6 @@ type ValuatedTx struct {
 	InFiat        *FiatLeg               `protobuf:"bytes,2,opt,name=in_fiat,json=inFiat,proto3,oneof" json:"in_fiat,omitempty"`
 	OutFiat       *FiatLeg               `protobuf:"bytes,3,opt,name=out_fiat,json=outFiat,proto3,oneof" json:"out_fiat,omitempty"`
 	FeeFiat       *FiatLeg               `protobuf:"bytes,4,opt,name=fee_fiat,json=feeFiat,proto3,oneof" json:"fee_fiat,omitempty"`
-	Errors        []*AssetError          `protobuf:"bytes,5,rep,name=errors,proto3" json:"errors,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -434,13 +430,6 @@ func (x *ValuatedTx) GetOutFiat() *FiatLeg {
 func (x *ValuatedTx) GetFeeFiat() *FiatLeg {
 	if x != nil {
 		return x.FeeFiat
-	}
-	return nil
-}
-
-func (x *ValuatedTx) GetErrors() []*AssetError {
-	if x != nil {
-		return x.Errors
 	}
 	return nil
 }
@@ -668,9 +657,11 @@ const file_price_v1_price_proto_rawDesc = "" +
 	"\x14price/v1/price.proto\x12\bprice.v1\x1a\x1fgoogle/protobuf/timestamp.proto\":\n" +
 	"\bMoneyLeg\x12\x16\n" +
 	"\x06symbol\x18\x01 \x01(\tR\x06symbol\x12\x16\n" +
-	"\x06amount\x18\x02 \x01(\tR\x06amount\"\x1d\n" +
+	"\x06amount\x18\x02 \x01(\tR\x06amount\"X\n" +
 	"\aFiatLeg\x12\x12\n" +
-	"\x04fiat\x18\x02 \x01(\tR\x04fiat\"\xa2\x02\n" +
+	"\x04fiat\x18\x01 \x01(\tR\x04fiat\x12/\n" +
+	"\x05error\x18\x02 \x01(\v2\x14.price.v1.AssetErrorH\x00R\x05error\x88\x01\x01B\b\n" +
+	"\x06_error\"\xa2\x02\n" +
 	"\vTxToValuate\x12\x13\n" +
 	"\x05tx_id\x18\x01 \x01(\tR\x04txId\x125\n" +
 	"\btime_utc\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\atimeUtc\x122\n" +
@@ -684,22 +675,20 @@ const file_price_v1_price_proto_rawDesc = "" +
 	"_fee_money\"<\n" +
 	"\rCoinCandidate\x12\x17\n" +
 	"\acoin_id\x18\x01 \x01(\tR\x06coinId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"\xa5\x01\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"\x8b\x01\n" +
 	"\n" +
 	"AssetError\x12\x16\n" +
 	"\x06symbol\x18\x01 \x01(\tR\x06symbol\x12,\n" +
-	"\x04code\x18\x02 \x01(\x0e2\x18.price.v1.AssetErrorCodeR\x04code\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\x127\n" +
+	"\x04code\x18\x02 \x01(\x0e2\x18.price.v1.AssetErrorCodeR\x04code\x127\n" +
 	"\n" +
 	"candidates\x18\x04 \x03(\v2\x17.price.v1.CoinCandidateR\n" +
-	"candidates\"\x8c\x02\n" +
+	"candidates\"\xde\x01\n" +
 	"\n" +
 	"ValuatedTx\x12\x13\n" +
 	"\x05tx_id\x18\x01 \x01(\tR\x04txId\x12/\n" +
 	"\ain_fiat\x18\x02 \x01(\v2\x11.price.v1.FiatLegH\x00R\x06inFiat\x88\x01\x01\x121\n" +
 	"\bout_fiat\x18\x03 \x01(\v2\x11.price.v1.FiatLegH\x01R\aoutFiat\x88\x01\x01\x121\n" +
-	"\bfee_fiat\x18\x04 \x01(\v2\x11.price.v1.FiatLegH\x02R\afeeFiat\x88\x01\x01\x12,\n" +
-	"\x06errors\x18\x05 \x03(\v2\x14.price.v1.AssetErrorR\x06errorsB\n" +
+	"\bfee_fiat\x18\x04 \x01(\v2\x11.price.v1.FiatLegH\x02R\afeeFiat\x88\x01\x01B\n" +
 	"\n" +
 	"\b_in_fiatB\v\n" +
 	"\t_out_fiatB\v\n" +
@@ -716,13 +705,12 @@ const file_price_v1_price_proto_rawDesc = "" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12\x16\n" +
 	"\x06symbol\x18\x03 \x01(\tR\x06symbol\x12\x17\n" +
 	"\acoin_id\x18\x04 \x01(\tR\x06coinId\"\x1c\n" +
-	"\x1aUpsertTenantSymbolResponse*\x82\x01\n" +
-	"\x0eAssetErrorCode\x12 \n" +
-	"\x1cASSET_ERROR_CODE_UNSPECIFIED\x10\x00\x12\x11\n" +
-	"\rASSET_UNKNOWN\x10\x01\x12\x13\n" +
-	"\x0fASSET_AMBIGUOUS\x10\x02\x12\x12\n" +
-	"\x0eRATE_NOT_FOUND\x10\x03\x12\x12\n" +
-	"\x0ePROVIDER_ERROR\x10\x042\xd1\x01\n" +
+	"\x1aUpsertTenantSymbolResponse*`\n" +
+	"\x0eAssetErrorCode\x12\x11\n" +
+	"\rASSET_UNKNOWN\x10\x00\x12\x13\n" +
+	"\x0fASSET_AMBIGUOUS\x10\x01\x12\x12\n" +
+	"\x0eRATE_NOT_FOUND\x10\x02\x12\x12\n" +
+	"\x0ePROVIDER_ERROR\x10\x032\xd1\x01\n" +
 	"\x05Price\x12g\n" +
 	"\x18ValuateTransactionsBatch\x12$.price.v1.ValuateTransactionsRequest\x1a%.price.v1.ValuateTransactionsResponse\x12_\n" +
 	"\x12UpsertTenantSymbol\x12#.price.v1.UpsertTenantSymbolRequest\x1a$.price.v1.UpsertTenantSymbolResponseBVZTgithub.com/NightRunner/CryptoTax-Go/services/price-svc/internal/gen/price/v1;pricev1b\x06proto3"
@@ -756,16 +744,16 @@ var file_price_v1_price_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),       // 11: google.protobuf.Timestamp
 }
 var file_price_v1_price_proto_depIdxs = []int32{
-	11, // 0: price.v1.TxToValuate.time_utc:type_name -> google.protobuf.Timestamp
-	1,  // 1: price.v1.TxToValuate.in_money:type_name -> price.v1.MoneyLeg
-	1,  // 2: price.v1.TxToValuate.out_money:type_name -> price.v1.MoneyLeg
-	1,  // 3: price.v1.TxToValuate.fee_money:type_name -> price.v1.MoneyLeg
-	0,  // 4: price.v1.AssetError.code:type_name -> price.v1.AssetErrorCode
-	4,  // 5: price.v1.AssetError.candidates:type_name -> price.v1.CoinCandidate
-	2,  // 6: price.v1.ValuatedTx.in_fiat:type_name -> price.v1.FiatLeg
-	2,  // 7: price.v1.ValuatedTx.out_fiat:type_name -> price.v1.FiatLeg
-	2,  // 8: price.v1.ValuatedTx.fee_fiat:type_name -> price.v1.FiatLeg
-	5,  // 9: price.v1.ValuatedTx.errors:type_name -> price.v1.AssetError
+	5,  // 0: price.v1.FiatLeg.error:type_name -> price.v1.AssetError
+	11, // 1: price.v1.TxToValuate.time_utc:type_name -> google.protobuf.Timestamp
+	1,  // 2: price.v1.TxToValuate.in_money:type_name -> price.v1.MoneyLeg
+	1,  // 3: price.v1.TxToValuate.out_money:type_name -> price.v1.MoneyLeg
+	1,  // 4: price.v1.TxToValuate.fee_money:type_name -> price.v1.MoneyLeg
+	0,  // 5: price.v1.AssetError.code:type_name -> price.v1.AssetErrorCode
+	4,  // 6: price.v1.AssetError.candidates:type_name -> price.v1.CoinCandidate
+	2,  // 7: price.v1.ValuatedTx.in_fiat:type_name -> price.v1.FiatLeg
+	2,  // 8: price.v1.ValuatedTx.out_fiat:type_name -> price.v1.FiatLeg
+	2,  // 9: price.v1.ValuatedTx.fee_fiat:type_name -> price.v1.FiatLeg
 	3,  // 10: price.v1.ValuateTransactionsRequest.transactions:type_name -> price.v1.TxToValuate
 	6,  // 11: price.v1.ValuateTransactionsResponse.transactions:type_name -> price.v1.ValuatedTx
 	7,  // 12: price.v1.Price.ValuateTransactionsBatch:input_type -> price.v1.ValuateTransactionsRequest
@@ -784,6 +772,7 @@ func file_price_v1_price_proto_init() {
 	if File_price_v1_price_proto != nil {
 		return
 	}
+	file_price_v1_price_proto_msgTypes[1].OneofWrappers = []any{}
 	file_price_v1_price_proto_msgTypes[2].OneofWrappers = []any{}
 	file_price_v1_price_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}

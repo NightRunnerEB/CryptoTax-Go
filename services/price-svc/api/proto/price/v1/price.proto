@@ -9,11 +9,11 @@ import "google/protobuf/timestamp.proto";
 service Price {
   // Valuates batch of transactions and returns calculated prices.
   rpc ValuateTransactionsBatch(ValuateTransactionsRequest)
-      returns (ValuateTransactionsResponse);
+  returns (ValuateTransactionsResponse);
 
   // Creates or updates tenant symbol.
   rpc UpsertTenantSymbol(UpsertTenantSymbolRequest)
-      returns (UpsertTenantSymbolResponse);
+  returns (UpsertTenantSymbolResponse);
 }
 
 message MoneyLeg {
@@ -22,50 +22,48 @@ message MoneyLeg {
 }
 
 message FiatLeg {
-  string fiat = 2; // decimal as string
+  string              fiat  = 1; // decimal as string
+  optional AssetError error = 2;
 }
 
 message TxToValuate {
-  string tx_id = 1;
-  google.protobuf.Timestamp time_utc = 2;
-  optional MoneyLeg in_money = 3;
-  optional MoneyLeg out_money = 4;
-  optional MoneyLeg fee_money = 5;
+  string                    tx_id     = 1;
+  google.protobuf.Timestamp time_utc  = 2;
+  optional MoneyLeg         in_money  = 3;
+  optional MoneyLeg         out_money = 4;
+  optional MoneyLeg         fee_money = 5;
 }
 
 enum AssetErrorCode {
-  ASSET_ERROR_CODE_UNSPECIFIED = 0;
-  ASSET_UNKNOWN = 1;
-  ASSET_AMBIGUOUS = 2;
-  RATE_NOT_FOUND = 3;
-  PROVIDER_ERROR = 4;
+  ASSET_UNKNOWN   = 0;
+  ASSET_AMBIGUOUS = 1;
+  RATE_NOT_FOUND  = 2;
+  PROVIDER_ERROR  = 3;
 }
 
 message CoinCandidate {
   string coin_id = 1;
-  string name = 2;
+  string name    = 2;
 }
 
 message AssetError {
-  string symbol = 1;
-  AssetErrorCode code = 2;
-  string message = 3;
+  string                 symbol     = 1;
+  AssetErrorCode         code       = 2;
   repeated CoinCandidate candidates = 4;
 }
 
 message ValuatedTx {
-  string tx_id = 1;
-  optional FiatLeg in_fiat = 2;
+  string           tx_id    = 1;
+  optional FiatLeg in_fiat  = 2;
   optional FiatLeg out_fiat = 3;
   optional FiatLeg fee_fiat = 4;
-  repeated AssetError errors = 5;
 }
 
 message ValuateTransactionsRequest {
-  string tenant_id = 1;
-  string source = 2;
-  string fiat_currency = 3;
-  repeated TxToValuate transactions = 4;
+  string               tenant_id     = 1;
+  string               source        = 2;
+  string               fiat_currency = 3;
+  repeated TxToValuate transactions  = 4;
 }
 
 message ValuateTransactionsResponse {
@@ -74,9 +72,9 @@ message ValuateTransactionsResponse {
 
 message UpsertTenantSymbolRequest {
   string tenant_id = 1;
-  string source = 2;
-  string symbol = 3;
-  string coin_id = 4;
+  string source    = 2;
+  string symbol    = 3;
+  string coin_id   = 4;
 }
 
 message UpsertTenantSymbolResponse {}

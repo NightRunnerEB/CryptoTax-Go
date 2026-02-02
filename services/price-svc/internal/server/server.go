@@ -2,7 +2,6 @@ package grpcserver
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
@@ -64,8 +63,7 @@ func (server *PriceServer) ValuateTransactionsBatch(ctx context.Context, req *v1
 		}
 
 		out := &v1.ValuatedTx{
-			TxId:   tx.TxId,
-			Errors: nil,
+			TxId: tx.TxId,
 		}
 		resp.Transactions[i] = out
 
@@ -74,14 +72,14 @@ func (server *PriceServer) ValuateTransactionsBatch(ctx context.Context, req *v1
 				return
 			}
 
+			// В будущем Resolve должен возвращать
 			coinID, err := server.resolver.Resolve(m.Symbol)
 			if err != nil {
-				out.Errors = append(out.Errors, &v1.AssetError{
+				(*result).Error = &v1.AssetError{
 					Symbol:     m.Symbol,
 					Code:       v1.AssetErrorCode_ASSET_UNKNOWN,
 					Candidates: nil,
-					Message:    fmt.Sprintf("symbol to coinID resolution failed: %v", err),
-				})
+				}
 				return
 			}
 
