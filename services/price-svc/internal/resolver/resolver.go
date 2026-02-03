@@ -1,9 +1,8 @@
 package resolver
 
 import (
-	"fmt"
-
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 	inmemory "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/infra/in-memory"
 )
 
@@ -35,5 +34,5 @@ func (r *CoinIdResolver) Resolve(symbol string) (string, error) {
 	// }
 
 	// r.coinIdCache.Set(cacheKey, ts.CoinID)
-	return "", fmt.Errorf("symbol not found: %s", symbol)
+	return "", apperr.UnknownSymbol(symbol, "")
 }

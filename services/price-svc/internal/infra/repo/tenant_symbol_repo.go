@@ -2,10 +2,10 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
 	db "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 	"github.com/google/uuid"
 )
 
@@ -18,17 +18,33 @@ func NewTenantSymbolRepo(store db.Store) domain.TenantSymbolRepo {
 }
 
 func (r *tenantSymbolRepository) Upsert(ctx context.Context, s domain.TenantSymbol) error {
+	var violations []apperr.FieldViolation
 	if s.TenantID == uuid.Nil {
-		return fmt.Errorf("Upsert: tenantID is nil")
+		violations = append(violations, apperr.FieldViolation{
+			Field:       "tenant_id",
+			Description: "required",
+		})
 	}
 	if s.Source == "" {
-		return fmt.Errorf("Upsert: source is empty")
+		violations = append(violations, apperr.FieldViolation{
+			Field:       "source",
+			Description: "required",
+		})
 	}
 	if s.Symbol == "" {
-		return fmt.Errorf("Upsert: symbol is empty")
+		violations = append(violations, apperr.FieldViolation{
+			Field:       "symbol",
+			Description: "required",
+		})
 	}
 	if s.CoinID == "" {
-		return fmt.Errorf("Upsert: coinID is empty")
+		violations = append(violations, apperr.FieldViolation{
+			Field:       "coin_id",
+			Description: "required",
+		})
+	}
+	if len(violations) > 0 {
+		return apperr.InvalidArgument("invalid tenant symbol", nil, violations...)
 	}
 
 	if err := r.store.UpsertTenantSymbol(ctx, db.UpsertTenantSymbolParams{
@@ -37,21 +53,39 @@ func (r *tenantSymbolRepository) Upsert(ctx context.Context, s domain.TenantSymb
 		Symbol:   s.Symbol,
 		CoinID:   s.CoinID,
 	}); err != nil {
-		return fmt.Errorf("Upsert: query failed: %w", err)
+		return apperr.Internal("upsert tenant symbol failed", err, map[string]string{
+			"tenant_id": s.TenantID.String(),
+			"source":    s.Source,
+			"symbol":    s.Symbol,
+			"coin_id":   s.CoinID,
+		})
 	}
 
 	return nil
 }
 
 func (r *tenantSymbolRepository) Delete(ctx context.Context, tenantID uuid.UUID, source, symbol string) error {
+	var violations []apperr.FieldViolation
 	if tenantID == uuid.Nil {
-		return fmt.Errorf("Delete: tenantID is nil")
+		violations = append(violations, apperr.FieldViolation{
+			Field:       "tenant_id",
+			Description: "required",
+		})
 	}
 	if source == "" {
-		return fmt.Errorf("Delete: source is empty")
+		violations = append(violations, apperr.FieldViolation{
+			Field:       "source",
+			Description: "required",
+		})
 	}
 	if symbol == "" {
-		return fmt.Errorf("Delete: symbol is empty")
+		violations = append(violations, apperr.FieldViolation{
+			Field:       "symbol",
+			Description: "required",
+		})
+	}
+	if len(violations) > 0 {
+		return apperr.InvalidArgument("invalid tenant symbol", nil, violations...)
 	}
 
 	rowsAffected, err := r.store.DeleteTenantSymbol(ctx, db.DeleteTenantSymbolParams{
@@ -60,11 +94,19 @@ func (r *tenantSymbolRepository) Delete(ctx context.Context, tenantID uuid.UUID,
 		Symbol:   symbol,
 	})
 	if err != nil {
-		return fmt.Errorf("Delete: query failed: %w", err)
+		return apperr.Internal("delete tenant symbol failed", err, map[string]string{
+			"tenant_id": tenantID.String(),
+			"source":    source,
+			"symbol":    symbol,
+		})
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("Delete: tenant symbol not found")
+		name := tenantID.String() + ":" + source + ":" + symbol
+		return apperr.NotFound("tenant symbol not found", apperr.Resource{
+			Type: "tenant_symbol",
+			Name: name,
+		}, nil)
 	}
 
 	return nil
@@ -76,11 +118,21 @@ func (r *tenantSymbolRepository) GetList(
 	source string,
 	symbols []string,
 ) ([]domain.TenantSymbol, error) {
+	var violations []apperr.FieldViolation
 	if tenantID == uuid.Nil {
-		return nil, fmt.Errorf("GetList: tenantID is nil")
+		violations = append(violations, apperr.FieldViolation{
+			Field:       "tenant_id",
+			Description: "required",
+		})
 	}
 	if source == "" {
-		return nil, fmt.Errorf("GetList: source is empty")
+		violations = append(violations, apperr.FieldViolation{
+			Field:       "source",
+			Description: "required",
+		})
+	}
+	if len(violations) > 0 {
+		return nil, apperr.InvalidArgument("invalid tenant symbol query", nil, violations...)
 	}
 	if len(symbols) == 0 {
 		return []domain.TenantSymbol{}, nil
@@ -92,7 +144,10 @@ func (r *tenantSymbolRepository) GetList(
 		Column3:  symbols,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("GetList: query failed: %w", err)
+		return nil, apperr.Internal("get tenant symbols failed", err, map[string]string{
+			"tenant_id": tenantID.String(),
+			"source":    source,
+		})
 	}
 
 	out := make([]domain.TenantSymbol, 0, len(rows))
@@ -107,11 +162,21 @@ func (r *tenantSymbolRepository) GetListBySource(
 	tenantID uuid.UUID,
 	source string,
 ) ([]domain.TenantSymbol, error) {
+	var violations []apperr.FieldViolation
 	if tenantID == uuid.Nil {
-		return nil, fmt.Errorf("GetListBySource: tenantID is nil")
+		violations = append(violations, apperr.FieldViolation{
+			Field:       "tenant_id",
+			Description: "required",
+		})
 	}
 	if source == "" {
-		return nil, fmt.Errorf("GetListBySource: source is empty")
+		violations = append(violations, apperr.FieldViolation{
+			Field:       "source",
+			Description: "required",
+		})
+	}
+	if len(violations) > 0 {
+		return nil, apperr.InvalidArgument("invalid tenant symbol query", nil, violations...)
 	}
 
 	rows, err := r.store.ListTenantSymbolsBySource(ctx, db.ListTenantSymbolsBySourceParams{
@@ -119,7 +184,10 @@ func (r *tenantSymbolRepository) GetListBySource(
 		Source:   source,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("GetListBySource: query failed: %w", err)
+		return nil, apperr.Internal("get tenant symbols by source failed", err, map[string]string{
+			"tenant_id": tenantID.String(),
+			"source":    source,
+		})
 	}
 
 	out := make([]domain.TenantSymbol, 0, len(rows))

@@ -3,11 +3,12 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
+	"strconv"
 	"time"
 
 	db "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -37,14 +38,16 @@ func (r *historicalPriceRepository) GetBatch(ctx context.Context, priceKeys []do
 		Column2: toTimestamptzSlice(bucketStarts),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("GetBatch: query failed: %w", err)
+		return nil, apperr.Internal("get historical price batch failed", err, map[string]string{
+			"keys": strconv.Itoa(len(priceKeys)),
+		})
 	}
 
 	out := make([]domain.HistoricalPrice, 0, len(rows))
 	for _, row := range rows {
 		p, err := mapHistoricalPriceRowDBToDomain(row)
 		if err != nil {
-			return nil, fmt.Errorf("GetBatch: map db->domain failed: %w", err)
+			return nil, apperr.Internal("map historical price row failed", err, nil)
 		}
 		out = append(out, p)
 	}
@@ -54,7 +57,10 @@ func (r *historicalPriceRepository) GetBatch(ctx context.Context, priceKeys []do
 
 func (r *historicalPriceRepository) Get(ctx context.Context, coinID string, bucketStartUTC time.Time) (domain.HistoricalPrice, error) {
 	if coinID == "" {
-		return domain.HistoricalPrice{}, fmt.Errorf("Get: coinID is empty")
+		return domain.HistoricalPrice{}, apperr.InvalidArgument("coin id is required", nil, apperr.FieldViolation{
+			Field:       "coin_id",
+			Description: "required",
+		})
 	}
 
 	row, err := r.store.GetHistoricalPrice(ctx, db.GetHistoricalPriceParams{
@@ -63,14 +69,21 @@ func (r *historicalPriceRepository) Get(ctx context.Context, coinID string, buck
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.HistoricalPrice{}, err
+			name := coinID + "@" + bucketStartUTC.UTC().Format(time.RFC3339)
+			return domain.HistoricalPrice{}, apperr.NotFound("historical price not found", apperr.Resource{
+				Type: "historical_price",
+				Name: name,
+			}, err)
 		}
-		return domain.HistoricalPrice{}, fmt.Errorf("Get: query failed: %w", err)
+		return domain.HistoricalPrice{}, apperr.Internal("get historical price failed", err, map[string]string{
+			"coin_id":      coinID,
+			"bucket_start": bucketStartUTC.UTC().Format(time.RFC3339),
+		})
 	}
 
 	p, err := mapHistoricalPriceDBToDomain(row)
 	if err != nil {
-		return domain.HistoricalPrice{}, fmt.Errorf("Get: map db->domain failed: %w", err)
+		return domain.HistoricalPrice{}, apperr.Internal("map historical price failed", err, nil)
 	}
 
 	return p, nil
@@ -78,12 +91,18 @@ func (r *historicalPriceRepository) Get(ctx context.Context, coinID string, buck
 
 func (r *historicalPriceRepository) Upsert(ctx context.Context, p domain.HistoricalPrice) error {
 	if p.CoinID == "" {
-		return fmt.Errorf("Upsert: CoinID is empty")
+		return apperr.InvalidArgument("coin id is required", nil, apperr.FieldViolation{
+			Field:       "coin_id",
+			Description: "required",
+		})
 	}
 
 	priceNumeric, err := decimalToNumeric(p.PriceUsd)
 	if err != nil {
-		return fmt.Errorf("Upsert: invalid PriceUSD: %w", err)
+		return apperr.InvalidArgument("price_usd is invalid", err, apperr.FieldViolation{
+			Field:       "price_usd",
+			Description: "invalid",
+		})
 	}
 
 	if err := r.store.UpsertHistoricalPrice(ctx, db.UpsertHistoricalPriceParams{
@@ -92,7 +111,10 @@ func (r *historicalPriceRepository) Upsert(ctx context.Context, p domain.Histori
 		PriceUsd:           priceNumeric,
 		GranularitySeconds: int32(*p.GranularitySeconds),
 	}); err != nil {
-		return fmt.Errorf("Upsert: query failed: %w", err)
+		return apperr.Internal("upsert historical price failed", err, map[string]string{
+			"coin_id":      p.CoinID,
+			"bucket_start": p.Time.UTC().Format(time.RFC3339),
+		})
 	}
 
 	return nil
@@ -113,12 +135,18 @@ func (r *historicalPriceRepository) UpsertBatch(
 
 	for _, p := range prices {
 		if p.CoinID == "" || p.PriceUsd == nil || p.GranularitySeconds == nil {
-			return fmt.Errorf("UpsertBatch: invalid HistoricalPrice %+v", p)
+			return apperr.InvalidArgument("invalid historical price", nil, apperr.FieldViolation{
+				Field:       "prices",
+				Description: "missing required fields",
+			})
 		}
 
 		num, err := decimalToNumeric(p.PriceUsd)
 		if err != nil {
-			return fmt.Errorf("UpsertBatch: price_usd: %w", err)
+			return apperr.InvalidArgument("price_usd is invalid", err, apperr.FieldViolation{
+				Field:       "price_usd",
+				Description: "invalid",
+			})
 		}
 
 		coinIDs = append(coinIDs, p.CoinID)
@@ -136,7 +164,9 @@ func (r *historicalPriceRepository) UpsertBatch(
 			Column4: grans,
 		},
 	); err != nil {
-		return fmt.Errorf("UpsertBatch: query failed: %w", err)
+		return apperr.Internal("upsert historical prices batch failed", err, map[string]string{
+			"count": strconv.Itoa(len(prices)),
+		})
 	}
 
 	return nil
