@@ -1,95 +1,48 @@
 package logger
 
 import (
-	"fmt"
-	"os"
-	"strings"
+	"context"
 
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
 )
 
 type Logger interface {
-	Debug(message interface{}, args ...interface{})
-	Info(message string, args ...interface{})
-	Warn(message string, args ...interface{})
-	Error(message interface{}, args ...interface{})
-	Fatal(message interface{}, args ...interface{})
+	Info(msg string, fields ...zap.Field)
+	Warn(msg string, fields ...zap.Field)
+	Error(msg string, fields ...zap.Field)
 }
 
-type ZeroLogger struct {
-	logger *zerolog.Logger
+type ctxKey struct{}
+
+func WithContext(ctx context.Context, l *zap.Logger) context.Context {
+	if l == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, ctxKey{}, l)
 }
 
-var _ Logger = (*ZeroLogger)(nil)
+func FromContext(ctx context.Context) *zap.Logger {
+	if ctx == nil {
+		return zap.NewExample()
+	}
+	if l, ok := ctx.Value(ctxKey{}).(*zap.Logger); ok && l != nil {
+		return l
+	}
+	return zap.NewExample()
+}
 
-// New -.
-func New(level string) *ZeroLogger {
-	var l zerolog.Level
-
-	switch strings.ToLower(level) {
-	case "error":
-		l = zerolog.ErrorLevel
-	case "warn":
-		l = zerolog.WarnLevel
-	case "info":
-		l = zerolog.InfoLevel
-	case "debug":
-		l = zerolog.DebugLevel
-	default:
-		l = zerolog.InfoLevel
+func NewLogger(level string, env string) (*zap.Logger, error) {
+	if env == "dev" {
+		cfg := zap.NewDevelopmentConfig()
+		cfg.DisableStacktrace = true
+		return cfg.Build()
 	}
 
-	zerolog.SetGlobalLevel(l)
+	cfg := zap.NewProductionConfig()
 
-	skipFrameCount := 3
-	logger := zerolog.New(os.Stdout).With().Timestamp().CallerWithSkipFrameCount(zerolog.CallerSkipFrameCount + skipFrameCount).Logger()
-
-	return &ZeroLogger{
-		logger: &logger,
-	}
-}
-
-func (l *ZeroLogger) Debug(message interface{}, args ...interface{}) {
-	l.msg(zerolog.DebugLevel, message, args...)
-}
-
-func (l *ZeroLogger) Info(message string, args ...interface{}) {
-	l.log(zerolog.InfoLevel, message, args...)
-}
-
-func (l *ZeroLogger) Warn(message string, args ...interface{}) {
-	l.log(zerolog.WarnLevel, message, args...)
-}
-
-func (l *ZeroLogger) Error(message interface{}, args ...interface{}) {
-	if l.logger.GetLevel() == zerolog.DebugLevel {
-		l.Debug(message, args...)
+	if err := cfg.Level.UnmarshalText([]byte(level)); err != nil {
+		return zap.NewExample(), err
 	}
 
-	l.msg(zerolog.ErrorLevel, message, args...)
-}
-
-func (l *ZeroLogger) Fatal(message interface{}, args ...interface{}) {
-	l.msg(zerolog.FatalLevel, message, args...)
-
-	os.Exit(1)
-}
-
-func (l *ZeroLogger) log(level zerolog.Level, message string, args ...interface{}) {
-	if len(args) == 0 {
-		l.logger.WithLevel(level).Msg(message)
-	} else {
-		l.logger.WithLevel(level).Msgf(message, args...)
-	}
-}
-
-func (l *ZeroLogger) msg(level zerolog.Level, message interface{}, args ...interface{}) {
-	switch msg := message.(type) {
-	case error:
-		l.log(level, msg.Error(), args...)
-	case string:
-		l.log(level, msg, args...)
-	default:
-		l.log(level, fmt.Sprintf("%s message %v has unknown type %v", level, message, msg), args...)
-	}
+	return cfg.Build()
 }
