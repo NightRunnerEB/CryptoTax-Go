@@ -2,11 +2,12 @@ package fiatfx
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"time"
 
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
+	applogger "github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type FXProvider struct {
@@ -29,8 +30,11 @@ func (r *FXProvider) Start(ctx context.Context) error {
 }
 
 func (r *FXProvider) runSource(ctx context.Context, src FXSource) {
+	log := applogger.FromContext(ctx)
+	currency := src.Currency()
+
 	if err := src.Update(ctx); err != nil {
-		log.Printf("fx: initial update failed for %s: %v", src.Currency(), err)
+		log.Fatal("fx initial update failed", zap.String("fiat", currency), zap.Error(err))
 	}
 
 	for {
@@ -44,27 +48,42 @@ func (r *FXProvider) runSource(ctx context.Context, src FXSource) {
 
 		case <-timer.C:
 			if err := src.Update(ctx); err != nil {
-				log.Printf("fx: update failed for %s: %v", src.Currency(), err)
+				log.Error("fx update failed", zap.String("fiat", currency), zap.Error(err))
 			}
 		}
 	}
 }
 
 func (r *FXProvider) GetUSDtoFiatRate(ctx context.Context, day time.Time, currency string) (domain.Fiat, error) {
+	log := applogger.FromContext(ctx)
+
 	source, ok := r.registry.GetSource(currency)
 	if !ok {
-		return domain.Fiat{}, fmt.Errorf("GetUSDtoFiatRate: no source for currency %s", currency)
+		log.Warn("fx source not found", zap.String("fiat", currency))
+		return domain.Fiat{}, apperr.UnsupportedFiat("unsupported fiat currency", currency)
 	}
 
 	if rate, ok := source.Get(day); ok {
 		return rate, nil
 	}
 
+	log.Warn(
+		"fx rate cache miss",
+		zap.String("fiat", currency),
+		zap.String("day", day.Format("2006-01-02")),
+	)
 	// Need to implement certain day update logic
 	// rate, err := source.UpdateAt(ctx)
 	// if err != nil {
 	// 	return domain.Fiat{}, fmt.Errorf("GetUSDtoFiatRate: source update failed: %w", err)
 	// }
 
-	return domain.Fiat{}, fmt.Errorf("GetUSDtoFiatRate: no rate for currency %s at day %s", currency, day.Format("2006-01-02"))
+	return domain.Fiat{}, apperr.FXUnavailable(
+		"fx rate unavailable",
+		currency,
+		map[string]string{
+			"day": day.Format("2006-01-02"),
+		},
+		nil,
+	)
 }

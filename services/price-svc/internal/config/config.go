@@ -1,11 +1,11 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"time"
 
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/coingecko"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
 )
@@ -54,18 +54,20 @@ type (
 	}
 )
 
-func NewConfig() (*Config, error) {
+func NewConfig(path string) (*Config, error) {
 	if os.Getenv("APP_ENV") != "prod" {
 		_ = godotenv.Load()
 	}
 
 	var cfg Config
 
-	if err := cleanenv.ReadConfig("config.yaml", &cfg); err != nil {
-		return nil, fmt.Errorf("read config.yaml: %w", err)
+	if err := cleanenv.ReadConfig(path, &cfg); err != nil {
+		return nil, apperr.Internal("read config file failed", err, map[string]string{
+			"file": path,
+		})
 	}
 	if err := cleanenv.ReadEnv(&cfg); err != nil {
-		return nil, fmt.Errorf("read env: %w", err)
+		return nil, apperr.Internal("read environment failed", err, nil)
 	}
 
 	return &cfg, nil

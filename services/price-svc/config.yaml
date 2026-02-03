@@ -3,7 +3,7 @@ app:
   env: "dev"
 
 log:
-  level: "info"
+  level: "debug"
 
 grpc:
   addr: "0.0.0.0:8093"
