@@ -3,21 +3,21 @@ package usecase
 import (
 	"context"
 	"errors"
-	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/coingecko"
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/logger"
 )
 
 const USD = "usd"
 
 var precision = "3"
 
+const providerCoinGecko = "coingecko"
+
 type historicalPriceUC struct {
-	logger         logger.Logger
 	repo           domain.HistoricalPriceRepo
 	fxProvider     domain.FXProvider
 	cgClient       *coingecko.CGClient
@@ -25,14 +25,12 @@ type historicalPriceUC struct {
 }
 
 func NewHistoricalPriceUC(
-	logger logger.Logger,
 	repo domain.HistoricalPriceRepo,
 	fx domain.FXProvider,
 	cgClient *coingecko.CGClient,
 	timeout time.Duration,
 ) domain.HistoricalPriceUseCase {
 	return &historicalPriceUC{
-		logger:         logger,
 		repo:           repo,
 		fxProvider:     fx,
 		cgClient:       cgClient,
@@ -42,7 +40,14 @@ func NewHistoricalPriceUC(
 
 func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrency string, priceKeys []domain.PriceKey) ([]domain.Fiat, error) {
 	if fiatCurrency == "" {
-		return nil, apperr.ErrInvalidArgument
+		return nil, apperr.InvalidArgument(
+			"fiat currency is required",
+			nil,
+			apperr.FieldViolation{
+				Field:       "fiat_currency",
+				Description: "required",
+			},
+		)
 	}
 
 	if len(priceKeys) == 0 {
@@ -92,10 +97,15 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 	// read batch from DB (LEFT JOIN order-preserving)
 	rows, err := u.repo.GetBatch(ctx, repoKeys)
 	if err != nil {
-		return nil, fmt.Errorf("repo.GetBatch: %w", err)
+		return nil, apperr.Internal("repo GetBatch failed", err, map[string]string{
+			"keys": strconv.Itoa(len(repoKeys)),
+		})
 	}
 	if len(rows) != len(repoKeys) {
-		return nil, fmt.Errorf("pricing invariant violated: got %d rows for %d keys", len(rows), len(repoKeys))
+		return nil, apperr.Internal("pricing invariant violated", nil, map[string]string{
+			"got":      strconv.Itoa(len(rows)),
+			"expected": strconv.Itoa(len(repoKeys)),
+		})
 	}
 
 	// plan provider fetches for missing/upgrade
@@ -123,10 +133,15 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 	// fetch day data from CoinGecko and upsert buckets
 	for fk := range needFetch {
 		if err := u.fetchAndUpsertDay(ctx, fk.coinID, fk.dayStart, fk.g); err != nil {
-			if errors.Is(err, apperr.ErrProviderUnavailable) || errors.Is(err, apperr.ErrProviderBadResponse) {
-				return nil, err
+			var ae *apperr.Error
+			if errors.As(err, &ae) {
+				return nil, ae
 			}
-			return nil, fmt.Errorf("fetchAndUpsertDay: %w", err)
+			return nil, apperr.Internal("fetch and upsert failed", err, map[string]string{
+				"coin_id":             fk.coinID,
+				"day_start":           fk.dayStart.Format(time.DateOnly),
+				"granularity_seconds": strconv.FormatInt(int64(fk.g/time.Second), 10),
+			})
 		}
 	}
 
@@ -134,10 +149,15 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 	if len(needFetch) > 0 {
 		rows, err = u.repo.GetBatch(ctx, repoKeys)
 		if err != nil {
-			return nil, fmt.Errorf("repo.GetBatch (after fetch): %w", err)
+			return nil, apperr.Internal("repo GetBatch after fetch failed", err, map[string]string{
+				"keys": strconv.Itoa(len(repoKeys)),
+			})
 		}
 		if len(rows) != len(repoKeys) {
-			return nil, fmt.Errorf("pricing invariant violated after fetch: got %d rows for %d keys", len(rows), len(repoKeys))
+			return nil, apperr.Internal("pricing invariant violated after fetch", nil, map[string]string{
+				"got":      strconv.Itoa(len(rows)),
+				"expected": strconv.Itoa(len(repoKeys)),
+			})
 		}
 	}
 
@@ -145,15 +165,32 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 
 	for i, p := range rows {
 		if p.PriceUsd == nil {
-			u.logger.Error("price still missing after fetch", "coinID", w[i].coinID, "bucket", w[i].bucket)
-			return nil, fmt.Errorf("coin=%s bucket=%s: %w", w[i].coinID, w[i].bucket.Format(time.RFC3339), apperr.ErrPriceUnavailable)
+			return nil, apperr.PriceUnavailable(
+				"price unavailable",
+				w[i].coinID,
+				map[string]string{
+					"bucket_start": w[i].bucket.Format(time.RFC3339),
+					"date":         w[i].dayStart.Format(time.DateOnly),
+				},
+				nil,
+			)
 		}
 
 		rate, err := u.fxProvider.GetUSDtoFiatRate(ctx, w[i].dayStart, fiatCurrency)
 		if err != nil {
 			// distinguish unsupported fiat vs fx unavailable if your fxProvider does it
-			u.logger.Error("fxProvider.GetUSDtoFiatRate: fx rate fetch failed", "fiat", fiatCurrency, "day", w[i].dayStart, "error", err)
-			return nil, fmt.Errorf("fxProvider.GetUSDtoFiatRate: %w", err)
+			var ae *apperr.Error
+			if errors.As(err, &ae) {
+				return nil, ae
+			}
+			return nil, apperr.FXUnavailable(
+				"fx rate fetch failed",
+				fiatCurrency,
+				map[string]string{
+					"day": w[i].dayStart.Format(time.DateOnly),
+				},
+				err,
+			)
 		}
 
 		usd := *p.PriceUsd
@@ -164,28 +201,54 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 }
 
 func (u *historicalPriceUC) fetchAndUpsertDay(ctx context.Context, coinID string, dayStartUTC time.Time, granularitySeconds time.Duration) error {
+	metadata := map[string]string{
+		"coin_id": coinID,
+		"date":    dayStartUTC.Format(time.DateOnly),
+	}
 
 	to := dayStartUTC.Add(24*time.Hour - time.Second)
 
 	// CoinGecko returns points; per our agreement we normalize sequentially into buckets without flooring by timestamp.
 	resp, err := u.cgClient.CoinsMarketChartRange(ctx, coinID, "usd", dayStartUTC, to, &precision)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apperr.ErrProviderUnavailable, err)
+		var ae *apperr.Error
+		if errors.As(err, &ae) {
+			return ae
+		}
+		return apperr.ProviderUnavailable(
+			"coingecko request failed",
+			providerCoinGecko,
+			err,
+			metadata,
+		)
 	}
 
 	if resp == nil || len(resp.Prices) == 0 {
-		return fmt.Errorf("%w: empty prices for coin=%s day=%s", apperr.ErrProviderBadResponse, coinID, dayStartUTC.Format(time.DateOnly))
+		return apperr.ProviderBadResponse(
+			"empty prices",
+			providerCoinGecko,
+			nil,
+			metadata,
+		)
 	}
 
 	// normalize points to buckets "by order"
 	buckets, err := normalizeByOrder(coinID, dayStartUTC, granularitySeconds, resp.Prices)
 	if err != nil {
-		u.logger.Error("normalizeByOrder failed", "coinID", coinID, "dayStartUTC", dayStartUTC, "error", err)
-		return fmt.Errorf("%w: %v", apperr.ErrProviderBadResponse, err)
+		var ae *apperr.Error
+		if errors.As(err, &ae) {
+			return ae
+		}
+		return apperr.ProviderBadResponse(
+			"normalize by order failed",
+			providerCoinGecko,
+			err,
+			metadata,
+		)
 	}
 
 	if err := u.repo.UpsertBatch(ctx, buckets); err != nil {
-		return fmt.Errorf("repo.UpsertBatch: %w", err)
+		return apperr.Internal("repo UpsertBatch failed", err, metadata)
 	}
 
 	return nil

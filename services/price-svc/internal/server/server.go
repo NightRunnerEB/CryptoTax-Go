@@ -2,14 +2,16 @@ package grpcserver
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 	v1 "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/gen/price/v1"
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/logger"
+	applogger "github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/logger"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/shopspring/decimal"
+	"go.uber.org/zap"
 )
 
 type LegKind int
@@ -25,20 +27,19 @@ type slot struct {
 	kind   LegKind
 	symbol string
 	coinID string
+	amount decimal.Decimal
 	result **v1.FiatLeg
 }
 
 type PriceServer struct {
 	v1.UnimplementedPriceServer
-	log               *logger.ZeroLogger
 	resolver          domain.CoinIdResolver
 	historicalPriceUC domain.HistoricalPriceUseCase
 	tenantSymbolUC    domain.TenantSymbolUseCase
 }
 
-func NewPriceServer(log *logger.ZeroLogger, resolver domain.CoinIdResolver, historicalPriceUC domain.HistoricalPriceUseCase, tenantSymbolUC domain.TenantSymbolUseCase) *PriceServer {
+func NewPriceServer(resolver domain.CoinIdResolver, historicalPriceUC domain.HistoricalPriceUseCase, tenantSymbolUC domain.TenantSymbolUseCase) *PriceServer {
 	return &PriceServer{
-		log:               log,
 		resolver:          resolver,
 		historicalPriceUC: historicalPriceUC,
 		tenantSymbolUC:    tenantSymbolUC,
@@ -47,7 +48,12 @@ func NewPriceServer(log *logger.ZeroLogger, resolver domain.CoinIdResolver, hist
 
 func (server *PriceServer) ValuateTransactionsBatch(ctx context.Context, req *v1.ValuateTransactionsRequest) (*v1.ValuateTransactionsResponse, error) {
 	start := time.Now()
-	server.log.Info("ValuateTransactionsBatch: start txs=%d fiat=%s", len(req.Transactions), req.FiatCurrency)
+	log := applogger.FromContext(ctx)
+	log.Info(
+		"ValuateTransactionsBatch: start",
+		zap.Int("txs", len(req.Transactions)),
+		zap.String("fiat", req.FiatCurrency),
+	)
 
 	resp := &v1.ValuateTransactionsResponse{
 		Transactions: make([]*v1.ValuatedTx, len(req.Transactions)),
@@ -58,8 +64,25 @@ func (server *PriceServer) ValuateTransactionsBatch(ctx context.Context, req *v1
 
 	for i, tx := range req.Transactions {
 		if tx.TimeUtc == nil {
-			server.log.Warn("ValuateTransactionsBatch: missing TimeUtc tx_idx=%d", i)
-			return nil, status.Errorf(codes.InvalidArgument, "transaction %d: missing TimeUtc", i)
+			log.Warn("ValuateTransactionsBatch: missing TimeUtc", zap.Int("tx_idx", i))
+			return nil, apperr.InvalidArgument(
+				"transaction time is required",
+				nil,
+				apperr.FieldViolation{
+					Field:       "transactions[" + strconv.Itoa(i) + "].time_utc",
+					Description: "required",
+				},
+			)
+		}
+		if tx.TimeUtc.AsTime().After(time.Now().UTC()) {
+			return nil, apperr.InvalidArgument(
+				"transaction time cannot be in the future",
+				nil,
+				apperr.FieldViolation{
+					Field:       "transactions[" + strconv.Itoa(i) + "].time_utc",
+					Description: "must not be in the future",
+				},
+			)
 		}
 
 		out := &v1.ValuatedTx{
@@ -67,9 +90,31 @@ func (server *PriceServer) ValuateTransactionsBatch(ctx context.Context, req *v1
 		}
 		resp.Transactions[i] = out
 
-		add := func(kind LegKind, m *v1.MoneyLeg, result **v1.FiatLeg) {
+		add := func(kind LegKind, m *v1.MoneyLeg, amountField string, result **v1.FiatLeg) error {
 			if m == nil {
-				return
+				return nil
+			}
+
+			if m.Amount == "" {
+				return apperr.InvalidArgument(
+					"amount is required",
+					nil,
+					apperr.FieldViolation{
+						Field:       amountField,
+						Description: "required",
+					},
+				)
+			}
+			amount, err := decimal.NewFromString(m.Amount)
+			if err != nil {
+				return apperr.InvalidArgument(
+					"invalid amount",
+					err,
+					apperr.FieldViolation{
+						Field:       amountField,
+						Description: "invalid decimal",
+					},
+				)
 			}
 
 			// В будущем Resolve должен возвращать
@@ -80,7 +125,7 @@ func (server *PriceServer) ValuateTransactionsBatch(ctx context.Context, req *v1
 					Code:       v1.AssetErrorCode_ASSET_UNKNOWN,
 					Candidates: nil,
 				}
-				return
+				return nil
 			}
 
 			slots = append(slots, slot{
@@ -88,47 +133,77 @@ func (server *PriceServer) ValuateTransactionsBatch(ctx context.Context, req *v1
 				kind:   kind,
 				symbol: m.Symbol,
 				coinID: coinID,
+				amount: amount,
 				result: result,
 			})
 			priceKeys = append(priceKeys, domain.PriceKey{CoinID: coinID, BucketStartUtc: tx.TimeUtc.AsTime()})
+			return nil
 		}
-		add(LegIn, tx.InMoney, &out.InFiat)
-		add(LegOut, tx.OutMoney, &out.OutFiat)
-		add(LegFee, tx.FeeMoney, &out.FeeFiat)
+		if err := add(LegIn, tx.InMoney, "transactions["+strconv.Itoa(i)+"].in_money.amount", &out.InFiat); err != nil {
+			return nil, err
+		}
+		if err := add(LegOut, tx.OutMoney, "transactions["+strconv.Itoa(i)+"].out_money.amount", &out.OutFiat); err != nil {
+			return nil, err
+		}
+		if err := add(LegFee, tx.FeeMoney, "transactions["+strconv.Itoa(i)+"].fee_money.amount", &out.FeeFiat); err != nil {
+			return nil, err
+		}
 	}
 
 	if len(slots) == 0 {
-		server.log.Info("ValuateTransactionsBatch: no slots txs=%d duration=%s", len(req.Transactions), time.Since(start))
+		log.Info(
+			"ValuateTransactionsBatch: no slots",
+			zap.Int("txs", len(req.Transactions)),
+			zap.Duration("duration", time.Since(start)),
+		)
 		return resp, nil
 	}
 
 	fiats, err := server.historicalPriceUC.GetHistoricalPrices(ctx, req.FiatCurrency, priceKeys)
 	if err != nil {
-		server.log.Error("ValuateTransactionsBatch: GetHistoricalPrices failed: %v", err)
-		return nil, status.Errorf(codes.Internal, "failed to get historical prices: %v", err)
+		return nil, err
 	}
 
 	if len(fiats) != len(priceKeys) {
-		server.log.Error("ValuateTransactionsBatch: pricing invariant violated got=%d expected=%d", len(fiats), len(priceKeys))
-		return nil, status.Errorf(codes.Internal, "pricing invariant violated: got %d results for %d keys", len(fiats), len(priceKeys))
+		return nil, apperr.Internal(
+			"pricing invariant violated",
+			nil,
+			map[string]string{
+				"got":      strconv.Itoa(len(fiats)),
+				"expected": strconv.Itoa(len(priceKeys)),
+			},
+		)
 	}
 
 	for i, fiat := range fiats {
 		s := slots[i]
+		total := fiat.Mul(s.amount)
 		*s.result = &v1.FiatLeg{
-			Fiat: fiat.String(),
+			Fiat: total.String(),
 		}
 	}
 
-	server.log.Info("ValuateTransactionsBatch: done txs=%d duration=%s", len(req.Transactions), time.Since(start))
+	log.Info(
+		"ValuateTransactionsBatch: done",
+		zap.Int("txs", len(req.Transactions)),
+		zap.Duration("duration", time.Since(start)),
+	)
 	return resp, nil
 }
 
 func (server PriceServer) UpsertTenantSymbol(ctx context.Context, req *v1.UpsertTenantSymbolRequest) (*v1.UpsertTenantSymbolResponse, error) {
+	log := applogger.FromContext(ctx)
 	tenantId, err := parseUUID(req.TenantId)
 	if err != nil {
-		server.log.Warn("UpsertTenantSymbol: invalid tenant ID: %v", err)
-		return nil, status.Errorf(codes.InvalidArgument, "invalid tenant ID: %v", err)
+		log.Warn("UpsertTenantSymbol: invalid tenant ID", zap.Error(err))
+		return nil, apperr.InvalidArgument(
+			"invalid tenant id",
+			err,
+			apperr.FieldViolation{
+				Field:       "tenant_id",
+				Description: "invalid format",
+			},
+		)
 	}
 
 	tenantSymbol := domain.TenantSymbol{
@@ -140,8 +215,13 @@ func (server PriceServer) UpsertTenantSymbol(ctx context.Context, req *v1.Upsert
 
 	server.tenantSymbolUC.Upsert(ctx, tenantSymbol)
 
-	server.log.Info("UpsertTenantSymbol: upserted tenant_id=%s source=%s symbol=%s", tenantId.String(), req.Source, req.Symbol)
-	return nil, status.Error(codes.Unimplemented, "method UpsertTenantSymbol not implemented")
+	log.Info(
+		"UpsertTenantSymbol: upserted",
+		zap.String("tenant_id", tenantId.String()),
+		zap.String("source", req.Source),
+		zap.String("symbol", req.Symbol),
+	)
+	return nil, apperr.Internal("method not implemented", nil, nil)
 }
 
 func parseUUID(s string) (uuid.UUID, error) {

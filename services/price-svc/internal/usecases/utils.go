@@ -1,10 +1,11 @@
 package usecase
 
 import (
-	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 	"github.com/shopspring/decimal"
 )
 
@@ -18,13 +19,17 @@ func normalizeByOrder(
 	prices [][]float64, // [ [ts_ms, price], ... ]
 ) ([]domain.HistoricalPrice, error) {
 	if granularity <= 0 {
-		return nil, fmt.Errorf("bad granularity=%d", granularity)
+		return nil, apperr.Internal("granularity must be positive", nil, map[string]string{
+			"granularity": granularity.String(),
+		})
 	}
 
 	out := make([]domain.HistoricalPrice, 0, len(prices))
 	for i, pt := range prices {
 		if len(pt) < 2 {
-			return nil, fmt.Errorf("bad point at idx=%d", i)
+			return nil, apperr.ProviderBadResponse("invalid price point", providerCoinGecko, nil, map[string]string{
+				"index": strconv.Itoa(i),
+			})
 		}
 		price := pt[1]
 
