@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	inmemory "github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/in-memory"
-	applogger "github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/logger"
+	inmemory "github.com/NightRunner/CryptoTax-Go/pkg/in-memory"
+	applogger "github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )

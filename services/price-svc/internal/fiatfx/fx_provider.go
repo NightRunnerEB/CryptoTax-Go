@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	applogger "github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
-	applogger "github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/logger"
+	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/grpcerr"
 	"go.uber.org/zap"
 )
 
@@ -34,7 +35,13 @@ func (r *FXProvider) runSource(ctx context.Context, src FXSource) {
 	currency := src.Currency()
 
 	if err := src.Update(ctx); err != nil {
-		log.Fatal("fx initial update failed", zap.String("fiat", currency), zap.Error(err))
+		fields := append(
+			[]zap.Field{
+				zap.String("fiat", currency),
+			},
+			grpcerr.LogFields(err)...,
+		)
+		log.Fatal("fx initial update failed", fields...)
 	}
 
 	for {

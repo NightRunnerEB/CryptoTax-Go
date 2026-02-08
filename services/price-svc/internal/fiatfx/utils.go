@@ -34,7 +34,7 @@ func FetchXML[T any](
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
-		return nil, apperr.Internal("unexpected http status", nil, map[string]string{
+		return nil, apperr.Internal("unexpected http status", err, map[string]string{
 			"url":    url,
 			"status": resp.Status,
 			"body":   strings.TrimSpace(string(b)),
