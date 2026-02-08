@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/in-memory"
+	"github.com/NightRunner/CryptoTax-Go/pkg/in-memory"
 	"gopkg.in/yaml.v3"
 )
 

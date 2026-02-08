@@ -80,7 +80,7 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 		desired := u.cgClient.GetGranularitySeconds(txTime, now)
 		bucket := floorToBucket(txTime, desired)
 		dayStart := truncateDayUTC(txTime)
-		dayEnd := dayStart.Add(24*time.Hour + 59*time.Minute + 59*time.Second)
+		dayEnd := dayStart.Add(24*time.Hour - time.Second)
 
 		w[i] = wanted{
 			coinID:   k.CoinID,
