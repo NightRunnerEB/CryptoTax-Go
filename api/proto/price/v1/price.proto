@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package price.v1;
 
-option go_package = "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/gen/price/v1;pricev1";
+option go_package = "github.com/NightRunner/CryptoTax-Go/gen/price/v1;pricev1";
 
 import "google/protobuf/timestamp.proto";
 

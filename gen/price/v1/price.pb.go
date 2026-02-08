@@ -713,7 +713,7 @@ const file_price_v1_price_proto_rawDesc = "" +
 	"\x0ePROVIDER_ERROR\x10\x032\xd1\x01\n" +
 	"\x05Price\x12g\n" +
 	"\x18ValuateTransactionsBatch\x12$.price.v1.ValuateTransactionsRequest\x1a%.price.v1.ValuateTransactionsResponse\x12_\n" +
-	"\x12UpsertTenantSymbol\x12#.price.v1.UpsertTenantSymbolRequest\x1a$.price.v1.UpsertTenantSymbolResponseBVZTgithub.com/NightRunner/CryptoTax-Go/services/price-svc/internal/gen/price/v1;pricev1b\x06proto3"
+	"\x12UpsertTenantSymbol\x12#.price.v1.UpsertTenantSymbolRequest\x1a$.price.v1.UpsertTenantSymbolResponseB:Z8github.com/NightRunner/CryptoTax-Go/gen/price/v1;pricev1b\x06proto3"
 
 var (
 	file_price_v1_price_proto_rawDescOnce sync.Once
