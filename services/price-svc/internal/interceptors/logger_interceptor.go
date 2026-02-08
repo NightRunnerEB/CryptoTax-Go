@@ -3,7 +3,7 @@ package interceptors
 import (
 	"context"
 
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/logger"
+	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )

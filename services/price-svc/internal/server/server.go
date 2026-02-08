@@ -7,8 +7,8 @@ import (
 
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
-	v1 "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/gen/price/v1"
-	applogger "github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/logger"
+	v1 "github.com/NightRunner/CryptoTax-Go/gen/price/v1"
+	applogger "github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"

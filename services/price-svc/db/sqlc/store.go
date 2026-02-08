@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/postgres"
+	"github.com/NightRunner/CryptoTax-Go/pkg/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

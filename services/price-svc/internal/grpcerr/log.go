@@ -2,7 +2,6 @@ package grpcerr
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 	"go.uber.org/zap"
@@ -11,9 +10,9 @@ import (
 func LogFields(err error) []zap.Field {
 	fields := []zap.Field{
 		zap.Error(err),
-		zap.Strings("cause_chain", causeChain(err)),
-		zap.Any("root_cause", rootCauseString(err)),
-		zap.String("root_cause_type", rootCauseType(err)),
+		// zap.Strings("cause_chain", causeChain(err)),
+		// zap.Any("root_cause", rootCauseString(err)),
+		// zap.String("root_cause_type", rootCauseType(err)),
 	}
 
 	var ae *apperr.Error
@@ -36,40 +35,41 @@ func LogFields(err error) []zap.Field {
 	return fields
 }
 
-func causeChain(err error) []string {
-	var out []string
-	for err != nil {
-		out = append(out, err.Error())
-		err = errors.Unwrap(err)
-	}
-	return out
-}
+// В данной модели ошибок цепочек вызовов ошибок не должно быть!
+// func causeChain(err error) []string {
+// 	var out []string
+// 	for err != nil {
+// 		out = append(out, err.Error())
+// 		err = errors.Unwrap(err)
+// 	}
+// 	return out
+// }
 
-func rootCauseString(err error) string {
-	rc := rootCause(err)
-	if rc == nil {
-		return ""
-	}
-	return rc.Error()
-}
+// func rootCauseString(err error) string {
+// 	rc := rootCause(err)
+// 	if rc == nil {
+// 		return ""
+// 	}
+// 	return rc.Error()
+// }
 
-func rootCauseType(err error) string {
-	rc := rootCause(err)
-	if rc == nil {
-		return ""
-	}
-	return fmt.Sprintf("%T", rc)
-}
+// func rootCauseType(err error) string {
+// 	rc := rootCause(err)
+// 	if rc == nil {
+// 		return ""
+// 	}
+// 	return fmt.Sprintf("%T", rc)
+// }
 
-func rootCause(err error) error {
-	if err == nil {
-		return nil
-	}
-	for {
-		u := errors.Unwrap(err)
-		if u == nil {
-			return err
-		}
-		err = u
-	}
-}
+// func rootCause(err error) error {
+// 	if err == nil {
+// 		return nil
+// 	}
+// 	for {
+// 		u := errors.Unwrap(err)
+// 		if u == nil {
+// 			return err
+// 		}
+// 		err = u
+// 	}
+// }
