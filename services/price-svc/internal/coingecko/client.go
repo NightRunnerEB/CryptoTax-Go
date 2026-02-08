@@ -10,7 +10,7 @@ import (
 	"time"
 
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
-	applogger "github.com/NightRunner/CryptoTax-Go/services/price-svc/pkg/logger"
+	applogger "github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )
