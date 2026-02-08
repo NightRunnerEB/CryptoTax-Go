@@ -1,0 +1,41 @@
+# stages:
+#     - checks
+#     - container_build
+
+# clippy:
+#     stage: checks
+#     image: rust:1.79.0
+#     script:
+#         - apt-get update && apt-get install -y cmake pkg-config liblz4-dev libsecp256k1-dev libsodium-dev
+#         - git submodule update --init
+#         - rustup default 1.79.0
+#         - rustup component add clippy
+#         - cargo clippy --all-targets --no-deps -- -Dwarnings
+#     tags:
+#         - docker
+
+# tests:
+#     stage: checks
+#     image: rust:1.79.0
+#     script:
+#         - apt-get update && apt-get install -y cmake pkg-config liblz4-dev libsecp256k1-dev libsodium-dev
+#         - cargo test --workspace -- --skip test_send
+#     tags:
+#         - docker
+
+# build_module:
+#     stage: container_build
+#     script:
+#         - export DOCKER_BUILDKIT=1
+#         - echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+#         - gcloud auth configure-docker    
+#         - git submodule update --init
+#         - docker build -t gcr.io/poetic-nova-407814/photon-module-v2:$CI_COMMIT_BRANCH.$CI_PIPELINE_ID -t gcr.io/poetic-nova-407814/photon-module-v2:latest -f ./docker/Dockerfile .
+#         - docker tag gcr.io/poetic-nova-407814/photon-module-v2:$CI_COMMIT_BRANCH.$CI_PIPELINE_ID gcr.io/poetic-nova-407814/photon-module-v2:$CI_COMMIT_BRANCH.latest
+#         - docker push gcr.io/poetic-nova-407814/photon-module-v2:$CI_COMMIT_BRANCH.$CI_PIPELINE_ID
+#         - docker push gcr.io/poetic-nova-407814/photon-module-v2:latest         
+#     only:
+#         - testnet
+#         - mainnet
+#     tags:
+#         - linux
