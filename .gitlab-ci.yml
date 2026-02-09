@@ -1,41 +1,46 @@
-# stages:
-#     - checks
-#     - container_build
+stages:
+  - lint
+  - test
+  - build
 
-# clippy:
-#     stage: checks
-#     image: rust:1.79.0
-#     script:
-#         - apt-get update && apt-get install -y cmake pkg-config liblz4-dev libsecp256k1-dev libsodium-dev
-#         - git submodule update --init
-#         - rustup default 1.79.0
-#         - rustup component add clippy
-#         - cargo clippy --all-targets --no-deps -- -Dwarnings
-#     tags:
-#         - docker
+variables:
+  GOWORK: "on"
+  GOPATH: "$CI_PROJECT_DIR/.go"
+  GOCACHE: "$CI_PROJECT_DIR/.cache/go-build"
+  GOMODCACHE: "$CI_PROJECT_DIR/.cache/go-mod"
 
-# tests:
-#     stage: checks
-#     image: rust:1.79.0
-#     script:
-#         - apt-get update && apt-get install -y cmake pkg-config liblz4-dev libsecp256k1-dev libsodium-dev
-#         - cargo test --workspace -- --skip test_send
-#     tags:
-#         - docker
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - .cache/go-build
+    - .cache/go-mod
 
-# build_module:
-#     stage: container_build
-#     script:
-#         - export DOCKER_BUILDKIT=1
-#         - echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
-#         - gcloud auth configure-docker    
-#         - git submodule update --init
-#         - docker build -t gcr.io/poetic-nova-407814/photon-module-v2:$CI_COMMIT_BRANCH.$CI_PIPELINE_ID -t gcr.io/poetic-nova-407814/photon-module-v2:latest -f ./docker/Dockerfile .
-#         - docker tag gcr.io/poetic-nova-407814/photon-module-v2:$CI_COMMIT_BRANCH.$CI_PIPELINE_ID gcr.io/poetic-nova-407814/photon-module-v2:$CI_COMMIT_BRANCH.latest
-#         - docker push gcr.io/poetic-nova-407814/photon-module-v2:$CI_COMMIT_BRANCH.$CI_PIPELINE_ID
-#         - docker push gcr.io/poetic-nova-407814/photon-module-v2:latest         
-#     only:
-#         - testnet
-#         - mainnet
-#     tags:
-#         - linux
+lint:
+  image: golangci/golangci-lint:v1.64
+  stage: lint
+  script:
+    - golangci-lint version
+    - golangci-lint run ./...
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+unit-test:
+  image: golang:1.25
+  stage: test
+  script:
+    - go version
+    - go test ./...
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+build:
+  image: golang:1.25
+  stage: build
+  script:
+    - go version
+    - go build ./...
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
