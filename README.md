@@ -1,13 +1,13 @@
 # CryptoTax-Go
 
-Backend infrastructure for a platform that prepares tax reports based on cryptocurrency transactions.
+Golang backend infrastructure for a platform that prepares tax reports based on cryptocurrency transactions.
 
 ## What this system does
 
 - Resolves asset symbols to canonical identifiers.
 - Fetches historical crypto prices and converts them to fiat.
 - Provides gRPC APIs for valuation and analytics.
-- Emits production‑ready telemetry (metrics + logs).
+- Emits telemetry (metrics + logs).
 
 ## Services
 

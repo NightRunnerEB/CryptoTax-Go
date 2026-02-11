@@ -1,15 +1,21 @@
 services:
-  promtail:
-    image: grafana/promtail:latest
-    container_name: promtail
-    ports:
-      - "9080:9080"
-    volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./promtail-config.yaml:/etc/promtail/config.yml
-    command: -config.file=/etc/promtail/config.yml
-    privileged: true
+  # price-svc:
+  #   build:
+  #     context: .
+  #     dockerfile: services/price-svc/Dockerfile
+  #   container_name: price-svc
+  #   ports:
+  #     - "8093:8093"
+  #   environment:
+  #     APP_VERSION: ${APP_VERSION:-0.0.0}
+  #     APP_ENV: ${APP_ENV:-prod}
+  #     DATABASE_URL: ${DATABASE_URL}
+  #     REDIS_URL: ${REDIS_URL}
+  #     OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+  #     OTEL_EXPORTER_OTLP_INSECURE: "true"
+  #     OTEL_GO_X_DEPRECATED_RUNTIME_METRICS: "true"
+  #   depends_on:
+  #     - otel-collector
 
   loki:
     image: grafana/loki:latest
@@ -17,7 +23,22 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./loki-config.yaml:/etc/loki/local-config.yaml
+      - ./observability/loki-config.yaml:/etc/loki/local-config.yaml
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.130.0
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "9464:9464"
+    environment:
+      DEPLOYMENT_ENVIRONMENT: ${APP_ENV:-dev}
+    volumes:
+      - ./observability/otel-collector.yml:/etc/otelcol/config.yaml
+    depends_on:
+      - loki
 
   prometheus:
     image: prom/prometheus:latest
@@ -25,8 +46,11 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./observability/prometheus/alerts.yml:/etc/prometheus/alerts.yml
       - prometheusdata:/prometheus
+    depends_on:
+      - otel-collector
 
   grafana:
     image: grafana/grafana:latest
@@ -37,18 +61,13 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
-      - ./grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./observability/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./observability/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards
       - grafanadata:/var/lib/grafana
-
-  # backend:
-  #   build: ./backend
-  #   container_name: backend
-  #   ports:
-  #     - "8080:8080"
-  #   logging:
-  #     driver: json-file
-  #     options:
-  #       tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+    depends_on:
+      - prometheus
+      - loki
 
 volumes:
   grafanadata:

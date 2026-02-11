@@ -1,7 +1,15 @@
-target/
-test-ledger/
-node_modules/
-.anchor/
-.idea/
-docker/Dockerfile*
-transmitter-module/doc/
+# VCS
+.git
+
+# IDE
+.vscode
+.idea
+.DS_Store
+
+# Build artifacts
+**/bin
+
+# Logs and env
+**/*.log
+.env
+.env.*

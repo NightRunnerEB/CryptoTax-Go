@@ -1,0 +1,107 @@
+{
+  "uid": "grpc-overview",
+  "title": "gRPC Overview",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 2,
+  "refresh": "10s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "RPS by method",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(rpc_server_call_duration_count[5m])) by (rpc_method)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Latency p50/p90/p99 by method",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(rpc_server_call_duration_bucket[5m])) by (le, rpc_method))",
+          "refId": "A",
+          "legendFormat": "{{rpc_method}} p50"
+        },
+        {
+          "expr": "histogram_quantile(0.90, sum(rate(rpc_server_call_duration_bucket[5m])) by (le, rpc_method))",
+          "refId": "B",
+          "legendFormat": "{{rpc_method}} p90"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(rpc_server_call_duration_bucket[5m])) by (le, rpc_method))",
+          "refId": "C",
+          "legendFormat": "{{rpc_method}} p99"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Error rate (%)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "expr": "100 * (sum(rate(rpc_server_call_duration_count{rpc_response_status_code!=\"OK\"}[5m])) / sum(rate(rpc_server_call_duration_count[5m])))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Status code rate",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "stacking": { "mode": "normal" }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(rpc_server_call_duration_count[5m])) by (rpc_response_status_code)",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "templating": { "list": [] }
+}
