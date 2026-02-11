@@ -22,14 +22,14 @@ func ToGRPCStatus(err error, domain string) error {
 
 	switch {
 	case errors.Is(err, context.Canceled):
-		return status.Error(codes.Canceled, "request canceled")
+		return wrapStatus(err, status.New(codes.Canceled, "request canceled"))
 	case errors.Is(err, context.DeadlineExceeded):
-		return status.Error(codes.DeadlineExceeded, "deadline exceeded")
+		return wrapStatus(err, status.New(codes.DeadlineExceeded, "deadline exceeded"))
 	}
 
 	var ae *apperr.Error
 	if !errors.As(err, &ae) {
-		return status.Error(codes.Internal, "internal error")
+		return wrapStatus(err, status.New(codes.Internal, "internal error"))
 	}
 
 	grpcCode := mapCodeToGRPC(ae.Code)
@@ -41,9 +41,9 @@ func ToGRPCStatus(err error, domain string) error {
 			Domain: domain,
 		})
 		if err2 == nil {
-			return st2.Err()
+			return wrapStatus(err, st2)
 		}
-		return st.Err()
+		return wrapStatus(err, st)
 	}
 
 	st := status.New(grpcCode, ae.Msg)
@@ -51,11 +51,35 @@ func ToGRPCStatus(err error, domain string) error {
 	details := toDetails(ae, domain)
 	if len(details) > 0 {
 		if st2, err2 := st.WithDetails(details...); err2 == nil {
-			return st2.Err()
+			return wrapStatus(err, st2)
 		}
 	}
 
-	return st.Err()
+	return wrapStatus(err, st)
+}
+
+type statusError struct {
+	err error
+	st  *status.Status
+}
+
+func (e statusError) Error() string {
+	return e.st.Err().Error()
+}
+
+func (e statusError) GRPCStatus() *status.Status {
+	return e.st
+}
+
+func (e statusError) Unwrap() error {
+	return e.err
+}
+
+func wrapStatus(err error, st *status.Status) error {
+	if st == nil {
+		return err
+	}
+	return statusError{err: err, st: st}
 }
 
 func mapCodeToGRPC(c apperr.ErrorCode) codes.Code {

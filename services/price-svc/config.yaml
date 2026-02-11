@@ -5,6 +5,12 @@ app:
 log:
   level: "debug"
 
+otel:
+  endpoint: "localhost:4317"
+  insecure: true
+  metrics_export_interval: 3s
+  runtime_read_mem_stats_interval: 10s
+
 grpc:
   addr: "0.0.0.0:8093"
 

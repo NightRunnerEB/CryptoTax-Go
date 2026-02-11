@@ -14,6 +14,7 @@ type (
 	Config struct {
 		App      App                `yaml:"app"`
 		Log      Log                `yaml:"log"`
+		OTel     OTelConfig         `yaml:"otel"`
 		PG       PG                 `yaml:"postgres"`
 		GRPC     GRPC               `yaml:"grpc"`
 		Redis    Redis              `yaml:"redis"`
@@ -51,6 +52,13 @@ type (
 
 	Resolver struct {
 		Path string `yaml:"path"`
+	}
+
+	OTelConfig struct {
+		Endpoint                    string        `yaml:"endpoint" env:"OTEL_EXPORTER_OTLP_ENDPOINT" env-required:"true"`
+		Insecure                    bool          `yaml:"insecure" env:"OTEL_EXPORTER_OTLP_INSECURE"`
+		MetricsExportInterval       time.Duration `yaml:"metrics_export_interval" env:"OTEL_METRICS_EXPORT_INTERVAL"`
+		RuntimeReadMemStatsInterval time.Duration `yaml:"runtime_read_mem_stats_interval" env:"OTEL_RUNTIME_READ_MEM_STATS_INTERVAL"`
 	}
 )
 

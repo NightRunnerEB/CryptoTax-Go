@@ -2,7 +2,8 @@ FROM golang:1.25.1 AS build
 
 WORKDIR /workspace
 ENV CGO_ENABLED=0
-ENV GOWORK=/workspace/go.work
+ENV GOWORK=off
+# TODO: убрать GOWORK, когда снова потребуется сборка с go.work
 
 COPY go.work go.work.sum ./
 COPY gen/go.mod gen/go.sum ./gen/
@@ -12,9 +13,9 @@ COPY services/price-svc/go.mod services/price-svc/go.sum ./services/price-svc/
 WORKDIR /workspace/services/price-svc
 RUN go mod download
 
-COPY gen ./gen
-COPY pkg ./pkg
-COPY services/price-svc ./services/price-svc
+COPY gen /workspace/gen
+COPY pkg /workspace/pkg
+COPY services/price-svc /workspace/services/price-svc
 
 RUN go build -o /out/price-svc ./cmd/app
 

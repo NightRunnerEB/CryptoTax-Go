@@ -19,7 +19,7 @@ const (
 	// CBRDynamicURL returns a time range of records for a given currency id (VAL_NM_RQ).
 	// Important: the response usually contains records only for working days.
 	// Weekends/holidays are typically missing and must be handled by the caller.
-	CBRDynamicURL = "https://www.cbr-xml-daily.ru/XML_dynamic.xml"
+	CBRDynamicURL = "https://www.cbr.ru/scripts/XML_dynamic.xml"
 
 	// USDValNmRq is the CBR internal id for USD.
 	USDValNmRq = "R01235"

@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
-	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 	v1 "github.com/NightRunner/CryptoTax-Go/gen/price/v1"
 	applogger "github.com/NightRunner/CryptoTax-Go/pkg/logger"
+	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -120,10 +120,12 @@ func (server *PriceServer) ValuateTransactionsBatch(ctx context.Context, req *v1
 			// В будущем Resolve должен возвращать
 			coinID, err := server.resolver.Resolve(m.Symbol)
 			if err != nil {
-				(*result).Error = &v1.AssetError{
-					Symbol:     m.Symbol,
-					Code:       v1.AssetErrorCode_ASSET_UNKNOWN,
-					Candidates: nil,
+				*result = &v1.FiatLeg{
+					Error: &v1.AssetError{
+						Symbol:     m.Symbol,
+						Code:       v1.AssetErrorCode_ASSET_UNKNOWN,
+						Candidates: nil,
+					},
 				}
 				return nil
 			}
