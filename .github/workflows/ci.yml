@@ -7,6 +7,13 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - pkg
+          - services/price-svc
+          - services/aggregation-svc
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,14 +24,22 @@ jobs:
           go-version-file: go.work
           cache: true
 
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.0
+
       - name: GolangCI-Lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: v1.64.0
-          args: --timeout=5m
+        working-directory: ${{ matrix.module }}
+        run: $(go env GOPATH)/bin/golangci-lint run ./... --timeout=5m
 
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - pkg
+          - services/price-svc
+          - services/aggregation-svc
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,10 +51,18 @@ jobs:
           cache: true
 
       - name: Test
+        working-directory: ${{ matrix.module }}
         run: go test ./...
 
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - pkg
+          - services/price-svc
+          - services/aggregation-svc
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,4 +74,5 @@ jobs:
           cache: true
 
       - name: Build
+        working-directory: ${{ matrix.module }}
         run: go build ./...
