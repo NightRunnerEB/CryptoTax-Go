@@ -1,0 +1,50 @@
+app:
+  name: "aggregation-svc"
+  env: "dev"
+
+log:
+  level: "debug"
+
+otel:
+  endpoint: "otel-collector:4317"
+  insecure: true
+  metrics_export_interval: 10s
+  runtime_read_mem_stats_interval: 10s
+
+grpc:
+  addr: "0.0.0.0:8094"
+
+http:
+  addr: "0.0.0.0:8095"
+  shutdown_timeout: 5s
+
+postgres:
+  pool_max: 10
+  conn_attempts: 3
+  conn_timeout: 2s
+  attempt_timeout: 5s
+
+redis:
+  pool_max: 4
+  jitter: 120s
+
+ledger:
+  base_url: "http://ledger-svc:8080"
+  timeout: 10s
+
+price:
+  addr: "price-svc:8093"
+  timeout: 10s
+  batch_size: 10000
+
+rabbitmq:
+  url: "amqp://guest:guest@localhost:5672/"
+  exchange: "ledger.events"
+  queue: "aggregation.import.completed"
+  routing_key: "ImportCompleted"
+  prefetch: 10
+
+aggregation:
+  default_fiat_currency: "usd"
+  default_timezone: "UTC"
+  import_lock_ttl: 10m
