@@ -18,6 +18,7 @@ type Cache interface {
 	// DelAll(ctx context.Context, pattern string) error
 }
 
+// возможно стоит добавить connAttempts логику как в postgres
 type Redis struct {
 	client *redis.Client
 	jitter time.Duration

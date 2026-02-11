@@ -51,7 +51,15 @@ func New(ctx context.Context, url string, opts ...Option) (*Postgres, error) {
 		cancel()
 
 		if err == nil {
-			return pg, nil
+			pingCtx, pingCancel := context.WithTimeout(context.Background(), pg.connTimeout)
+			err = pg.Pool.Ping(pingCtx)
+			pingCancel()
+
+			if err == nil {
+				return pg, nil
+			}
+
+			pg.Pool.Close()
 		}
 
 		log.Printf("Postgres is trying to connect, attempts left: %d", pg.connAttempts)
@@ -61,7 +69,7 @@ func New(ctx context.Context, url string, opts ...Option) (*Postgres, error) {
 		pg.connAttempts--
 	}
 
-	return nil, fmt.Errorf("postgres - NewPostgres - connAttempts == 0: %w", err)
+	return nil, fmt.Errorf("postgres connect failed after %d attempts: %w", pg.connAttempts, err)
 }
 
 func (p *Postgres) Close() {
