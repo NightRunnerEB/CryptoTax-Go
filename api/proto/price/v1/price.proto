@@ -6,6 +6,7 @@ option go_package = "github.com/NightRunner/CryptoTax-Go/gen/price/v1;pricev1";
 
 import "google/protobuf/timestamp.proto";
 
+// Price provides transaction valuation APIs and tenant symbol mapping APIs.
 service Price {
   // Valuates batch of transactions and returns calculated prices.
   rpc ValuateTransactionsBatch(ValuateTransactionsRequest)
