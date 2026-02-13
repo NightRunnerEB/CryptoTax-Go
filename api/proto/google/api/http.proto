@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package google.api;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "google.golang.org/genproto/googleapis/api/annotations;annotations";
+
+// HTTP configuration for an API service.
+message Http {
+  repeated HttpRule rules = 1;
+
+  // When set to true, URL path parameters will be automatically decoded.
+  bool fully_decode_reserved_expansion = 2;
+}
+
+// Defines the HTTP configuration for a single API method.
+message HttpRule {
+  // Selects a method to which this rule applies.
+  string selector = 1;
+
+  // Determines the URL pattern is matched by this rule.
+  oneof pattern {
+    // Used for listing and getting information about resources.
+    string get = 2;
+
+    // Used for creating a resource.
+    string post = 3;
+
+    // Used for updating a resource.
+    string put = 4;
+
+    // Used for deleting a resource.
+    string delete = 5;
+
+    // Used for updating a resource.
+    string patch = 6;
+
+    // Custom HTTP method.
+    CustomHttpPattern custom = 8;
+  }
+
+  // The name of the request field whose value is mapped to the HTTP request body.
+  // A value of "*" means that all fields are mapped to the body.
+  string body = 7;
+
+  // Additional HTTP bindings for the selector.
+  repeated HttpRule additional_bindings = 11;
+}
+
+message CustomHttpPattern {
+  // The name of this custom HTTP verb.
+  string kind = 1;
+
+  // The path matched by this custom verb.
+  string path = 2;
+}

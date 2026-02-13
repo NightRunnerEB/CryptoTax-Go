@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package aggregation.v1;
+
+option go_package = "github.com/NightRunner/CryptoTax-Go/gen/aggregation/v1;aggregationv1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// Aggregation provides read-model APIs for aggregated transactions
+// and tenant-level aggregation settings.
+service Aggregation {
+  // ListTransactionsByImport returns paginated aggregated transactions
+  // for a specific tenant import.
+  rpc ListTransactionsByImport(ListTransactionsByImportRequest)
+  returns (ListTransactionsByImportResponse) {
+    option (google.api.http) = {
+      get: "/v1/tenants/{tenant_id}/imports/{import_id}/transactions"
+    };
+  }
+
+  // ListTransactionsByRange returns paginated aggregated transactions
+  // for a specific tenant and UTC time range [from_utc, to_utc).
+  rpc ListTransactionsByRange(ListTransactionsByRangeRequest)
+  returns (ListTransactionsByRangeResponse) {
+    option (google.api.http) = {
+      get: "/v1/tenants/{tenant_id}/transactions"
+    };
+  }
+
+  // GetTenantSettings returns aggregation settings for a tenant.
+  rpc GetTenantSettings(GetTenantSettingsRequest)
+  returns (GetTenantSettingsResponse) {
+    option (google.api.http) = {
+      get: "/v1/tenants/{tenant_id}/settings"
+    };
+  }
+
+  // UpsertTenantSettings creates or updates aggregation settings for a tenant.
+  rpc UpsertTenantSettings(UpsertTenantSettingsRequest)
+  returns (UpsertTenantSettingsResponse) {
+    option (google.api.http) = {
+      put: "/v1/tenants/{tenant_id}/settings"
+      body: "*"
+    };
+  }
+}
+
+message AggregatedTx {
+  string                    tx_id           = 1;
+  string                    tenant_id       = 2;
+  string                    source          = 4;
+  string                    import_id       = 5;
+  google.protobuf.Timestamp time_utc        = 6;
+  string                    kind            = 7;
+  google.protobuf.Struct    in_money        = 8;
+  google.protobuf.Struct    out_money       = 9;
+  google.protobuf.Struct    fee_money       = 10;
+  string                    tx_hash         = 11;
+  string                    note            = 12;
+  string                    contract_symbol = 13;
+  string                    derivative_kind = 14;
+  string                    position_id     = 15;
+  string                    order_id        = 16;
+  string                    tx_fingerprint  = 17;
+}
+
+message ListTransactionsByImportRequest {
+  string tenant_id = 1;
+  string import_id = 2;
+  int32  limit     = 3;
+  int32  offset    = 4;
+}
+
+message ListTransactionsByImportResponse {
+  repeated AggregatedTx transactions = 1;
+  int64                 total        = 2;
+}
+
+message ListTransactionsByRangeRequest {
+  string                    tenant_id = 1;
+  google.protobuf.Timestamp from_utc  = 2;
+  google.protobuf.Timestamp to_utc    = 3;
+  int32                     limit     = 4;
+  int32                     offset    = 5;
+}
+
+message ListTransactionsByRangeResponse {
+  repeated AggregatedTx transactions = 1;
+  int64                 total        = 2;
+}
+
+message TenantSettings {
+  string tenant_id     = 1;
+  string fiat_currency = 2;
+  string timezone      = 3;
+}
+
+message GetTenantSettingsRequest {
+  string tenant_id = 1;
+}
+
+message GetTenantSettingsResponse {
+  TenantSettings settings = 1;
+}
+
+message UpsertTenantSettingsRequest {
+  string tenant_id     = 1;
+  string fiat_currency = 2;
+  string timezone      = 3;
+}
+
+message UpsertTenantSettingsResponse {
+  TenantSettings settings = 1;
+}
