@@ -14,6 +14,7 @@ type Cache interface {
 
 	Get(ctx context.Context, key string) (string, bool, error)
 	Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error
+	SetNX(ctx context.Context, key string, value interface{}, ttl time.Duration) (bool, error)
 	Del(ctx context.Context, keys ...string) error
 	// DelAll(ctx context.Context, pattern string) error
 }
@@ -71,6 +72,11 @@ func (r *Redis) Set(ctx context.Context, key string, value interface{}, ttl time
 	}
 
 	return nil
+}
+
+func (r *Redis) SetNX(ctx context.Context, key string, value interface{}, ttl time.Duration) (bool, error) {
+	ttl = ttlWithJitter(ttl, r.jitter)
+	return r.client.SetNX(ctx, key, value, ttl).Result()
 }
 
 func (r *Redis) Del(ctx context.Context, keys ...string) error {
