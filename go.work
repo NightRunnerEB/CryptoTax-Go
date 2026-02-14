@@ -3,5 +3,8 @@ go 1.25.1
 use (
 	./gen
 	./pkg
+	./services/aggregation-svc
 	./services/price-svc
+	./services/report-svc
+	./services/tax-svc
 )
