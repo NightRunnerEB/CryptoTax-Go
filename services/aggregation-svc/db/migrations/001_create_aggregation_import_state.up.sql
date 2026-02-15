@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS aggregation_import_state (
   tenant_id uuid NOT NULL,
   import_id uuid NOT NULL,
-  source text NOT NULL,
+  event_id uuid NOT NULL,
   status text NOT NULL,
   started_at timestamptz NOT NULL DEFAULT now(),
   completed_at timestamptz NULL,

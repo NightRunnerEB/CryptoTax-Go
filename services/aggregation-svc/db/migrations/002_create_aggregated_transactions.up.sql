@@ -1,7 +1,6 @@
 CREATE TABLE IF NOT EXISTS aggregated_transactions (
   id uuid PRIMARY KEY,
   tenant_id uuid NOT NULL,
-  wallet text NOT NULL,
   source text NOT NULL,
   import_id uuid NOT NULL,
   time_utc timestamptz NOT NULL,
