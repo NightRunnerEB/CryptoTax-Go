@@ -12,7 +12,7 @@ import (
 )
 
 const getAggregationImportState = `-- name: GetAggregationImportState :one
-SELECT tenant_id, import_id, source, status, started_at, completed_at, error
+SELECT tenant_id, import_id, event_id, status, started_at, completed_at, error
 FROM aggregation_import_state
 WHERE tenant_id = $1 AND import_id = $2
 `
@@ -28,7 +28,7 @@ func (q *Queries) GetAggregationImportState(ctx context.Context, arg GetAggregat
 	err := row.Scan(
 		&i.TenantID,
 		&i.ImportID,
-		&i.Source,
+		&i.EventID,
 		&i.Status,
 		&i.StartedAt,
 		&i.CompletedAt,
@@ -71,11 +71,11 @@ func (q *Queries) MarkAggregationImportStateFailed(ctx context.Context, arg Mark
 }
 
 const upsertAggregationImportStateProcessing = `-- name: UpsertAggregationImportStateProcessing :exec
-INSERT INTO aggregation_import_state (tenant_id, import_id, source, status)
+INSERT INTO aggregation_import_state (tenant_id, import_id, event_id, status)
 VALUES ($1, $2, $3, $4)
 ON CONFLICT (tenant_id, import_id)
 DO UPDATE SET
-  source = EXCLUDED.source,
+  event_id = EXCLUDED.event_id,
   status = EXCLUDED.status,
   started_at = now(),
   completed_at = NULL,
@@ -85,7 +85,7 @@ DO UPDATE SET
 type UpsertAggregationImportStateProcessingParams struct {
 	TenantID uuid.UUID `json:"tenantId"`
 	ImportID uuid.UUID `json:"importId"`
-	Source   string    `json:"source"`
+	EventID  uuid.UUID `json:"eventId"`
 	Status   string    `json:"status"`
 }
 
@@ -93,7 +93,7 @@ func (q *Queries) UpsertAggregationImportStateProcessing(ctx context.Context, ar
 	_, err := q.db.Exec(ctx, upsertAggregationImportStateProcessing,
 		arg.TenantID,
 		arg.ImportID,
-		arg.Source,
+		arg.EventID,
 		arg.Status,
 	)
 	return err

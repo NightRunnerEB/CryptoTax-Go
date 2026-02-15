@@ -12,7 +12,6 @@ import (
 type AggregatedTransaction struct {
 	ID             uuid.UUID          `json:"id"`
 	TenantID       uuid.UUID          `json:"tenantId"`
-	Wallet         string             `json:"wallet"`
 	Source         string             `json:"source"`
 	ImportID       uuid.UUID          `json:"importId"`
 	TimeUtc        pgtype.Timestamptz `json:"timeUtc"`
@@ -34,7 +33,7 @@ type AggregatedTransaction struct {
 type AggregationImportState struct {
 	TenantID    uuid.UUID          `json:"tenantId"`
 	ImportID    uuid.UUID          `json:"importId"`
-	Source      string             `json:"source"`
+	EventID     uuid.UUID          `json:"eventId"`
 	Status      string             `json:"status"`
 	StartedAt   pgtype.Timestamptz `json:"startedAt"`
 	CompletedAt pgtype.Timestamptz `json:"completedAt"`

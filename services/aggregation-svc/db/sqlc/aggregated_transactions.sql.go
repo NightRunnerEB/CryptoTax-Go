@@ -30,11 +30,31 @@ func (q *Queries) CountAggregatedTransactionsByImport(ctx context.Context, arg C
 	return count, err
 }
 
+const countAggregatedTransactionsByRange = `-- name: CountAggregatedTransactionsByRange :one
+SELECT count(*)
+FROM aggregated_transactions
+WHERE tenant_id = $1
+  AND time_utc >= $2
+  AND time_utc < $3
+`
+
+type CountAggregatedTransactionsByRangeParams struct {
+	TenantID  uuid.UUID          `json:"tenantId"`
+	TimeUtc   pgtype.Timestamptz `json:"timeUtc"`
+	TimeUtc_2 pgtype.Timestamptz `json:"timeUtc2"`
+}
+
+func (q *Queries) CountAggregatedTransactionsByRange(ctx context.Context, arg CountAggregatedTransactionsByRangeParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countAggregatedTransactionsByRange, arg.TenantID, arg.TimeUtc, arg.TimeUtc_2)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const listAggregatedTransactionsByImport = `-- name: ListAggregatedTransactionsByImport :many
 SELECT
   id,
   tenant_id,
-  wallet,
   source,
   import_id,
   time_utc,
@@ -81,7 +101,6 @@ func (q *Queries) ListAggregatedTransactionsByImport(ctx context.Context, arg Li
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
-			&i.Wallet,
 			&i.Source,
 			&i.ImportID,
 			&i.TimeUtc,
@@ -109,11 +128,159 @@ func (q *Queries) ListAggregatedTransactionsByImport(ctx context.Context, arg Li
 	return items, nil
 }
 
+const listAggregatedTransactionsByRange = `-- name: ListAggregatedTransactionsByRange :many
+SELECT
+  id,
+  tenant_id,
+  source,
+  import_id,
+  time_utc,
+  kind,
+  in_money,
+  out_money,
+  fee_money,
+  contract_symbol,
+  derivative_kind,
+  position_id,
+  order_id,
+  tx_hash,
+  note,
+  tx_fingerprint,
+  created_at,
+  updated_at
+FROM aggregated_transactions
+WHERE tenant_id = $1
+  AND time_utc >= $2
+  AND time_utc < $3
+ORDER BY time_utc ASC
+LIMIT $4 OFFSET $5
+`
+
+type ListAggregatedTransactionsByRangeParams struct {
+	TenantID  uuid.UUID          `json:"tenantId"`
+	TimeUtc   pgtype.Timestamptz `json:"timeUtc"`
+	TimeUtc_2 pgtype.Timestamptz `json:"timeUtc2"`
+	Limit     int32              `json:"limit"`
+	Offset    int32              `json:"offset"`
+}
+
+func (q *Queries) ListAggregatedTransactionsByRange(ctx context.Context, arg ListAggregatedTransactionsByRangeParams) ([]AggregatedTransaction, error) {
+	rows, err := q.db.Query(ctx, listAggregatedTransactionsByRange,
+		arg.TenantID,
+		arg.TimeUtc,
+		arg.TimeUtc_2,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AggregatedTransaction
+	for rows.Next() {
+		var i AggregatedTransaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.Source,
+			&i.ImportID,
+			&i.TimeUtc,
+			&i.Kind,
+			&i.InMoney,
+			&i.OutMoney,
+			&i.FeeMoney,
+			&i.ContractSymbol,
+			&i.DerivativeKind,
+			&i.PositionID,
+			&i.OrderID,
+			&i.TxHash,
+			&i.Note,
+			&i.TxFingerprint,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateAggregatedTransactionByFingerprint = `-- name: UpdateAggregatedTransactionByFingerprint :execrows
+UPDATE aggregated_transactions
+SET
+  id = $1,
+  source = $3,
+  import_id = $4,
+  time_utc = $5,
+  kind = $6,
+  in_money = $7,
+  out_money = $8,
+  fee_money = $9,
+  contract_symbol = $10,
+  derivative_kind = $11,
+  position_id = $12,
+  order_id = $13,
+  tx_hash = $14,
+  note = $15,
+  created_at = $17,
+  updated_at = now()
+WHERE tenant_id = $2 AND tx_fingerprint = $16
+`
+
+type UpdateAggregatedTransactionByFingerprintParams struct {
+	ID             uuid.UUID          `json:"id"`
+	TenantID       uuid.UUID          `json:"tenantId"`
+	Source         string             `json:"source"`
+	ImportID       uuid.UUID          `json:"importId"`
+	TimeUtc        pgtype.Timestamptz `json:"timeUtc"`
+	Kind           string             `json:"kind"`
+	InMoney        []byte             `json:"inMoney"`
+	OutMoney       []byte             `json:"outMoney"`
+	FeeMoney       []byte             `json:"feeMoney"`
+	ContractSymbol *string            `json:"contractSymbol"`
+	DerivativeKind *string            `json:"derivativeKind"`
+	PositionID     *string            `json:"positionId"`
+	OrderID        *string            `json:"orderId"`
+	TxHash         *string            `json:"txHash"`
+	Note           *string            `json:"note"`
+	TxFingerprint  string             `json:"txFingerprint"`
+	CreatedAt      pgtype.Timestamptz `json:"createdAt"`
+}
+
+func (q *Queries) UpdateAggregatedTransactionByFingerprint(ctx context.Context, arg UpdateAggregatedTransactionByFingerprintParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateAggregatedTransactionByFingerprint,
+		arg.ID,
+		arg.TenantID,
+		arg.Source,
+		arg.ImportID,
+		arg.TimeUtc,
+		arg.Kind,
+		arg.InMoney,
+		arg.OutMoney,
+		arg.FeeMoney,
+		arg.ContractSymbol,
+		arg.DerivativeKind,
+		arg.PositionID,
+		arg.OrderID,
+		arg.TxHash,
+		arg.Note,
+		arg.TxFingerprint,
+		arg.CreatedAt,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const upsertAggregatedTransaction = `-- name: UpsertAggregatedTransaction :exec
 INSERT INTO aggregated_transactions (
   id,
   tenant_id,
-  wallet,
   source,
   import_id,
   time_utc,
@@ -131,14 +298,13 @@ INSERT INTO aggregated_transactions (
   created_at
 )
 VALUES (
-  $1, $2, $3, $4, $5, $6, $7,
-  $8, $9, $10,
-  $11, $12, $13, $14, $15, $16,
-  $17, $18
+  $1, $2, $3, $4, $5, $6,
+  $7, $8, $9,
+  $10, $11, $12, $13, $14, $15,
+  $16, $17
 )
 ON CONFLICT (id)
 DO UPDATE SET
-  wallet = EXCLUDED.wallet,
   source = EXCLUDED.source,
   import_id = EXCLUDED.import_id,
   time_utc = EXCLUDED.time_utc,
@@ -159,7 +325,6 @@ DO UPDATE SET
 type UpsertAggregatedTransactionParams struct {
 	ID             uuid.UUID          `json:"id"`
 	TenantID       uuid.UUID          `json:"tenantId"`
-	Wallet         string             `json:"wallet"`
 	Source         string             `json:"source"`
 	ImportID       uuid.UUID          `json:"importId"`
 	TimeUtc        pgtype.Timestamptz `json:"timeUtc"`
@@ -181,7 +346,6 @@ func (q *Queries) UpsertAggregatedTransaction(ctx context.Context, arg UpsertAgg
 	_, err := q.db.Exec(ctx, upsertAggregatedTransaction,
 		arg.ID,
 		arg.TenantID,
-		arg.Wallet,
 		arg.Source,
 		arg.ImportID,
 		arg.TimeUtc,
