@@ -14,8 +14,9 @@ type AggregatedTxPage struct {
 }
 
 type AggregationUseCase interface {
-	ProcessImportCompleted(ctx context.Context, event ImportCompletedEvent) error
+	ProcessImport(ctx context.Context, event ImportEvent) error
 	ListTransactionsByImport(ctx context.Context, tenantID, importID uuid.UUID, limit, offset int32) (AggregatedTxPage, error)
+	ListTransactionsByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32) (AggregatedTxPage, error)
 }
 
 type TenantSettingsUseCase interface {
@@ -26,6 +27,7 @@ type TenantSettingsUseCase interface {
 type AggregatedTransactionRepo interface {
 	UpsertBatch(ctx context.Context, txs []AggregatedTransaction) error
 	ListByImport(ctx context.Context, tenantID, importID uuid.UUID, limit, offset int32) (AggregatedTxPage, error)
+	ListByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32) (AggregatedTxPage, error)
 }
 
 type ImportStateRepo interface {

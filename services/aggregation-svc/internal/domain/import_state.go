@@ -17,7 +17,7 @@ const (
 type AggregationImportState struct {
 	TenantID    uuid.UUID    `json:"tenant_id"`
 	ImportID    uuid.UUID    `json:"import_id"`
-	Source      string       `json:"source"`
+	EventId     uuid.UUID    `json:"event_id"`
 	Status      ImportStatus `json:"status"`
 	StartedAt   time.Time    `json:"started_at"`
 	CompletedAt *time.Time   `json:"completed_at,omitempty"`

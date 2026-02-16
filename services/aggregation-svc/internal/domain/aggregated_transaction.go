@@ -26,7 +26,6 @@ type FiatLegError struct {
 type AggregatedTransaction struct {
 	ID             uuid.UUID `json:"id"`
 	TenantID       uuid.UUID `json:"tenant_id"`
-	Wallet         string    `json:"wallet"`
 	Source         string    `json:"source"`
 	ImportID       uuid.UUID `json:"import_id"`
 	TimeUTC        time.Time `json:"time_utc"`
