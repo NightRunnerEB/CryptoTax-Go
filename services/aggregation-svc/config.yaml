@@ -41,10 +41,14 @@ rabbitmq:
   url: "amqp://guest:guest@localhost:5672/"
   exchange: "ledger.events"
   queue: "aggregation.import.completed"
+  queue_durable: true
   routing_key: "ImportCompleted"
+  consumer_name: "aggregation-import-completed-consumer"
   prefetch: 10
+  concurrency: 1
+  reconnect_interval: 2s
 
 aggregation:
-  default_fiat_currency: "usd"
-  default_timezone: "UTC"
+  default_fiat_currency: "rub"
+  default_timezone: "Europe/Moscow"
   import_lock_ttl: 10m
