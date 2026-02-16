@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
+	pkgredis "github.com/NightRunner/CryptoTax-Go/pkg/redis"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 )
 
 type RedisLockManager struct {
-	client *redis.Client
+	client pkgredis.Cache
 }
 
-func NewRedisLockManager(client *redis.Client) *RedisLockManager {
+func NewRedisLockManager(client pkgredis.Cache) *RedisLockManager {
 	return &RedisLockManager{client: client}
 }
 
@@ -23,7 +23,7 @@ func (m *RedisLockManager) AcquireImportLock(ctx context.Context, tenantID, impo
 		return false, fmt.Errorf("redis client is nil")
 	}
 	key := importLockKey(tenantID, importID)
-	return m.client.SetNX(ctx, key, "1", ttl).Result()
+	return m.client.SetNX(ctx, key, "1", ttl)
 }
 
 func (m *RedisLockManager) ReleaseImportLock(ctx context.Context, tenantID, importID uuid.UUID) error {
@@ -31,7 +31,7 @@ func (m *RedisLockManager) ReleaseImportLock(ctx context.Context, tenantID, impo
 		return fmt.Errorf("redis client is nil")
 	}
 	key := importLockKey(tenantID, importID)
-	return m.client.Del(ctx, key).Err()
+	return m.client.Del(ctx, key)
 }
 
 func importLockKey(tenantID, importID uuid.UUID) string {

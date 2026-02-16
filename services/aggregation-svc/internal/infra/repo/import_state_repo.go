@@ -40,7 +40,7 @@ func (r *importStateRepo) Get(ctx context.Context, tenantID, importID uuid.UUID)
 	state := domain.AggregationImportState{
 		TenantID:    row.TenantID,
 		ImportID:    row.ImportID,
-		Source:      row.Source,
+		EventId:     row.EventID,
 		Status:      domain.ImportStatus(row.Status),
 		StartedAt:   fromTimestamptz(row.StartedAt),
 		CompletedAt: nil,
@@ -58,7 +58,7 @@ func (r *importStateRepo) UpsertProcessing(ctx context.Context, state domain.Agg
 	if err := r.store.UpsertAggregationImportStateProcessing(ctx, db.UpsertAggregationImportStateProcessingParams{
 		TenantID: state.TenantID,
 		ImportID: state.ImportID,
-		Source:   state.Source,
+		EventID:  state.EventId,
 		Status:   string(state.Status),
 	}); err != nil {
 		return apperr.Internal("upsert import processing failed", err, map[string]string{
