@@ -15,13 +15,13 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type AccessLogConfig struct {
+type LogConfig struct {
 	ServiceName    string
 	ServiceVersion string
 	Environment    string
 }
 
-func AccessLogInterceptor(log *zap.Logger, cfg AccessLogConfig) grpc.UnaryServerInterceptor {
+func LogInterceptor(log *zap.Logger, cfg LogConfig) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		start := time.Now()
 
@@ -38,6 +38,7 @@ func AccessLogInterceptor(log *zap.Logger, cfg AccessLogConfig) grpc.UnaryServer
 			)
 		}
 
+		// Удалить?
 		if cfg.ServiceName != "" {
 			baseFields = append(baseFields, zap.String("service.name", cfg.ServiceName))
 		}
