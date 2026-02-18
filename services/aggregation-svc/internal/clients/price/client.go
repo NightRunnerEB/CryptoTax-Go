@@ -18,10 +18,7 @@ type Client struct {
 }
 
 func NewClient(ctx context.Context, cfg config.Price) (*Client, error) {
-	dialCtx, cancel := context.WithTimeout(ctx, cfg.Timeout)
-	defer cancel()
-
-	conn, err := grpc.DialContext(dialCtx, cfg.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(cfg.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, apperr.PriceUnavailable("price grpc dial failed", err, map[string]string{
 			"addr": cfg.Addr,

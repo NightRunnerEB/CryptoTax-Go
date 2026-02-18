@@ -16,13 +16,17 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/pkg/postgres"
 	"github.com/NightRunner/CryptoTax-Go/pkg/redis"
 	"github.com/NightRunner/CryptoTax-Go/pkg/telemetry"
+	db "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/clients/ledger"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/clients/price"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/config"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/consumer"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
+	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/infra/lock"
+	repository "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/infra/repo"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/interceptors"
 	grpcserver "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/server"
+	usecase "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/usecases"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.opentelemetry.io/contrib/bridges/otelzap"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -105,11 +109,24 @@ func Run(cfg *config.Config) {
 	}
 	defer priceClient.Close()
 
-	// TODO: wire repositories + usecases.
-	var aggregationUC domain.AggregationUseCase
-	var settingsUC domain.TenantSettingsUseCase
-	_ = ledgerClient
-	_ = redisClient
+	store := db.NewStore(pg)
+
+	txRepo := repository.NewAggregatedTransactionRepo(store)
+	importStateRepo := repository.NewImportStateRepo(store)
+	tenantSettingsRepo := repository.NewTenantSettingsRepo(store)
+	lockManager := lock.NewRedisLockManager(redisClient)
+
+	settingsUC := usecase.NewTenantSettingsUC(tenantSettingsRepo)
+	aggregationUC := usecase.NewAggregationUC(
+		txRepo,
+		importStateRepo,
+		tenantSettingsRepo,
+		ledgerClient,
+		priceClient,
+		lockManager,
+		cfg.Price.BatchSize,
+		cfg.Aggregation.ImportLockTTL,
+	)
 
 	statsHandler := otelgrpc.NewServerHandler(
 		otelgrpc.WithTracerProvider(noop.NewTracerProvider()),
@@ -136,14 +153,18 @@ func Run(cfg *config.Config) {
 		cfg.GRPC.Addr,
 	)
 
-	consumer := consumer.NewImportCompletedConsumer(cfg.RabbitMQ, aggregationUC, log)
-	waitGroup.Go(func() error {
-		return consumer.Start(ctx)
-	})
-	waitGroup.Go(func() error {
-		<-ctx.Done()
-		return consumer.Close()
-	})
+	if aggregationUC != nil {
+		consumer := consumer.NewImportCompletedConsumer(cfg.RabbitMQ, aggregationUC, log)
+		waitGroup.Go(func() error {
+			return consumer.Start(ctx)
+		})
+		waitGroup.Go(func() error {
+			<-ctx.Done()
+			return consumer.Close()
+		})
+	} else {
+		log.Warn("ImportCompletedConsumer disabled: aggregation usecase is not wired")
+	}
 
 	err = waitGroup.Wait()
 	if err != nil {
@@ -169,7 +190,7 @@ func runGrpcServer(
 	grpcServer := grpc.NewServer(
 		grpc.StatsHandler(statsHandler),
 		grpc.ChainUnaryInterceptor(
-			interceptors.AccessLogInterceptor(log, interceptors.AccessLogConfig{
+			interceptors.LogInterceptor(log, interceptors.LogConfig{
 				ServiceName:    serviceName,
 				ServiceVersion: serviceVersion,
 				Environment:    environment,

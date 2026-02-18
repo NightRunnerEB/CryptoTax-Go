@@ -69,11 +69,15 @@ type (
 	}
 
 	RabbitMQ struct {
-		URL        string `yaml:"url" env:"RABBITMQ_URL" env-required:"true"`
-		Exchange   string `yaml:"exchange"`
-		Queue      string `yaml:"queue"`
-		RoutingKey string `yaml:"routing_key"`
-		Prefetch   int    `yaml:"prefetch"`
+		URL               string        `yaml:"url" env:"RABBITMQ_URL" env-required:"true"`
+		Exchange          string        `yaml:"exchange"`
+		Queue             string        `yaml:"queue"`
+		QueueDurable      bool          `yaml:"queue_durable"`
+		RoutingKey        string        `yaml:"routing_key"`
+		ConsumerName      string        `yaml:"consumer_name"`
+		Prefetch          int           `yaml:"prefetch"`
+		Concurrency       int           `yaml:"concurrency"`
+		ReconnectInterval time.Duration `yaml:"reconnect_interval"`
 	}
 
 	Aggregation struct {
@@ -119,10 +123,10 @@ func applyDefaults(cfg *Config) {
 		cfg.Price.BatchSize = 10000
 	}
 	if cfg.Aggregation.DefaultFiatCurrency == "" {
-		cfg.Aggregation.DefaultFiatCurrency = "usd"
+		cfg.Aggregation.DefaultFiatCurrency = "rub"
 	}
 	if cfg.Aggregation.DefaultTimezone == "" {
-		cfg.Aggregation.DefaultTimezone = "UTC"
+		cfg.Aggregation.DefaultTimezone = "Europe/Moscow"
 	}
 	if cfg.Aggregation.ImportLockTTL == 0 {
 		cfg.Aggregation.ImportLockTTL = 10 * time.Minute
@@ -132,5 +136,26 @@ func applyDefaults(cfg *Config) {
 	}
 	if cfg.Price.Timeout == 0 {
 		cfg.Price.Timeout = 10 * time.Second
+	}
+	if cfg.RabbitMQ.Exchange == "" {
+		cfg.RabbitMQ.Exchange = "ledger.events"
+	}
+	if cfg.RabbitMQ.Queue == "" {
+		cfg.RabbitMQ.Queue = "aggregation.import.completed"
+	}
+	if cfg.RabbitMQ.RoutingKey == "" {
+		cfg.RabbitMQ.RoutingKey = "ImportCompleted"
+	}
+	if cfg.RabbitMQ.ConsumerName == "" {
+		cfg.RabbitMQ.ConsumerName = "aggregation-import-completed-consumer"
+	}
+	if cfg.RabbitMQ.Prefetch <= 0 {
+		cfg.RabbitMQ.Prefetch = 10
+	}
+	if cfg.RabbitMQ.Concurrency <= 0 {
+		cfg.RabbitMQ.Concurrency = 1
+	}
+	if cfg.RabbitMQ.ReconnectInterval == 0 {
+		cfg.RabbitMQ.ReconnectInterval = 2 * time.Second
 	}
 }
