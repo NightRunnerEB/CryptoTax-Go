@@ -67,7 +67,6 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 		txTime   time.Time
 		bucket   time.Time
 		dayStart time.Time
-		dayEnd   time.Time
 		desiredG time.Duration
 	}
 
@@ -80,14 +79,12 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 		desired := u.cgClient.GetGranularitySeconds(txTime, now)
 		bucket := floorToBucket(txTime, desired)
 		dayStart := truncateDayUTC(txTime)
-		dayEnd := dayStart.Add(24*time.Hour - time.Second)
 
 		w[i] = wanted{
 			coinID:   k.CoinID,
 			txTime:   txTime,
 			bucket:   bucket,
 			dayStart: dayStart,
-			dayEnd:   dayEnd,
 			desiredG: desired,
 		}
 		// repo expects bucket_start_utc
@@ -112,7 +109,6 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 	type fetchKey struct {
 		coinID   string
 		dayStart time.Time
-		dayEnd   time.Time
 		g        time.Duration
 	}
 	needFetch := make(map[fetchKey]struct{})
@@ -200,7 +196,7 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 	return out, nil
 }
 
-func (u *historicalPriceUC) fetchAndUpsertDay(ctx context.Context, coinID string, dayStartUTC time.Time, granularitySeconds time.Duration) error {
+func (u *historicalPriceUC) fetchAndUpsertDay(ctx context.Context, coinID string, dayStartUTC time.Time, granularity time.Duration) error {
 	metadata := map[string]string{
 		"coin_id": coinID,
 		"date":    dayStartUTC.Format(time.DateOnly),
@@ -233,7 +229,7 @@ func (u *historicalPriceUC) fetchAndUpsertDay(ctx context.Context, coinID string
 	}
 
 	// normalize points to buckets "by order"
-	buckets, err := normalizeByOrder(coinID, dayStartUTC, granularitySeconds, resp.Prices)
+	buckets, err := normalizeByOrder(coinID, dayStartUTC, granularity, resp.Prices)
 	if err != nil {
 		var ae *apperr.Error
 		if errors.As(err, &ae) {
