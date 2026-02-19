@@ -215,7 +215,9 @@ func (server PriceServer) UpsertTenantSymbol(ctx context.Context, req *v1.Upsert
 		CoinID:   req.CoinId,
 	}
 
-	server.tenantSymbolUC.Upsert(ctx, tenantSymbol)
+	if err := server.tenantSymbolUC.Upsert(ctx, tenantSymbol); err != nil {
+		return nil, err
+	}
 
 	log.Info(
 		"UpsertTenantSymbol: upserted",
