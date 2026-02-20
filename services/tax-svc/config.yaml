@@ -1,0 +1,65 @@
+app:
+  name: "tax-svc"
+  env: "dev"
+
+log:
+  level: "debug"
+
+otel:
+  endpoint: "otel-collector:4317"
+  insecure: true
+  metrics_export_interval: 10s
+  runtime_read_mem_stats_interval: 10s
+
+grpc:
+  addr: "0.0.0.0:8096"
+
+http:
+  addr: "0.0.0.0:8097"
+  shutdown_timeout: 5s
+
+postgres:
+  max_conns: 10
+  conn_timeout: 2s
+  attempt_timeout: 5s
+  conn_attempts: 3
+
+rabbitmq:
+  exchange: "tax.pipeline"
+  queue_job_requested: "tax.job.requested"
+  queue_render_results: "tax.render.results"
+  routing_job_requested: "TaxReportJobRequested"
+  routing_render_request: "ReportRenderRequested"
+  routing_rendered: "ReportRendered"
+  routing_render_failed: "ReportRenderFailed"
+  consumer_name_jobs: "tax-job-requested-consumer"
+  consumer_name_results: "tax-render-results-consumer"
+  prefetch: 10
+  concurrency: 1
+  reconnect_interval: 2s
+  outbox_batch_size: 100
+  outbox_poll_interval: 1s
+  outbox_max_attempts: 10
+  handler_timeout: 30s
+  queue_durable: true
+  skip_queue_declare: true
+
+aggregation:
+  addr: "aggregation-svc:8094"
+  timeout: 10s
+  page_limit: 1000
+
+minio:
+  endpoint: "minio:9000"
+  bucket: "tax-reports"
+  use_ssl: false
+  presign_ttl: 15m
+
+defaults:
+  jurisdiction: "RU"
+  timezone: "UTC"
+  cost_basis_method: "FIFO"
+
+worker:
+  template_version: "v1"
+  treat_crypto_to_crypto_as_disposition: false
