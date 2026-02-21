@@ -1,0 +1,45 @@
+package grpcserver
+
+import (
+	"context"
+	"strings"
+
+	apperr "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/error"
+	"github.com/google/uuid"
+	"google.golang.org/grpc/metadata"
+)
+
+const (
+	headerTenantID = "x-tenant-id"
+	headerUserID   = "x-user-id"
+	headerRoles    = "x-roles"
+)
+
+func requireTenantMatchIfPresent(ctx context.Context, tenantID uuid.UUID) error {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil
+	}
+
+	values := md.Get(headerTenantID)
+	if len(values) == 0 || strings.TrimSpace(values[0]) == "" {
+		return nil
+	}
+
+	headerTenantID := strings.TrimSpace(values[0])
+	headerTenantUUID, err := uuid.Parse(headerTenantID)
+	if err != nil {
+		return apperr.InvalidArgument("invalid tenant header", err, apperr.FieldViolation{
+			Field:       "x-tenant-id",
+			Description: "invalid uuid",
+		})
+	}
+	if headerTenantUUID != tenantID {
+		return apperr.InvalidArgument("tenant mismatch", nil, apperr.FieldViolation{
+			Field:       "tenant_id",
+			Description: "must match x-tenant-id header",
+		})
+	}
+
+	return nil
+}
