@@ -18,5 +18,9 @@
 # Logs
 *.log
 
+# Go cache
+.gocache/
+**/.gocache/
+
 # Env
 .env
