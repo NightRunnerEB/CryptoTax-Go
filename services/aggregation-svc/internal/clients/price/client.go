@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	pricev1 "github.com/NightRunner/CryptoTax-Go/gen/price/v1"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/config"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Client struct {

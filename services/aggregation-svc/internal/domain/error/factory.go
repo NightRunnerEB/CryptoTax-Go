@@ -90,6 +90,17 @@ func PriceBadResponse(msg string, cause error, meta map[string]string) *Error {
 	}
 }
 
+func DataNotReady(msg string, cause error, meta map[string]string, details ...Detail) *Error {
+	return &Error{
+		Op:      Op(),
+		Code:    ErrDataNotReady,
+		Msg:     msg,
+		Meta:    meta,
+		Cause:   cause,
+		Details: details,
+	}
+}
+
 func ImportAlreadyDone(msg string, cause error, meta map[string]string) *Error {
 	return &Error{
 		Op:    Op(),

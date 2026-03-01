@@ -94,6 +94,8 @@ func mapCodeToGRPC(c apperr.ErrorCode) codes.Code {
 		return codes.Unavailable
 	case apperr.ErrLedgerBadResponse, apperr.ErrPriceBadResponse:
 		return codes.Internal
+	case apperr.ErrDataNotReady:
+		return codes.FailedPrecondition
 	case apperr.ErrImportAlreadyDone:
 		return codes.AlreadyExists
 	case apperr.ErrImportLocked:

@@ -3,14 +3,18 @@ package usecase
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	pricev1 "github.com/NightRunner/CryptoTax-Go/gen/price/v1"
+	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
-	"github.com/google/uuid"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -52,6 +56,24 @@ func NewAggregationUC(
 }
 
 func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEvent) (retErr error) {
+	startedAt := time.Now()
+	log := logger.FromContext(ctx).With(
+		zap.String("tenant_id", event.TenantID.String()),
+		zap.String("import_id", event.ImportID.String()),
+		zap.String("event_id", event.EventId.String()),
+	)
+	log.Debug("ProcessImport: started")
+	defer func() {
+		if retErr != nil {
+			log.Warn("ProcessImport: finished with error",
+				zap.Error(retErr),
+				zap.Duration("elapsed", time.Since(startedAt)),
+			)
+			return
+		}
+		log.Debug("ProcessImport: finished successfully", zap.Duration("elapsed", time.Since(startedAt)))
+	}()
+
 	if err := u.validateDeps(); err != nil {
 		return err
 	}
@@ -75,14 +97,18 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 	}
 	if !locked {
 		// Another worker is already processing this import.
+		log.Debug("ProcessImport: import lock not acquired, skip")
 		return nil
 	}
+	log.Debug("ProcessImport: import lock acquired", zap.Duration("lock_ttl", u.importLockTTL))
 	defer func() {
 		if releaseErr := u.lockManager.ReleaseImportLock(ctx, event.TenantID, event.ImportID); releaseErr != nil && retErr == nil {
 			retErr = apperr.Internal("release import lock failed", releaseErr, map[string]string{
 				"tenant_id": event.TenantID.String(),
 				"import_id": event.ImportID.String(),
 			})
+		} else if releaseErr == nil {
+			log.Debug("ProcessImport: import lock released")
 		}
 	}()
 
@@ -90,13 +116,23 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 	if err != nil {
 		return err
 	}
+	log.Debug("ProcessImport: tenant settings loaded",
+		zap.String("fiat_currency", settings.FiatCurrency),
+		zap.String("timezone", settings.Timezone),
+	)
 
 	state, err := u.importRepo.Get(ctx, event.TenantID, event.ImportID)
 	if err != nil && !isNotFound(err) {
 		return err
 	}
 	if err == nil && state.Status == domain.ImportStatusCompleted {
+		log.Debug("ProcessImport: import already completed, skip")
 		return nil
+	}
+	if err == nil {
+		log.Debug("ProcessImport: import state found", zap.String("status", string(state.Status)))
+	} else {
+		log.Debug("ProcessImport: import state not found, creating processing state")
 	}
 
 	if err := u.importRepo.UpsertProcessing(ctx, domain.AggregationImportState{
@@ -107,23 +143,33 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 	}); err != nil {
 		return err
 	}
+	log.Debug("ProcessImport: import state set to processing")
 
 	ledgerTxs, err := u.ledgerClient.ListTransactionsByImport(ctx, event.TenantID, event.ImportID)
 	if err != nil {
 		return u.markImportFailed(ctx, event, err)
 	}
+	log.Debug("ProcessImport: ledger transactions loaded", zap.Int("count", len(ledgerTxs)))
+	log.Debug("ProcessImport: ledger tx fingerprints", zap.Any("tx_fingerprints", ledgerTxFingerprints(ledgerTxs)))
 	if len(ledgerTxs) == 0 {
 		if err := u.importRepo.MarkCompleted(ctx, event.TenantID, event.ImportID); err != nil {
 			return err
 		}
+		log.Debug("ProcessImport: no ledger transactions, marked completed")
 		return nil
 	}
 
 	source := pickSource(ledgerTxs)
+	log.Debug("ProcessImport: start valuation",
+		zap.String("source", source),
+		zap.String("fiat_currency", settings.FiatCurrency),
+		zap.Int("batch_size", u.batchSize),
+	)
 	priceByTxID, err := u.valuateTransactions(ctx, event.TenantID, source, settings.FiatCurrency, ledgerTxs)
 	if err != nil {
 		return u.markImportFailed(ctx, event, err)
 	}
+	log.Debug("ProcessImport: valuation completed", zap.Int("valuated_count", len(priceByTxID)))
 
 	aggregated := make([]domain.AggregatedTransaction, 0, len(ledgerTxs))
 	for _, tx := range ledgerTxs {
@@ -158,14 +204,17 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 
 		aggregated = append(aggregated, aggregatedTx)
 	}
+	log.Debug("ProcessImport: aggregated transactions prepared", zap.Int("count", len(aggregated)))
 
 	if err := u.txRepo.UpsertBatch(ctx, aggregated); err != nil {
 		return u.markImportFailed(ctx, event, err)
 	}
+	log.Debug("ProcessImport: aggregated transactions persisted", zap.Int("count", len(aggregated)))
 
 	if err := u.importRepo.MarkCompleted(ctx, event.TenantID, event.ImportID); err != nil {
 		return err
 	}
+	log.Debug("ProcessImport: import state marked completed")
 
 	return nil
 }
@@ -239,7 +288,14 @@ func (u *aggregationUC) ListTransactionsByRange(ctx context.Context, tenantID uu
 		)
 	}
 
-	return u.txRepo.ListByRange(ctx, tenantID, fromUTC, toUTC, limit, offset)
+	page, err := u.txRepo.ListByRange(ctx, tenantID, fromUTC, toUTC, limit, offset)
+	if err != nil {
+		return domain.AggregatedTxPage{}, err
+	}
+	if err := ensureTransactionsReadyForTax(page.Transactions); err != nil {
+		return domain.AggregatedTxPage{}, err
+	}
+	return page, nil
 }
 
 func (u *aggregationUC) validateDeps() error {
@@ -274,15 +330,6 @@ func (u *aggregationUC) loadTenantSettings(ctx context.Context, tenantID uuid.UU
 		return domain.TenantSettings{}, err
 	}
 
-	settings.FiatCurrency = strings.ToLower(strings.TrimSpace(settings.FiatCurrency))
-	if settings.FiatCurrency == "" {
-		settings.FiatCurrency = DefaultFiatCurrency
-	}
-	settings.Timezone = strings.TrimSpace(settings.Timezone)
-	if settings.Timezone == "" {
-		settings.Timezone = DefaultTimezone
-	}
-
 	return settings, nil
 }
 
@@ -293,6 +340,7 @@ func (u *aggregationUC) valuateTransactions(
 	fiatCurrency string,
 	ledgerTxs []domain.LedgerTransaction,
 ) (map[string]*pricev1.ValuatedTx, error) {
+	log := logger.FromContext(ctx)
 	priceByTxID := make(map[string]*pricev1.ValuatedTx, len(ledgerTxs))
 	toValuate := make([]*pricev1.TxToValuate, 0, len(ledgerTxs))
 	for _, tx := range ledgerTxs {
@@ -315,6 +363,13 @@ func (u *aggregationUC) valuateTransactions(
 		if end > len(toValuate) {
 			end = len(toValuate)
 		}
+		log.Debug("valuateTransactions: sending batch",
+			zap.Int("start", start),
+			zap.Int("end", end),
+			zap.Int("size", end-start),
+			zap.String("source", source),
+			zap.String("fiat_currency", fiatCurrency),
+		)
 
 		resp, err := u.priceClient.ValuateTransactionsBatch(ctx, &pricev1.ValuateTransactionsRequest{
 			TenantId:     tenantID.String(),
@@ -325,6 +380,9 @@ func (u *aggregationUC) valuateTransactions(
 		if err != nil {
 			return nil, err
 		}
+		log.Debug("valuateTransactions: batch response received",
+			zap.Int("response_size", len(resp.GetTransactions())),
+		)
 		for _, tx := range resp.GetTransactions() {
 			if tx == nil {
 				continue
@@ -426,4 +484,98 @@ func valuedFeeFiat(tx *pricev1.ValuatedTx) *pricev1.FiatLeg {
 		return nil
 	}
 	return tx.GetFeeFiat()
+}
+
+func ledgerTxFingerprints(txs []domain.LedgerTransaction) []map[string]string {
+	out := make([]map[string]string, 0, len(txs))
+	for _, tx := range txs {
+		out = append(out, map[string]string{
+			"tx_id":          tx.ID.String(),
+			"tx_fingerprint": tx.TxFingerprint,
+		})
+	}
+	return out
+}
+
+func ensureTransactionsReadyForTax(txs []domain.AggregatedTransaction) error {
+	unresolvedCount := 0
+	firstTxID := ""
+	firstLeg := ""
+	firstReason := ""
+
+	for _, tx := range txs {
+		if leg, reason := legNotReadyReason(tx.InMoney); reason != "" {
+			unresolvedCount++
+			if firstTxID == "" {
+				firstTxID = tx.ID.String()
+				firstLeg = legName("in_money", leg)
+				firstReason = reason
+			}
+		}
+		if leg, reason := legNotReadyReason(tx.OutMoney); reason != "" {
+			unresolvedCount++
+			if firstTxID == "" {
+				firstTxID = tx.ID.String()
+				firstLeg = legName("out_money", leg)
+				firstReason = reason
+			}
+		}
+		if leg, reason := legNotReadyReason(tx.FeeMoney); reason != "" {
+			unresolvedCount++
+			if firstTxID == "" {
+				firstTxID = tx.ID.String()
+				firstLeg = legName("fee_money", leg)
+				firstReason = reason
+			}
+		}
+	}
+
+	if unresolvedCount == 0 {
+		return nil
+	}
+
+	violations := []apperr.FieldViolation{
+		{
+			Field:       "transactions",
+			Description: "contains unresolved fiat valuations",
+		},
+	}
+	if firstLeg != "" {
+		violations = append(violations, apperr.FieldViolation{
+			Field:       firstLeg,
+			Description: firstReason,
+		})
+	}
+
+	return apperr.DataNotReady(
+		"aggregated data is not ready for tax calculation; resolve fiat valuations and retry",
+		nil,
+		map[string]string{
+			"unresolved_count": strconv.Itoa(unresolvedCount),
+			"first_tx_id":      firstTxID,
+			"first_leg":        firstLeg,
+		},
+		apperr.Validation{Violations: violations},
+	)
+}
+
+func legNotReadyReason(leg *domain.MoneyLeg) (string, string) {
+	if leg == nil {
+		return "", ""
+	}
+	if leg.Error != nil {
+		if code := strings.TrimSpace(leg.Error.Code); code != "" {
+			return leg.Symbol, "fiat error: " + code
+		}
+		return leg.Symbol, "fiat error"
+	}
+	if leg.FiatAmount == nil || strings.TrimSpace(*leg.FiatAmount) == "" {
+		return leg.Symbol, "missing fiat_amount"
+	}
+	return "", ""
+}
+
+func legName(prefix, symbol string) string {
+	symbol = strings.TrimSpace(symbol)
+	return prefix + "." + symbol
 }

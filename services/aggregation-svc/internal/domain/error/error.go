@@ -18,6 +18,7 @@ const (
 	ErrLedgerBadResponse  ErrorCode = "LEDGER_BAD_RESPONSE"
 	ErrPriceUnavailable   ErrorCode = "PRICE_UNAVAILABLE"
 	ErrPriceBadResponse   ErrorCode = "PRICE_BAD_RESPONSE"
+	ErrDataNotReady       ErrorCode = "DATA_NOT_READY"
 	ErrImportAlreadyDone  ErrorCode = "IMPORT_ALREADY_COMPLETED"
 	ErrImportLocked       ErrorCode = "IMPORT_LOCKED"
 	ErrImportInconsistent ErrorCode = "IMPORT_INCONSISTENT"
