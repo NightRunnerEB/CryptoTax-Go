@@ -57,12 +57,12 @@ message AggregatedTx {
   google.protobuf.Struct    in_money        = 8;
   google.protobuf.Struct    out_money       = 9;
   google.protobuf.Struct    fee_money       = 10;
-  string                    tx_hash         = 11;
+  optional string           tx_hash         = 11;
   string                    note            = 12;
-  string                    contract_symbol = 13;
+  optional string           contract_symbol = 13;
   string                    derivative_kind = 14;
-  string                    position_id     = 15;
-  string                    order_id        = 16;
+  optional string           position_id     = 15;
+  optional string           order_id        = 16;
   string                    tx_fingerprint  = 17;
 }
 

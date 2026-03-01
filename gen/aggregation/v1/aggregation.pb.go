@@ -35,12 +35,12 @@ type AggregatedTx struct {
 	InMoney        *structpb.Struct       `protobuf:"bytes,8,opt,name=in_money,json=inMoney,proto3" json:"in_money,omitempty"`
 	OutMoney       *structpb.Struct       `protobuf:"bytes,9,opt,name=out_money,json=outMoney,proto3" json:"out_money,omitempty"`
 	FeeMoney       *structpb.Struct       `protobuf:"bytes,10,opt,name=fee_money,json=feeMoney,proto3" json:"fee_money,omitempty"`
-	TxHash         string                 `protobuf:"bytes,11,opt,name=tx_hash,json=txHash,proto3" json:"tx_hash,omitempty"`
+	TxHash         *string                `protobuf:"bytes,11,opt,name=tx_hash,json=txHash,proto3,oneof" json:"tx_hash,omitempty"`
 	Note           string                 `protobuf:"bytes,12,opt,name=note,proto3" json:"note,omitempty"`
-	ContractSymbol string                 `protobuf:"bytes,13,opt,name=contract_symbol,json=contractSymbol,proto3" json:"contract_symbol,omitempty"`
+	ContractSymbol *string                `protobuf:"bytes,13,opt,name=contract_symbol,json=contractSymbol,proto3,oneof" json:"contract_symbol,omitempty"`
 	DerivativeKind string                 `protobuf:"bytes,14,opt,name=derivative_kind,json=derivativeKind,proto3" json:"derivative_kind,omitempty"`
-	PositionId     string                 `protobuf:"bytes,15,opt,name=position_id,json=positionId,proto3" json:"position_id,omitempty"`
-	OrderId        string                 `protobuf:"bytes,16,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	PositionId     *string                `protobuf:"bytes,15,opt,name=position_id,json=positionId,proto3,oneof" json:"position_id,omitempty"`
+	OrderId        *string                `protobuf:"bytes,16,opt,name=order_id,json=orderId,proto3,oneof" json:"order_id,omitempty"`
 	TxFingerprint  string                 `protobuf:"bytes,17,opt,name=tx_fingerprint,json=txFingerprint,proto3" json:"tx_fingerprint,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -140,8 +140,8 @@ func (x *AggregatedTx) GetFeeMoney() *structpb.Struct {
 }
 
 func (x *AggregatedTx) GetTxHash() string {
-	if x != nil {
-		return x.TxHash
+	if x != nil && x.TxHash != nil {
+		return *x.TxHash
 	}
 	return ""
 }
@@ -154,8 +154,8 @@ func (x *AggregatedTx) GetNote() string {
 }
 
 func (x *AggregatedTx) GetContractSymbol() string {
-	if x != nil {
-		return x.ContractSymbol
+	if x != nil && x.ContractSymbol != nil {
+		return *x.ContractSymbol
 	}
 	return ""
 }
@@ -168,15 +168,15 @@ func (x *AggregatedTx) GetDerivativeKind() string {
 }
 
 func (x *AggregatedTx) GetPositionId() string {
-	if x != nil {
-		return x.PositionId
+	if x != nil && x.PositionId != nil {
+		return *x.PositionId
 	}
 	return ""
 }
 
 func (x *AggregatedTx) GetOrderId() string {
-	if x != nil {
-		return x.OrderId
+	if x != nil && x.OrderId != nil {
+		return *x.OrderId
 	}
 	return ""
 }
@@ -692,7 +692,7 @@ var File_aggregation_v1_aggregation_proto protoreflect.FileDescriptor
 
 const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"\n" +
-	" aggregation/v1/aggregation.proto\x12\x0eaggregation.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc2\x04\n" +
+	" aggregation/v1/aggregation.proto\x12\x0eaggregation.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x93\x05\n" +
 	"\fAggregatedTx\x12\x13\n" +
 	"\x05tx_id\x18\x01 \x01(\tR\x04txId\x12\x1b\n" +
 	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12\x16\n" +
@@ -703,15 +703,20 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"\bin_money\x18\b \x01(\v2\x17.google.protobuf.StructR\ainMoney\x124\n" +
 	"\tout_money\x18\t \x01(\v2\x17.google.protobuf.StructR\boutMoney\x124\n" +
 	"\tfee_money\x18\n" +
-	" \x01(\v2\x17.google.protobuf.StructR\bfeeMoney\x12\x17\n" +
-	"\atx_hash\x18\v \x01(\tR\x06txHash\x12\x12\n" +
-	"\x04note\x18\f \x01(\tR\x04note\x12'\n" +
-	"\x0fcontract_symbol\x18\r \x01(\tR\x0econtractSymbol\x12'\n" +
-	"\x0fderivative_kind\x18\x0e \x01(\tR\x0ederivativeKind\x12\x1f\n" +
-	"\vposition_id\x18\x0f \x01(\tR\n" +
-	"positionId\x12\x19\n" +
-	"\border_id\x18\x10 \x01(\tR\aorderId\x12%\n" +
-	"\x0etx_fingerprint\x18\x11 \x01(\tR\rtxFingerprint\"\x89\x01\n" +
+	" \x01(\v2\x17.google.protobuf.StructR\bfeeMoney\x12\x1c\n" +
+	"\atx_hash\x18\v \x01(\tH\x00R\x06txHash\x88\x01\x01\x12\x12\n" +
+	"\x04note\x18\f \x01(\tR\x04note\x12,\n" +
+	"\x0fcontract_symbol\x18\r \x01(\tH\x01R\x0econtractSymbol\x88\x01\x01\x12'\n" +
+	"\x0fderivative_kind\x18\x0e \x01(\tR\x0ederivativeKind\x12$\n" +
+	"\vposition_id\x18\x0f \x01(\tH\x02R\n" +
+	"positionId\x88\x01\x01\x12\x1e\n" +
+	"\border_id\x18\x10 \x01(\tH\x03R\aorderId\x88\x01\x01\x12%\n" +
+	"\x0etx_fingerprint\x18\x11 \x01(\tR\rtxFingerprintB\n" +
+	"\n" +
+	"\b_tx_hashB\x12\n" +
+	"\x10_contract_symbolB\x0e\n" +
+	"\f_position_idB\v\n" +
+	"\t_order_id\"\x89\x01\n" +
 	"\x1fListTransactionsByImportRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
 	"\timport_id\x18\x02 \x01(\tR\bimportId\x12\x14\n" +
@@ -747,7 +752,7 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"\x18ListTransactionsByImport\x12/.aggregation.v1.ListTransactionsByImportRequest\x1a0.aggregation.v1.ListTransactionsByImportResponse\"@\x82\xd3\xe4\x93\x02:\x128/v1/tenants/{tenant_id}/imports/{import_id}/transactions\x12\xa8\x01\n" +
 	"\x17ListTransactionsByRange\x12..aggregation.v1.ListTransactionsByRangeRequest\x1a/.aggregation.v1.ListTransactionsByRangeResponse\",\x82\xd3\xe4\x93\x02&\x12$/v1/tenants/{tenant_id}/transactions\x12\x92\x01\n" +
 	"\x11GetTenantSettings\x12(.aggregation.v1.GetTenantSettingsRequest\x1a).aggregation.v1.GetTenantSettingsResponse\"(\x82\xd3\xe4\x93\x02\"\x12 /v1/tenants/{tenant_id}/settings\x12\x9e\x01\n" +
-	"\x14UpsertTenantSettings\x12+.aggregation.v1.UpsertTenantSettingsRequest\x1a,.aggregation.v1.UpsertTenantSettingsResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\" /v1/tenants/{tenant_id}/settingsBFZDgithub.com/NightRunner/CryptoTax-Go/gen/aggregation/v1;aggregationv1b\x06proto3"
+	"\x14UpsertTenantSettings\x12+.aggregation.v1.UpsertTenantSettingsRequest\x1a,.aggregation.v1.UpsertTenantSettingsResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\x1a /v1/tenants/{tenant_id}/settingsBFZDgithub.com/NightRunner/CryptoTax-Go/gen/aggregation/v1;aggregationv1b\x06proto3"
 
 var (
 	file_aggregation_v1_aggregation_proto_rawDescOnce sync.Once
@@ -807,6 +812,7 @@ func file_aggregation_v1_aggregation_proto_init() {
 	if File_aggregation_v1_aggregation_proto != nil {
 		return
 	}
+	file_aggregation_v1_aggregation_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

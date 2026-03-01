@@ -4,14 +4,15 @@ import (
 	"context"
 	"strconv"
 
-	aggregationv1 "github.com/NightRunner/CryptoTax-Go/gen/aggregation/v1"
-	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
-	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
-	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	aggregationv1 "github.com/NightRunner/CryptoTax-Go/gen/aggregation/v1"
+	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
+	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
 )
 
 type AggregationServer struct {
@@ -111,12 +112,12 @@ func (s *AggregationServer) ListTransactionsByImport(ctx context.Context, req *a
 			InMoney:        inMoney,
 			OutMoney:       outMoney,
 			FeeMoney:       feeMoney,
-			TxHash:         optionalString(tx.TxHash),
+			TxHash:         tx.TxHash,
 			Note:           optionalString(tx.Note),
-			ContractSymbol: optionalString(tx.ContractSymbol),
+			ContractSymbol: tx.ContractSymbol,
 			DerivativeKind: optionalString(tx.DerivativeKind),
-			PositionId:     optionalString(tx.PositionID),
-			OrderId:        optionalString(tx.OrderID),
+			PositionId:     tx.PositionID,
+			OrderId:        tx.OrderID,
 			TxFingerprint:  tx.TxFingerprint,
 		})
 	}
@@ -225,12 +226,12 @@ func (s *AggregationServer) ListTransactionsByRange(ctx context.Context, req *ag
 			InMoney:        inMoney,
 			OutMoney:       outMoney,
 			FeeMoney:       feeMoney,
-			TxHash:         optionalString(tx.TxHash),
+			TxHash:         tx.TxHash,
 			Note:           optionalString(tx.Note),
-			ContractSymbol: optionalString(tx.ContractSymbol),
+			ContractSymbol: tx.ContractSymbol,
 			DerivativeKind: optionalString(tx.DerivativeKind),
-			PositionId:     optionalString(tx.PositionID),
-			OrderId:        optionalString(tx.OrderID),
+			PositionId:     tx.PositionID,
+			OrderId:        tx.OrderID,
 			TxFingerprint:  tx.TxFingerprint,
 		})
 	}

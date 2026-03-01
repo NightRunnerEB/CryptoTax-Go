@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	pricev1 "github.com/NightRunner/CryptoTax-Go/gen/price/v1"
 	"github.com/google/uuid"
+
+	pricev1 "github.com/NightRunner/CryptoTax-Go/gen/price/v1"
 )
 
 type AggregatedTxPage struct {
@@ -50,7 +51,12 @@ type PriceClient interface {
 	ValuateTransactionsBatch(ctx context.Context, req *pricev1.ValuateTransactionsRequest) (*pricev1.ValuateTransactionsResponse, error)
 }
 
+// LockManager coordinates import processing across multiple workers/instances.
+// AcquireImportLock returns:
+//   - locked=true: current worker acquired the lock and must continue processing.
+//   - locked=false: lock is already held by another worker, caller should skip processing.
 type LockManager interface {
 	AcquireImportLock(ctx context.Context, tenantID, importID uuid.UUID, ttl time.Duration) (bool, error)
+	// ReleaseImportLock releases previously acquired lock for (tenantID, importID).
 	ReleaseImportLock(ctx context.Context, tenantID, importID uuid.UUID) error
 }
