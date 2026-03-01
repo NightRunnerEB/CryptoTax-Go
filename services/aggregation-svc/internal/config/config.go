@@ -4,9 +4,10 @@ import (
 	"os"
 	"time"
 
-	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
+
+	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
 )
 
 type (

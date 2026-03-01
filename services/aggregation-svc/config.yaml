@@ -6,7 +6,7 @@ log:
   level: "debug"
 
 otel:
-  endpoint: "otel-collector:4317"
+  endpoint: "localhost:4317"
   insecure: true
   metrics_export_interval: 10s
   runtime_read_mem_stats_interval: 10s
@@ -29,20 +29,20 @@ redis:
   jitter: 120s
 
 ledger:
-  base_url: "http://ledger-svc:8080"
+  base_url: "0.0.0.0:8086"
   timeout: 10s
 
 price:
-  addr: "price-svc:8093"
+  addr: "0.0.0.0:8093"
   timeout: 10s
   batch_size: 10000
 
 rabbitmq:
   url: "amqp://guest:guest@localhost:5672/"
-  exchange: "ledger.events"
+  exchange: "cryptotax"
   queue: "aggregation.import.completed"
   queue_durable: true
-  routing_key: "ImportCompleted"
+  routing_key: "import.completed"
   consumer_name: "aggregation-import-completed-consumer"
   prefetch: 10
   concurrency: 1

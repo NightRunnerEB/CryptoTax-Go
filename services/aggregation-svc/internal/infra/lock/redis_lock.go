@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+
 	pkgredis "github.com/NightRunner/CryptoTax-Go/pkg/redis"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
-	"github.com/google/uuid"
 )
 
 type RedisLockManager struct {

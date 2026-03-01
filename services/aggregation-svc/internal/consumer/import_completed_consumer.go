@@ -5,14 +5,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
+	"time"
 
-	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/config"
-	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
-	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
 	"github.com/google/uuid"
 	rabbitmq "github.com/wagslane/go-rabbitmq"
 	"go.uber.org/zap"
+
+	pkglogger "github.com/NightRunner/CryptoTax-Go/pkg/logger"
+	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/config"
+	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
+)
+
+const (
+	requeueDelayDefault = 300 * time.Millisecond
+	requeueDelaySlow    = time.Second
 )
 
 type ImportCompletedConsumer struct {
@@ -116,27 +126,34 @@ func (c *ImportCompletedConsumer) handleDelivery(d rabbitmq.Delivery) rabbitmq.A
 	if err != nil {
 		c.log.Warn("ImportCompletedConsumer: invalid message payload",
 			zap.Error(err),
+			zap.String("routing_key", d.RoutingKey),
 			zap.ByteString("body", d.Body),
 		)
 		return rabbitmq.NackDiscard
 	}
 
-	if err := c.uc.ProcessImport(context.Background(), event); err != nil {
+	ucCtx := pkglogger.WithContext(context.Background(), c.log)
+	if err := c.uc.ProcessImport(ucCtx, event); err != nil {
 		if shouldRequeue(err) {
-			c.log.Warn("ImportCompletedConsumer: process import failed, requeue",
-				zap.Error(err),
+			logFields := []zap.Field{
 				zap.String("tenant_id", event.TenantID.String()),
 				zap.String("import_id", event.ImportID.String()),
-			)
+			}
+			logFields = append(logFields, buildErrorFields(err)...)
+			c.log.Warn("ImportCompletedConsumer: process import failed, requeue", logFields...)
+			time.Sleep(requeueDelayFor(err))
 			return rabbitmq.NackRequeue
 		}
-		c.log.Warn("ImportCompletedConsumer: process import failed, discard",
-			zap.Error(err),
+		logFields := []zap.Field{
 			zap.String("tenant_id", event.TenantID.String()),
 			zap.String("import_id", event.ImportID.String()),
-		)
+		}
+		logFields = append(logFields, buildErrorFields(err)...)
+		c.log.Warn("ImportCompletedConsumer: process import failed, discard", logFields...)
 		return rabbitmq.NackDiscard
 	}
+
+	c.log.Debug("ImportCompletedConsumer: process import successfully completed")
 
 	return rabbitmq.Ack
 }
@@ -146,6 +163,26 @@ type importCompletedEnvelope struct {
 }
 
 func decodeImportCompletedEvent(body []byte) (domain.ImportEvent, error) {
+	var rawEnvelope map[string]json.RawMessage
+	if err := json.Unmarshal(body, &rawEnvelope); err == nil && len(rawEnvelope) > 0 {
+		if rawEvent, ok := rawEnvelope["ImportCompleted"]; ok {
+			var event domain.ImportEvent
+			if err := json.Unmarshal(rawEvent, &event); err != nil {
+				return domain.ImportEvent{}, fmt.Errorf("decode ImportCompleted payload: %w", err)
+			}
+			if event.TenantID == uuid.Nil || event.ImportID == uuid.Nil {
+				return domain.ImportEvent{}, fmt.Errorf("missing tenant_id or import_id in ImportCompleted payload")
+			}
+			return event, nil
+		}
+
+		for key := range rawEnvelope {
+			if strings.HasPrefix(key, "Import") {
+				return domain.ImportEvent{}, fmt.Errorf("unsupported event type: %s", key)
+			}
+		}
+	}
+
 	var envelope importCompletedEnvelope
 	if err := json.Unmarshal(body, &envelope); err == nil && envelope.ImportCompleted != nil {
 		event := *envelope.ImportCompleted
@@ -177,11 +214,73 @@ func shouldRequeue(err error) bool {
 		return false
 	case apperr.ErrInvalidArgument:
 		return false
-	case apperr.ErrLedgerUnavailable, apperr.ErrLedgerBadResponse, apperr.ErrPriceUnavailable, apperr.ErrPriceBadResponse:
+	case apperr.ErrLedgerUnavailable, apperr.ErrPriceUnavailable, apperr.ErrPriceBadResponse:
 		return true
+	case apperr.ErrLedgerBadResponse:
+		return shouldRequeueLedgerBadResponse(ae)
 	case apperr.ErrImportLocked, apperr.ErrImportInconsistent, apperr.ErrInternal:
 		return true
 	default:
 		return true
 	}
+}
+
+func shouldRequeueLedgerBadResponse(err *apperr.Error) bool {
+	statusCode := parseStatusCode(err)
+	if statusCode == 0 {
+		return true
+	}
+	if statusCode == 408 || statusCode == 429 {
+		return true
+	}
+	return statusCode >= 500
+}
+
+func parseStatusCode(err *apperr.Error) int {
+	if err == nil || err.Meta == nil {
+		return 0
+	}
+	if raw := strings.TrimSpace(err.Meta["status_code"]); raw != "" {
+		if code, parseErr := strconv.Atoi(raw); parseErr == nil {
+			return code
+		}
+	}
+	if raw := strings.TrimSpace(err.Meta["status"]); raw != "" {
+		fields := strings.Fields(raw)
+		if len(fields) > 0 {
+			if code, parseErr := strconv.Atoi(fields[0]); parseErr == nil {
+				return code
+			}
+		}
+	}
+	return 0
+}
+
+func requeueDelayFor(err error) time.Duration {
+	var ae *apperr.Error
+	if !errors.As(err, &ae) {
+		return requeueDelayDefault
+	}
+	switch ae.Code {
+	case apperr.ErrLedgerUnavailable, apperr.ErrPriceUnavailable:
+		return requeueDelaySlow
+	default:
+		return requeueDelayDefault
+	}
+}
+
+func buildErrorFields(err error) []zap.Field {
+	fields := []zap.Field{zap.Error(err)}
+	var ae *apperr.Error
+	if !errors.As(err, &ae) {
+		return fields
+	}
+	fields = append(fields, zap.String("error_code", string(ae.Code)))
+	if ae.Cause != nil {
+		fields = append(fields, zap.String("error_cause", ae.Cause.Error()))
+	}
+	if len(ae.Meta) > 0 {
+		fields = append(fields, zap.Any("error_meta", ae.Meta))
+	}
+	return fields
 }

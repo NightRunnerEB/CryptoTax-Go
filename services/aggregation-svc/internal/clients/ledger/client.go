@@ -3,12 +3,14 @@ package ledger
 import (
 	"context"
 	"fmt"
+	"strconv"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/google/uuid"
 
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/config"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
-	"github.com/go-resty/resty/v2"
-	"github.com/google/uuid"
 )
 
 type Client struct {
@@ -47,8 +49,9 @@ func (c *Client) ListTransactionsByImport(ctx context.Context, tenantID, importI
 	}
 	if resp.IsError() {
 		return nil, apperr.LedgerBadResponse("ledger bad response", nil, map[string]string{
-			"status": resp.Status(),
-			"path":   path,
+			"status":      resp.Status(),
+			"status_code": strconv.Itoa(resp.StatusCode()),
+			"path":        path,
 		})
 	}
 
