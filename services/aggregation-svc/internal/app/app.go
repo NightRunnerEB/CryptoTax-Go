@@ -11,6 +11,19 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"go.opentelemetry.io/contrib/bridges/otelzap"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel/trace/noop"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/stats"
+
 	aggregationv1 "github.com/NightRunner/CryptoTax-Go/gen/aggregation/v1"
 	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"github.com/NightRunner/CryptoTax-Go/pkg/postgres"
@@ -27,18 +40,6 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/interceptors"
 	grpcserver "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/server"
 	usecase "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/usecases"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"go.opentelemetry.io/contrib/bridges/otelzap"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.opentelemetry.io/otel/trace/noop"
-	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/health"
-	healthpb "google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/reflection"
-	"google.golang.org/grpc/stats"
 )
 
 var interruptSignals = []os.Signal{

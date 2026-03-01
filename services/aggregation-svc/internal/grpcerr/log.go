@@ -3,8 +3,9 @@ package grpcerr
 import (
 	"errors"
 
-	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
 	"go.uber.org/zap"
+
+	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
 )
 
 func LogFields(err error) []zap.Field {
