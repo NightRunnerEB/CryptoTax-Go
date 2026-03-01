@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
 	"github.com/jackc/pgx/v5/pgtype"
+
+	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
 )
 
 func toTimestamptz(t time.Time) pgtype.Timestamptz {

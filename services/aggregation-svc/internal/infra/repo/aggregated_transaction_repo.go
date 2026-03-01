@@ -3,12 +3,14 @@ package repository
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
 
 	db "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
-	"github.com/google/uuid"
 )
 
 type aggregatedTransactionRepo struct {
@@ -22,6 +24,9 @@ func NewAggregatedTransactionRepo(store db.Store) domain.AggregatedTransactionRe
 func (r *aggregatedTransactionRepo) UpsertBatch(ctx context.Context, txs []domain.AggregatedTransaction) error {
 	if len(txs) == 0 {
 		return nil
+	}
+	if err := validateBatchForUpsert(txs); err != nil {
+		return err
 	}
 
 	for _, tx := range txs {
@@ -63,19 +68,8 @@ func (r *aggregatedTransactionRepo) UpsertBatch(ctx context.Context, txs []domai
 			OrderID:        tx.OrderID,
 			TxHash:         tx.TxHash,
 			Note:           tx.Note,
-			TxFingerprint:  tx.TxFingerprint,
+			TxFingerprint:  strings.TrimSpace(tx.TxFingerprint),
 			CreatedAt:      toTimestamptz(tx.CreatedAt),
-		}
-
-		updatedRows, err := r.store.UpdateAggregatedTransactionByFingerprint(ctx, db.UpdateAggregatedTransactionByFingerprintParams(params))
-		if err != nil {
-			return apperr.Internal("update aggregated transaction by fingerprint failed", err, map[string]string{
-				"tenant_id": tx.TenantID.String(),
-				"import_id": tx.ImportID.String(),
-			})
-		}
-		if updatedRows > 0 {
-			continue
 		}
 
 		err = r.store.UpsertAggregatedTransaction(ctx, params)
@@ -87,6 +81,45 @@ func (r *aggregatedTransactionRepo) UpsertBatch(ctx context.Context, txs []domai
 		}
 	}
 
+	return nil
+}
+
+func validateBatchForUpsert(txs []domain.AggregatedTransaction) error {
+	seenFingerprints := make(map[string]string, len(txs))
+	for _, tx := range txs {
+		if tx.ID == uuid.Nil {
+			return apperr.InvalidArgument("invalid transaction id", nil, apperr.FieldViolation{
+				Field:       "id",
+				Description: "required",
+			})
+		}
+		if tx.TenantID == uuid.Nil {
+			return apperr.InvalidArgument("invalid tenant id", nil, apperr.FieldViolation{
+				Field:       "tenant_id",
+				Description: "required",
+			})
+		}
+		if tx.ImportID == uuid.Nil {
+			return apperr.InvalidArgument("invalid import id", nil, apperr.FieldViolation{
+				Field:       "import_id",
+				Description: "required",
+			})
+		}
+		txFingerprint := strings.TrimSpace(tx.TxFingerprint)
+		if txFingerprint == "" {
+			return apperr.InvalidArgument("invalid tx_fingerprint", nil, apperr.FieldViolation{
+				Field:       "tx_fingerprint",
+				Description: "required",
+			})
+		}
+		if prevTxID, exists := seenFingerprints[txFingerprint]; exists {
+			return apperr.InvalidArgument("duplicate tx_fingerprint in batch", nil, apperr.FieldViolation{
+				Field:       "tx_fingerprint",
+				Description: "duplicate for tx_id " + tx.ID.String() + " and " + prevTxID,
+			})
+		}
+		seenFingerprints[txFingerprint] = tx.ID.String()
+	}
 	return nil
 }
 

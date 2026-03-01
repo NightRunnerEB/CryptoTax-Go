@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+
 	db "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 type tenantSettingsRepo struct {

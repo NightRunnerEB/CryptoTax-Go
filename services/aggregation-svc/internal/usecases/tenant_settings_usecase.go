@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
-	"github.com/google/uuid"
 )
 
 type tenantSettingsUC struct {
@@ -78,7 +79,7 @@ func normalizeFiatCurrency(value string) string {
 	if value == "" {
 		return DefaultFiatCurrency
 	}
-	return strings.ToLower(value)
+	return value
 }
 
 func normalizeTimezone(value string) string {
@@ -97,16 +98,6 @@ func validateTenantSettings(settings domain.TenantSettings) error {
 			apperr.FieldViolation{
 				Field:       "fiat_currency",
 				Description: "required",
-			},
-		)
-	}
-	if strings.ToLower(settings.FiatCurrency) != settings.FiatCurrency {
-		return apperr.InvalidArgument(
-			"invalid fiat currency",
-			nil,
-			apperr.FieldViolation{
-				Field:       "fiat_currency",
-				Description: "must be lowercase",
 			},
 		)
 	}

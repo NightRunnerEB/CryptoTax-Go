@@ -1,8 +1,9 @@
 package db
 
 import (
-	"github.com/NightRunner/CryptoTax-Go/pkg/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/NightRunner/CryptoTax-Go/pkg/postgres"
 )
 
 // Store defines all functions to execute db queries and transactions
