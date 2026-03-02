@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
-	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 	"golang.org/x/net/html/charset"
+
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 )
 
 func FetchXML[T any](

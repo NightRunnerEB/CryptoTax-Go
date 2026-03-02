@@ -10,10 +10,11 @@ import (
 	"sync"
 	"time"
 
-	inmemory "github.com/NightRunner/CryptoTax-Go/pkg/in-memory"
-	applogger "github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
+
+	inmemory "github.com/NightRunner/CryptoTax-Go/pkg/in-memory"
+	applogger "github.com/NightRunner/CryptoTax-Go/pkg/logger"
 )
 
 const (
@@ -95,7 +96,7 @@ func (s *KZTSource) Update(ctx context.Context) error {
 	from := dateOnly(lastSaved, loc).AddDate(0, 0, 1)
 	to := dateOnly(now, loc).AddDate(0, 0, 1)
 
-	if from.After(to) || from.Equal(to){
+	if from.After(to) || from.Equal(to) {
 		return nil
 	}
 
