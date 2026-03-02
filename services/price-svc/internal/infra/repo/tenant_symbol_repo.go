@@ -3,10 +3,11 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
+
 	db "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
-	"github.com/google/uuid"
 )
 
 type tenantSymbolRepository struct {
@@ -135,7 +136,7 @@ func (r *tenantSymbolRepository) GetList(
 		return nil, apperr.InvalidArgument("invalid tenant symbol query", nil, violations...)
 	}
 	if len(symbols) == 0 {
-		return []domain.TenantSymbol{}, nil
+		return nil, nil
 	}
 
 	rows, err := r.store.GetTenantSymbols(ctx, db.GetTenantSymbolsParams{

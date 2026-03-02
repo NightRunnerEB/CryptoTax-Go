@@ -5,7 +5,7 @@ import (
 	"google.golang.org/protobuf/protoadapt"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 )
 
 func toDetails(ae *apperr.Error, domain string) []protoadapt.MessageV1 {

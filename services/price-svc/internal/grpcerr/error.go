@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 )
 
 func ToGRPCStatus(err error, domain string) error {

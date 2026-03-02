@@ -3,11 +3,12 @@ package interceptors
 import (
 	"context"
 
-	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
 )
 
 func RecoveryInterceptor() grpc.UnaryServerInterceptor {

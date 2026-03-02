@@ -6,11 +6,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+
 	db "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type historicalPriceRepository struct {
@@ -23,7 +24,7 @@ func NewHistoricalPriceRepo(store db.Store) domain.HistoricalPriceRepo {
 
 func (r *historicalPriceRepository) GetBatch(ctx context.Context, priceKeys []domain.PriceKey) ([]domain.HistoricalPrice, error) {
 	if len(priceKeys) == 0 {
-		return []domain.HistoricalPrice{}, nil
+		return nil, nil
 	}
 
 	coinIDs := make([]string, 0, len(priceKeys))

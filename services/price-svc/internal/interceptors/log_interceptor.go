@@ -5,14 +5,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/grpcerr"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+
+	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
+	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/grpcerr"
 )
 
 type AccessLogConfig struct {

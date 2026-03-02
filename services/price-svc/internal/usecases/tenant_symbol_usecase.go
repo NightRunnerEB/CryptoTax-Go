@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	"github.com/google/uuid"
+
+	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 )
 
 type tenantSymbolUC struct {

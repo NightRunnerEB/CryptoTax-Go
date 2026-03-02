@@ -13,7 +13,7 @@ import (
 
 const USD = "usd"
 
-var precision = "3"
+const _marketChartPrecision = "3"
 
 const providerCoinGecko = "coingecko"
 
@@ -51,7 +51,7 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 	}
 
 	if len(priceKeys) == 0 {
-		return []domain.Fiat{}, nil
+		return nil, nil
 	}
 
 	if u.contextTimeout > 0 {
@@ -205,6 +205,7 @@ func (u *historicalPriceUC) fetchAndUpsertDay(ctx context.Context, coinID string
 	to := dayStartUTC.Add(24*time.Hour - time.Second)
 
 	// CoinGecko returns points; per our agreement we normalize sequentially into buckets without flooring by timestamp.
+	precision := _marketChartPrecision
 	resp, err := u.cgClient.CoinsMarketChartRange(ctx, coinID, "usd", dayStartUTC, to, &precision)
 	if err != nil {
 		var ae *apperr.Error

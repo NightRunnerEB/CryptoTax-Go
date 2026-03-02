@@ -4,10 +4,11 @@ import (
 	"math/big"
 	"time"
 
-	sqlc "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
+
+	sqlc "github.com/NightRunner/CryptoTax-Go/services/price-svc/db/sqlc"
+	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 )
 
 func mapHistoricalPriceRowDBToDomain(h sqlc.GetHistoricalPricesBatchRow) (domain.HistoricalPrice, error) {

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	redis "github.com/NightRunner/CryptoTax-Go/pkg/redis"
+	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 )
 
 type PriceKey struct {

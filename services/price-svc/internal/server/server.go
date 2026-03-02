@@ -5,19 +5,20 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
+	"go.uber.org/zap"
+
 	v1 "github.com/NightRunner/CryptoTax-Go/gen/price/v1"
 	applogger "github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
-	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
-	"go.uber.org/zap"
 )
 
 type LegKind int
 
 const (
-	LegIn LegKind = iota
+	LegIn LegKind = iota + 1
 	LegOut
 	LegFee
 )
