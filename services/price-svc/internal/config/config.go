@@ -4,10 +4,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/coingecko"
-	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
+
+	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/coingecko"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 )
 
 type (

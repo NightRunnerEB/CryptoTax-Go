@@ -10,7 +10,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/NightRunner/CryptoTax-Go/gen/price/v1"
+	"go.opentelemetry.io/contrib/bridges/otelzap"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel/trace/noop"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/stats"
+
+	pricev1 "github.com/NightRunner/CryptoTax-Go/gen/price/v1"
 	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"github.com/NightRunner/CryptoTax-Go/pkg/postgres"
 	"github.com/NightRunner/CryptoTax-Go/pkg/redis"
@@ -26,26 +37,15 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/resolver"
 	grpcserver "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/server"
 	usecase "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/usecases"
-	"go.opentelemetry.io/contrib/bridges/otelzap"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.opentelemetry.io/otel/trace/noop"
-	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
-	"google.golang.org/grpc/stats"
-
-	"google.golang.org/grpc/health"
-	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-var interruptSignals = []os.Signal{
-	os.Interrupt,
-	syscall.SIGTERM,
-	syscall.SIGINT,
-}
-
 func Run(cfg *config.Config) {
+	interruptSignals := []os.Signal{
+		os.Interrupt,
+		syscall.SIGTERM,
+		syscall.SIGINT,
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), interruptSignals...)
 	defer stop()
 
@@ -149,6 +149,7 @@ func Run(cfg *config.Config) {
 		cfg,
 		statsHandler,
 		telemetryProviders,
+		fxProvider,
 		resolver,
 		historicalPriceUC,
 		tenantSymbolUC,
@@ -166,6 +167,7 @@ func runGrpcServer(
 	config *config.Config,
 	statsHandler stats.Handler,
 	telemetryProviders *telemetry.Providers,
+	fxProvider domain.FXProvider,
 	resolver domain.CoinIdResolver,
 	historicalPriceUC domain.HistoricalPriceUseCase,
 	tenantSymbolUC domain.TenantSymbolUseCase,
@@ -220,6 +222,10 @@ func runGrpcServer(
 
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
+		if err := fxProvider.Stop(shutdownCtx); err != nil {
+			log.Error("fx provider graceful stop failed", zap.Error(err))
+		}
+
 		if err := telemetryProviders.GracefulStop(shutdownCtx); err != nil {
 			log.Error("telemetry graceful stop failed", zap.Error(err))
 		}
