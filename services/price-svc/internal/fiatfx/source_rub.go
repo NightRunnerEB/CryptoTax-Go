@@ -8,8 +8,9 @@ import (
 	"sync"
 	"time"
 
-	inmemory "github.com/NightRunner/CryptoTax-Go/pkg/in-memory"
 	"github.com/shopspring/decimal"
+
+	inmemory "github.com/NightRunner/CryptoTax-Go/pkg/in-memory"
 )
 
 const (
@@ -115,7 +116,7 @@ func (s *RUBSource) Update(ctx context.Context) error {
 	// Compute [from..to] as date-only in the configured location.
 	from := lastSaved
 	if from.IsZero() {
-		from = defaultFrom.In(loc)
+		from = defaultFromUTC().In(loc)
 	}
 	from = dateOnly(from, loc).AddDate(0, 0, 1)
 	to := dateOnly(now, loc).AddDate(0, 0, 1)

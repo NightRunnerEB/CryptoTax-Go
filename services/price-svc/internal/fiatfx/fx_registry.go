@@ -16,8 +16,10 @@ const (
 	KZT Currency = "KZT"
 )
 
-// defaultFrom is the start point for the very first sync (when lastDate is empty).
-var defaultFrom = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+// defaultFromUTC is the start point for the very first sync (when lastDate is empty).
+func defaultFromUTC() time.Time {
+	return time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+}
 
 type Schedule struct {
 	Loc  *time.Location // Europe/Moscow for RUB, Asia/Almaty for KZT

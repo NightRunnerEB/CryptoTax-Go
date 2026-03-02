@@ -36,6 +36,7 @@ type HistoricalPriceRepo interface {
 
 type FXProvider interface {
 	Start(context.Context) error
+	Stop(context.Context) error
 	GetUSDtoFiatRate(ctx context.Context, day time.Time, fiat string) (Fiat, error)
 }
 
