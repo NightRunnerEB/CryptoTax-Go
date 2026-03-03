@@ -4,9 +4,10 @@ import (
 	"context"
 	"strings"
 
-	apperr "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/error"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
+
+	apperr "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/error"
 )
 
 const (

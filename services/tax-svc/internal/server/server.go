@@ -3,46 +3,42 @@ package grpcserver
 import (
 	"context"
 	"strings"
-	"time"
+
+	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	taxv1 "github.com/NightRunner/CryptoTax-Go/gen/tax/v1"
-	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/error"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type TaxServer struct {
 	taxv1.UnimplementedTaxServer
-
-	taxProfileUC      domain.TaxProfileUseCase
-	taxpayerProfileUC domain.TaxpayerProfileUseCase
-	reportUC          domain.ReportUseCase
+	taxProfileUC domain.TaxProfileUseCase
+	taxJobUC     domain.TaxJobUseCase
 }
 
-func NewTaxServer(
-	taxProfileUC domain.TaxProfileUseCase,
-	taxpayerProfileUC domain.TaxpayerProfileUseCase,
-	reportUC domain.ReportUseCase,
-) *TaxServer {
+func NewTaxServer(taxProfileUC domain.TaxProfileUseCase, taxJobUC domain.TaxJobUseCase) *TaxServer {
 	return &TaxServer{
-		taxProfileUC:      taxProfileUC,
-		taxpayerProfileUC: taxpayerProfileUC,
-		reportUC:          reportUC,
+		taxProfileUC: taxProfileUC,
+		taxJobUC:     taxJobUC,
 	}
 }
 
 func (s *TaxServer) GetTaxProfile(ctx context.Context, req *taxv1.GetTaxProfileRequest) (*taxv1.GetTaxProfileResponse, error) {
 	if req == nil {
-		return nil, invalidRequest()
+		return nil, apperr.InvalidArgument("invalid request", nil, apperr.FieldViolation{
+			Field:       "request",
+			Description: "required",
+		})
 	}
+
 	tenantID, err := parseUUID(req.GetTenantId())
 	if err != nil {
-		return nil, invalidField("tenant_id", err)
+		return nil, apperr.InvalidArgument("invalid tenant_id", err, apperr.FieldViolation{
+			Field:       "tenant_id",
+			Description: "invalid uuid",
+		})
 	}
 	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
 		return nil, err
@@ -54,309 +50,289 @@ func (s *TaxServer) GetTaxProfile(ctx context.Context, req *taxv1.GetTaxProfileR
 	}
 
 	return &taxv1.GetTaxProfileResponse{
-		Profile: mapTaxProfile(profile),
+		Profile: toProtoTaxProfile(profile),
 	}, nil
 }
 
 func (s *TaxServer) UpsertTaxProfile(ctx context.Context, req *taxv1.UpsertTaxProfileRequest) (*taxv1.UpsertTaxProfileResponse, error) {
 	if req == nil {
-		return nil, invalidRequest()
+		return nil, apperr.InvalidArgument("invalid request", nil, apperr.FieldViolation{
+			Field:       "request",
+			Description: "required",
+		})
 	}
+
 	tenantID, err := parseUUID(req.GetTenantId())
 	if err != nil {
-		return nil, invalidField("tenant_id", err)
+		return nil, apperr.InvalidArgument("invalid tenant_id", err, apperr.FieldViolation{
+			Field:       "tenant_id",
+			Description: "invalid uuid",
+		})
 	}
 	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
 		return nil, err
 	}
+	if req.GetProfile() == nil {
+		return nil, apperr.InvalidArgument("invalid profile", nil, apperr.FieldViolation{
+			Field:       "profile",
+			Description: "required",
+		})
+	}
 
-	current, err := s.taxProfileUC.Get(ctx, tenantID)
-	if err != nil {
+	profileReq := req.GetProfile()
+
+	profile := domain.TaxProfile{
+		TenantID:           tenantID,
+		INN:                profileReq.GetInn(),
+		LastName:           profileReq.GetLastName(),
+		FirstName:          profileReq.GetFirstName(),
+		MiddleName:         profileReq.GetMiddleName(),
+		Jurisdiction:       domain.Jurisdiction(strings.TrimSpace(profileReq.GetJurisdiction())),
+		Timezone:           strings.TrimSpace(profileReq.GetTimezone()),
+		Phone:              profileReq.GetPhone(),
+		Wallets:            toWallets(profileReq.GetWallets()),
+		TaxResidencyStatus: domain.TaxResidency(strings.TrimSpace(profileReq.GetTaxResidencyStatus())),
+		TaxPayerType:       domain.TaxPayerType(strings.TrimSpace(profileReq.GetTaxpayerType())),
+	}
+
+	if err := s.taxProfileUC.Upsert(ctx, profile); err != nil {
 		return nil, err
 	}
 
-	upsertInput := current
-	upsertInput.TenantID = tenantID
-	if v := strings.TrimSpace(req.GetJurisdiction()); v != "" {
-		upsertInput.Jurisdiction = v
-	}
-	if v := strings.TrimSpace(req.GetCostBasisMethod()); v != "" {
-		upsertInput.CostBasisMethod = v
-	}
-	if v := strings.TrimSpace(req.GetTimezone()); v != "" {
-		upsertInput.Timezone = v
-	}
-	if req.TreatSwapAsDisposition != nil {
-		upsertInput.TreatSwapAsDisposition = req.GetTreatSwapAsDisposition()
-	}
-	if req.TreatCryptoFeeAsDisposition != nil {
-		upsertInput.TreatCryptoFeeAsDisposition = req.GetTreatCryptoFeeAsDisposition()
-	}
-	if req.IncludeIncomeEvents != nil {
-		upsertInput.IncludeIncomeEvents = req.GetIncludeIncomeEvents()
-	}
-	if req.AllowLossEventsDeduction != nil {
-		upsertInput.AllowLossEventsDeduction = req.GetAllowLossEventsDeduction()
-	}
-	if req.FailOnNegativeInventory != nil {
-		upsertInput.FailOnNegativeInventory = req.GetFailOnNegativeInventory()
-	}
-	if req.FailOnMissingFiat != nil {
-		upsertInput.FailOnMissingFiat = req.GetFailOnMissingFiat()
-	}
-
-	profile, err := s.taxProfileUC.Upsert(ctx, upsertInput)
+	updated, err := s.taxProfileUC.Get(ctx, tenantID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &taxv1.UpsertTaxProfileResponse{
-		Profile: mapTaxProfile(profile),
-	}, nil
-}
-
-func (s *TaxServer) GetTaxpayerProfile(ctx context.Context, req *taxv1.GetTaxpayerProfileRequest) (*taxv1.GetTaxpayerProfileResponse, error) {
-	if req == nil {
-		return nil, invalidRequest()
-	}
-	tenantID, err := parseUUID(req.GetTenantId())
-	if err != nil {
-		return nil, invalidField("tenant_id", err)
-	}
-	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
-		return nil, err
-	}
-
-	profile, err := s.taxpayerProfileUC.Get(ctx, tenantID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &taxv1.GetTaxpayerProfileResponse{
-		Profile: mapTaxpayerProfile(profile),
-	}, nil
-}
-
-func (s *TaxServer) UpsertTaxpayerProfile(ctx context.Context, req *taxv1.UpsertTaxpayerProfileRequest) (*taxv1.UpsertTaxpayerProfileResponse, error) {
-	if req == nil {
-		return nil, invalidRequest()
-	}
-	tenantID, err := parseUUID(req.GetTenantId())
-	if err != nil {
-		return nil, invalidField("tenant_id", err)
-	}
-	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
-		return nil, err
-	}
-
-	var birthDate *time.Time
-	if v := strings.TrimSpace(req.GetBirthDate()); v != "" {
-		t, err := time.Parse("2006-01-02", v)
-		if err != nil {
-			return nil, invalidField("birth_date", err)
-		}
-		birthDate = &t
-	}
-
-	profile, err := s.taxpayerProfileUC.Upsert(ctx, domain.TaxpayerProfile{
-		TenantID:           tenantID,
-		INN:                nilIfEmpty(req.GetInn()),
-		LastName:           nilIfEmpty(req.GetLastName()),
-		FirstName:          nilIfEmpty(req.GetFirstName()),
-		MiddleName:         nilIfEmpty(req.GetMiddleName()),
-		BirthDate:          birthDate,
-		DocumentTypeCode:   nilIfEmpty(req.GetDocumentTypeCode()),
-		DocumentNumber:     nilIfEmpty(req.GetDocumentNumber()),
-		TaxResidencyStatus: nilIfEmpty(req.GetTaxResidencyStatus()),
-		Phone:              nilIfEmpty(req.GetPhone()),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &taxv1.UpsertTaxpayerProfileResponse{
-		Profile: mapTaxpayerProfile(profile),
+		Profile: toProtoTaxProfile(updated),
 	}, nil
 }
 
 func (s *TaxServer) StartReport(ctx context.Context, req *taxv1.StartReportRequest) (*taxv1.StartReportResponse, error) {
-	log := logger.FromContext(ctx)
 	if req == nil {
-		return nil, invalidRequest()
+		return nil, apperr.InvalidArgument("invalid request", nil, apperr.FieldViolation{
+			Field:       "request",
+			Description: "required",
+		})
 	}
+
 	tenantID, err := parseUUID(req.GetTenantId())
 	if err != nil {
-		return nil, invalidField("tenant_id", err)
+		return nil, apperr.InvalidArgument("invalid tenant_id", err, apperr.FieldViolation{
+			Field:       "tenant_id",
+			Description: "invalid uuid",
+		})
 	}
 	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
 		return nil, err
 	}
+	if req.GetParams() == nil {
+		return nil, apperr.InvalidArgument("invalid params", nil, apperr.FieldViolation{
+			Field:       "params",
+			Description: "required",
+		})
+	}
 
-	job, err := s.reportUC.StartReport(ctx, domain.StartReportParams{
-		TenantID:                         tenantID,
-		TaxYear:                          req.GetTaxYear(),
-		Jurisdiction:                     req.GetJurisdiction(),
-		Timezone:                         req.GetTimezone(),
-		CostBasisMethod:                  req.GetCostBasisMethod(),
-		TreatCryptoToCryptoAsDisposition: req.GetTreatCryptoToCryptoAsDisposition(),
-	})
+	params := req.GetParams()
+	if params.GetTaxPolicy() == nil {
+		return nil, apperr.InvalidArgument("invalid tax_policy", nil, apperr.FieldViolation{
+			Field:       "params.tax_policy",
+			Description: "required",
+		})
+	}
+	policy := params.GetTaxPolicy()
+	taxPolicy := domain.TaxPolicy{
+		TreatCryptoCryptoAsDisposal: policy.GetTreatCryptoCryptoAsDisposal(),
+		CostBasisMethod:             domain.CostBasisMethod(policy.GetCostBasisMethod()),
+	}.Normalize()
+	if err := taxPolicy.Validate(); err != nil {
+		return nil, apperr.InvalidArgument("invalid tax_policy", err, apperr.FieldViolation{
+			Field:       "params.tax_policy.cost_basis_method",
+			Description: "must be FIFO, LIFO or AVG",
+		})
+	}
+
+	job, err := s.taxJobUC.Enqueue(
+		ctx,
+		tenantID,
+		int(params.GetTaxYear()),
+		taxPolicy,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Info("StartReport: queued", zap.String("report_id", job.ID.String()), zap.String("tenant_id", tenantID.String()))
-	_ = grpc.SetHeader(ctx, metadata.Pairs("x-http-code", "202"))
 	return &taxv1.StartReportResponse{
 		ReportId: job.ID.String(),
+		Status:   string(job.Status),
 	}, nil
 }
 
 func (s *TaxServer) GetReportStatus(ctx context.Context, req *taxv1.GetReportStatusRequest) (*taxv1.GetReportStatusResponse, error) {
 	if req == nil {
-		return nil, invalidRequest()
+		return nil, apperr.InvalidArgument("invalid request", nil, apperr.FieldViolation{
+			Field:       "request",
+			Description: "required",
+		})
 	}
+
 	tenantID, err := parseUUID(req.GetTenantId())
 	if err != nil {
-		return nil, invalidField("tenant_id", err)
+		return nil, apperr.InvalidArgument("invalid tenant_id", err, apperr.FieldViolation{
+			Field:       "tenant_id",
+			Description: "invalid uuid",
+		})
 	}
 	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
 		return nil, err
 	}
-	reportID, err := parseUUID(req.GetReportId())
+
+	jobID, err := parseUUID(req.GetReportId())
 	if err != nil {
-		return nil, invalidField("report_id", err)
+		return nil, apperr.InvalidArgument("invalid report_id", err, apperr.FieldViolation{
+			Field:       "report_id",
+			Description: "invalid uuid",
+		})
 	}
 
-	view, err := s.reportUC.GetReportStatus(ctx, tenantID, reportID)
+	job, err := s.taxJobUC.GetStatus(ctx, tenantID, jobID)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := &taxv1.GetReportStatusResponse{
-		ReportId:     view.Job.ID.String(),
-		Status:       string(view.Job.Status),
-		Error:        valueOrEmpty(view.Job.Error),
-		RequestedAt:  timestamppb.New(view.Job.RequestedAt),
-		StartedAt:    toTimestamp(view.Job.StartedAt),
-		CompletedAt:  toTimestamp(view.Job.CompletedAt),
-		PdfObjectKey: valueOrEmpty(view.Job.PDFObjectKey),
-		DownloadUrl:  valueOrEmpty(view.DownloadURL),
-	}
-	return resp, nil
+	return &taxv1.GetReportStatusResponse{
+		Job: toProtoTaxJob(job),
+	}, nil
 }
 
 func (s *TaxServer) ListReports(ctx context.Context, req *taxv1.ListReportsRequest) (*taxv1.ListReportsResponse, error) {
 	if req == nil {
-		return nil, invalidRequest()
+		return nil, apperr.InvalidArgument("invalid request", nil, apperr.FieldViolation{
+			Field:       "request",
+			Description: "required",
+		})
 	}
+
 	tenantID, err := parseUUID(req.GetTenantId())
 	if err != nil {
-		return nil, invalidField("tenant_id", err)
+		return nil, apperr.InvalidArgument("invalid tenant_id", err, apperr.FieldViolation{
+			Field:       "tenant_id",
+			Description: "invalid uuid",
+		})
 	}
 	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
 		return nil, err
 	}
 
-	page, err := s.reportUC.ListReports(ctx, tenantID, req.GetTaxYear(), req.GetLimit(), req.GetOffset())
+	jobs, total, err := s.taxJobUC.List(ctx, tenantID, req.GetLimit(), req.GetOffset())
 	if err != nil {
 		return nil, err
 	}
 
-	items := make([]*taxv1.ReportListItem, 0, len(page.Reports))
-	for _, job := range page.Reports {
-		items = append(items, &taxv1.ReportListItem{
-			ReportId:     job.ID.String(),
-			TaxYear:      job.TaxYear,
-			Jurisdiction: job.Jurisdiction,
-			Status:       string(job.Status),
-			Error:        valueOrEmpty(job.Error),
-			RequestedAt:  timestamppb.New(job.RequestedAt),
-			StartedAt:    toTimestamp(job.StartedAt),
-			CompletedAt:  toTimestamp(job.CompletedAt),
-			PdfObjectKey: valueOrEmpty(job.PDFObjectKey),
-		})
+	out := make([]*taxv1.TaxJob, 0, len(jobs))
+	for _, job := range jobs {
+		out = append(out, toProtoTaxJob(job))
 	}
 
 	return &taxv1.ListReportsResponse{
-		Reports: items,
-		Total:   page.Total,
+		Jobs:  out,
+		Total: total,
 	}, nil
 }
 
-func mapTaxProfile(p domain.TaxProfile) *taxv1.TaxProfile {
-	return &taxv1.TaxProfile{
-		TenantId:                    p.TenantID.String(),
-		Jurisdiction:                p.Jurisdiction,
-		CostBasisMethod:             p.CostBasisMethod,
-		Timezone:                    p.Timezone,
-		TreatSwapAsDisposition:      p.TreatSwapAsDisposition,
-		TreatCryptoFeeAsDisposition: p.TreatCryptoFeeAsDisposition,
-		IncludeIncomeEvents:         p.IncludeIncomeEvents,
-		AllowLossEventsDeduction:    p.AllowLossEventsDeduction,
-		FailOnNegativeInventory:     p.FailOnNegativeInventory,
-		FailOnMissingFiat:           p.FailOnMissingFiat,
-	}
+func parseUUID(value string) (uuid.UUID, error) {
+	return uuid.Parse(strings.TrimSpace(value))
 }
 
-func mapTaxpayerProfile(p domain.TaxpayerProfile) *taxv1.TaxpayerProfile {
-	out := &taxv1.TaxpayerProfile{
-		TenantId:           p.TenantID.String(),
-		Inn:                valueOrEmpty(p.INN),
-		LastName:           valueOrEmpty(p.LastName),
-		FirstName:          valueOrEmpty(p.FirstName),
-		MiddleName:         valueOrEmpty(p.MiddleName),
-		DocumentTypeCode:   valueOrEmpty(p.DocumentTypeCode),
-		DocumentNumber:     valueOrEmpty(p.DocumentNumber),
-		TaxResidencyStatus: valueOrEmpty(p.TaxResidencyStatus),
-		Phone:              valueOrEmpty(p.Phone),
+func toWallets(in []string) []domain.Wallet {
+	if len(in) == 0 {
+		return nil
 	}
-	if p.BirthDate != nil {
-		out.BirthDate = p.BirthDate.Format("2006-01-02")
+	out := make([]domain.Wallet, 0, len(in))
+	for _, v := range in {
+		v = strings.TrimSpace(v)
+		if v == "" {
+			continue
+		}
+		out = append(out, domain.Wallet(v))
 	}
 	return out
 }
 
-func parseUUID(raw string) (uuid.UUID, error) {
-	id, err := uuid.Parse(strings.TrimSpace(raw))
-	if err != nil {
-		return uuid.Nil, err
+func toProtoTaxProfile(profile domain.TaxProfile) *taxv1.TaxProfile {
+	if profile.TenantID == uuid.Nil {
+		return nil
 	}
-	return id, nil
+
+	wallets := make([]string, 0, len(profile.Wallets))
+	for _, w := range profile.Wallets {
+		wallets = append(wallets, string(w))
+	}
+
+	return &taxv1.TaxProfile{
+		TenantId:           profile.TenantID.String(),
+		Inn:                profile.INN,
+		LastName:           profile.LastName,
+		FirstName:          profile.FirstName,
+		MiddleName:         profile.MiddleName,
+		Jurisdiction:       string(profile.Jurisdiction),
+		Timezone:           profile.Timezone,
+		Phone:              profile.Phone,
+		Wallets:            wallets,
+		TaxResidencyStatus: string(profile.TaxResidencyStatus),
+		TaxpayerType:       string(profile.TaxPayerType),
+	}
 }
 
-func invalidRequest() error {
-	return apperr.InvalidArgument("invalid request", nil, apperr.FieldViolation{
-		Field:       "request",
-		Description: "required",
-	})
+func toProtoTaxJob(job domain.TaxJob) *taxv1.TaxJob {
+	out := &taxv1.TaxJob{
+		ReportId:         job.ID.String(),
+		TenantId:         job.TenantID.String(),
+		TaxYear:          int32(job.TaxYear),
+		PolicySnapshot:   toProtoPolicy(job.PolicySnapshot),
+		Status:           string(job.Status),
+		Attempts:         int32(job.Attempts),
+		LastErrorCode:    optionalString(job.LastErrorCode),
+		LastErrorMessage: optionalString(job.LastErrorMessage),
+		AuditZipUrl:      optionalString(job.AuditZipURL),
+		ReportUrl:        optionalString(job.ReportURL),
+		Summary:          toProtoTaxSummary(job.Summary),
+	}
+	if !job.CreatedAt.IsZero() {
+		out.CreatedAt = timestamppb.New(job.CreatedAt)
+	}
+	if job.StartedAt != nil {
+		out.StartedAt = timestamppb.New(*job.StartedAt)
+	}
+	if job.FinishedAt != nil {
+		out.FinishedAt = timestamppb.New(*job.FinishedAt)
+	}
+	return out
 }
 
-func invalidField(field string, cause error) error {
-	return apperr.InvalidArgument("invalid "+field, cause, apperr.FieldViolation{
-		Field:       field,
-		Description: "invalid format",
-	})
+func toProtoPolicy(policy domain.TaxPolicy) *taxv1.TaxPolicy {
+	return &taxv1.TaxPolicy{
+		TreatCryptoCryptoAsDisposal: policy.TreatCryptoCryptoAsDisposal,
+		CostBasisMethod:             string(policy.CostBasisMethod),
+	}
 }
 
-func valueOrEmpty(v *string) string {
+func toProtoTaxSummary(summary *domain.TaxSummary) *taxv1.TaxSummary {
+	if summary == nil {
+		return nil
+	}
+	return &taxv1.TaxSummary{
+		TotalIncomeFiat:  summary.TotalIncome.String(),
+		TotalExpenseFiat: summary.TotalExpense.String(),
+		TaxBaseFiat:      summary.TaxBase.String(),
+		TaxDueFiat:       summary.TaxDue.String(),
+	}
+}
+
+func optionalString(v *string) string {
 	if v == nil {
 		return ""
 	}
 	return *v
-}
-
-func nilIfEmpty(v string) *string {
-	v = strings.TrimSpace(v)
-	if v == "" {
-		return nil
-	}
-	out := v
-	return &out
-}
-
-func toTimestamp(v *time.Time) *timestamppb.Timestamp {
-	if v == nil {
-		return nil
-	}
-	return timestamppb.New(*v)
 }
