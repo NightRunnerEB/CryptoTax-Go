@@ -7,54 +7,39 @@ option go_package = "github.com/NightRunner/CryptoTax-Go/gen/tax/v1;taxv1";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-// Tax provides tenant tax settings and async report job APIs.
+// Tax provides tax profile management and asynchronous tax job APIs.
 service Tax {
-  // GetTaxProfile returns tax profile settings for a tenant.
+  // GetTaxProfile returns the tax profile for tenant.
   rpc GetTaxProfile(GetTaxProfileRequest) returns (GetTaxProfileResponse) {
     option (google.api.http) = {
       get: "/v1/tenants/{tenant_id}/tax/profile"
     };
   }
 
-  // UpsertTaxProfile creates or updates tax profile settings for a tenant.
+  // UpsertTaxProfile creates or updates tenant tax profile.
   rpc UpsertTaxProfile(UpsertTaxProfileRequest) returns (UpsertTaxProfileResponse) {
     option (google.api.http) = {
       put: "/v1/tenants/{tenant_id}/tax/profile"
-      body: "*"
+      body: "profile"
     };
   }
 
-  // GetTaxpayerProfile returns taxpayer identity data for a tenant.
-  rpc GetTaxpayerProfile(GetTaxpayerProfileRequest) returns (GetTaxpayerProfileResponse) {
-    option (google.api.http) = {
-      get: "/v1/tenants/{tenant_id}/tax/taxpayer-profile"
-    };
-  }
-
-  // UpsertTaxpayerProfile creates or updates taxpayer identity data for a tenant.
-  rpc UpsertTaxpayerProfile(UpsertTaxpayerProfileRequest) returns (UpsertTaxpayerProfileResponse) {
-    option (google.api.http) = {
-      put: "/v1/tenants/{tenant_id}/tax/taxpayer-profile"
-      body: "*"
-    };
-  }
-
-  // StartReport creates a report job and returns report_id immediately.
+  // StartReport enqueues a tax calculation job.
   rpc StartReport(StartReportRequest) returns (StartReportResponse) {
     option (google.api.http) = {
       post: "/v1/tenants/{tenant_id}/tax/reports:start"
-      body: "*"
+      body: "params"
     };
   }
 
-  // GetReportStatus returns report job status and generated PDF key (if completed).
+  // GetReportStatus returns one tax job by report_id.
   rpc GetReportStatus(GetReportStatusRequest) returns (GetReportStatusResponse) {
     option (google.api.http) = {
       get: "/v1/tenants/{tenant_id}/tax/reports/{report_id}"
     };
   }
 
-  // ListReports lists report jobs for a tenant, optionally filtered by tax_year.
+  // ListReports returns paginated tax jobs for tenant.
   rpc ListReports(ListReportsRequest) returns (ListReportsResponse) {
     option (google.api.http) = {
       get: "/v1/tenants/{tenant_id}/tax/reports"
@@ -62,17 +47,60 @@ service Tax {
   }
 }
 
+message TaxPolicy {
+  bool treat_crypto_crypto_as_disposal = 1;
+  string cost_basis_method = 2;
+}
+
 message TaxProfile {
   string tenant_id = 1;
-  string jurisdiction = 2;
-  string cost_basis_method = 3;
-  string timezone = 4;
-  bool treat_swap_as_disposition = 5;
-  bool treat_crypto_fee_as_disposition = 6;
-  bool include_income_events = 7;
-  bool allow_loss_events_deduction = 8;
-  bool fail_on_negative_inventory = 9;
-  bool fail_on_missing_fiat = 10;
+  string inn = 2;
+  string last_name = 3;
+  string first_name = 4;
+  string middle_name = 5;
+  string jurisdiction = 7;
+  string timezone = 8;
+  string phone = 9;
+  repeated string wallets = 10;
+  string tax_residency_status = 11;
+  string taxpayer_type = 12;
+}
+
+message TaxProfileInput {
+  string inn = 1;
+  string last_name = 2;
+  string first_name = 3;
+  string middle_name = 4;
+  string jurisdiction = 5;
+  string timezone = 6;
+  string phone = 7;
+  repeated string wallets = 8;
+  string tax_residency_status = 9;
+  string taxpayer_type = 10;
+}
+
+message TaxSummary {
+  string total_income_fiat = 1;
+  string total_expense_fiat = 2;
+  string tax_base_fiat = 3;
+  string tax_due_fiat = 4;
+}
+
+message TaxJob {
+  string report_id = 1;
+  string tenant_id = 2;
+  int32 tax_year = 3;
+  TaxPolicy policy_snapshot = 4;
+  string status = 5;
+  int32 attempts = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp started_at = 8;
+  google.protobuf.Timestamp finished_at = 9;
+  string last_error_code = 10;
+  string last_error_message = 11;
+  string audit_zip_url = 12;
+  string report_url = 13;
+  TaxSummary summary = 14;
 }
 
 message GetTaxProfileRequest {
@@ -85,70 +113,26 @@ message GetTaxProfileResponse {
 
 message UpsertTaxProfileRequest {
   string tenant_id = 1;
-  string jurisdiction = 2;
-  string cost_basis_method = 3;
-  string timezone = 4;
-  optional bool treat_swap_as_disposition = 5;
-  optional bool treat_crypto_fee_as_disposition = 6;
-  optional bool include_income_events = 7;
-  optional bool allow_loss_events_deduction = 8;
-  optional bool fail_on_negative_inventory = 9;
-  optional bool fail_on_missing_fiat = 10;
+  TaxProfileInput profile = 2;
 }
 
 message UpsertTaxProfileResponse {
   TaxProfile profile = 1;
 }
 
-message TaxpayerProfile {
-  string tenant_id = 1;
-  string inn = 2;
-  string last_name = 3;
-  string first_name = 4;
-  string middle_name = 5;
-  string birth_date = 6;
-  string document_type_code = 7;
-  string document_number = 8;
-  string tax_residency_status = 9;
-  string phone = 10;
-}
-
-message GetTaxpayerProfileRequest {
-  string tenant_id = 1;
-}
-
-message GetTaxpayerProfileResponse {
-  TaxpayerProfile profile = 1;
-}
-
-message UpsertTaxpayerProfileRequest {
-  string tenant_id = 1;
-  string inn = 2;
-  string last_name = 3;
-  string first_name = 4;
-  string middle_name = 5;
-  string birth_date = 6;
-  string document_type_code = 7;
-  string document_number = 8;
-  string tax_residency_status = 9;
-  string phone = 10;
-}
-
-message UpsertTaxpayerProfileResponse {
-  TaxpayerProfile profile = 1;
+message StartReportParams {
+  int32 tax_year = 1;
+  TaxPolicy tax_policy = 2;
 }
 
 message StartReportRequest {
   string tenant_id = 1;
-  int32 tax_year = 2;
-  string jurisdiction = 3;
-  string timezone = 4;
-  string cost_basis_method = 5;
-  bool treat_crypto_to_crypto_as_disposition = 6;
+  StartReportParams params = 2;
 }
 
 message StartReportResponse {
   string report_id = 1;
+  string status = 2;
 }
 
 message GetReportStatusRequest {
@@ -157,36 +141,16 @@ message GetReportStatusRequest {
 }
 
 message GetReportStatusResponse {
-  string report_id = 1;
-  string status = 2;
-  string error = 3;
-  google.protobuf.Timestamp requested_at = 4;
-  google.protobuf.Timestamp started_at = 5;
-  google.protobuf.Timestamp completed_at = 6;
-  string pdf_object_key = 7;
-  string download_url = 8;
-}
-
-message ReportListItem {
-  string report_id = 1;
-  int32 tax_year = 2;
-  string jurisdiction = 3;
-  string status = 4;
-  string error = 5;
-  google.protobuf.Timestamp requested_at = 6;
-  google.protobuf.Timestamp started_at = 7;
-  google.protobuf.Timestamp completed_at = 8;
-  string pdf_object_key = 9;
+  TaxJob job = 1;
 }
 
 message ListReportsRequest {
   string tenant_id = 1;
-  int32 tax_year = 2;
-  int32 limit = 3;
-  int32 offset = 4;
+  int32 limit = 2;
+  int32 offset = 3;
 }
 
 message ListReportsResponse {
-  repeated ReportListItem reports = 1;
+  repeated TaxJob jobs = 1;
   int64 total = 2;
 }

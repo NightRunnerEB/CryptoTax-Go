@@ -19,34 +19,28 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Tax_GetTaxProfile_FullMethodName         = "/tax.v1.Tax/GetTaxProfile"
-	Tax_UpsertTaxProfile_FullMethodName      = "/tax.v1.Tax/UpsertTaxProfile"
-	Tax_GetTaxpayerProfile_FullMethodName    = "/tax.v1.Tax/GetTaxpayerProfile"
-	Tax_UpsertTaxpayerProfile_FullMethodName = "/tax.v1.Tax/UpsertTaxpayerProfile"
-	Tax_StartReport_FullMethodName           = "/tax.v1.Tax/StartReport"
-	Tax_GetReportStatus_FullMethodName       = "/tax.v1.Tax/GetReportStatus"
-	Tax_ListReports_FullMethodName           = "/tax.v1.Tax/ListReports"
+	Tax_GetTaxProfile_FullMethodName    = "/tax.v1.Tax/GetTaxProfile"
+	Tax_UpsertTaxProfile_FullMethodName = "/tax.v1.Tax/UpsertTaxProfile"
+	Tax_StartReport_FullMethodName      = "/tax.v1.Tax/StartReport"
+	Tax_GetReportStatus_FullMethodName  = "/tax.v1.Tax/GetReportStatus"
+	Tax_ListReports_FullMethodName      = "/tax.v1.Tax/ListReports"
 )
 
 // TaxClient is the client API for Tax service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Tax provides tenant tax settings and async report job APIs.
+// Tax provides tax profile management and asynchronous tax job APIs.
 type TaxClient interface {
-	// GetTaxProfile returns tax profile settings for a tenant.
+	// GetTaxProfile returns the tax profile for tenant.
 	GetTaxProfile(ctx context.Context, in *GetTaxProfileRequest, opts ...grpc.CallOption) (*GetTaxProfileResponse, error)
-	// UpsertTaxProfile creates or updates tax profile settings for a tenant.
+	// UpsertTaxProfile creates or updates tenant tax profile.
 	UpsertTaxProfile(ctx context.Context, in *UpsertTaxProfileRequest, opts ...grpc.CallOption) (*UpsertTaxProfileResponse, error)
-	// GetTaxpayerProfile returns taxpayer identity data for a tenant.
-	GetTaxpayerProfile(ctx context.Context, in *GetTaxpayerProfileRequest, opts ...grpc.CallOption) (*GetTaxpayerProfileResponse, error)
-	// UpsertTaxpayerProfile creates or updates taxpayer identity data for a tenant.
-	UpsertTaxpayerProfile(ctx context.Context, in *UpsertTaxpayerProfileRequest, opts ...grpc.CallOption) (*UpsertTaxpayerProfileResponse, error)
-	// StartReport creates a report job and returns report_id immediately.
+	// StartReport enqueues a tax calculation job.
 	StartReport(ctx context.Context, in *StartReportRequest, opts ...grpc.CallOption) (*StartReportResponse, error)
-	// GetReportStatus returns report job status and generated PDF key (if completed).
+	// GetReportStatus returns one tax job by report_id.
 	GetReportStatus(ctx context.Context, in *GetReportStatusRequest, opts ...grpc.CallOption) (*GetReportStatusResponse, error)
-	// ListReports lists report jobs for a tenant, optionally filtered by tax_year.
+	// ListReports returns paginated tax jobs for tenant.
 	ListReports(ctx context.Context, in *ListReportsRequest, opts ...grpc.CallOption) (*ListReportsResponse, error)
 }
 
@@ -72,26 +66,6 @@ func (c *taxClient) UpsertTaxProfile(ctx context.Context, in *UpsertTaxProfileRe
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpsertTaxProfileResponse)
 	err := c.cc.Invoke(ctx, Tax_UpsertTaxProfile_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *taxClient) GetTaxpayerProfile(ctx context.Context, in *GetTaxpayerProfileRequest, opts ...grpc.CallOption) (*GetTaxpayerProfileResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetTaxpayerProfileResponse)
-	err := c.cc.Invoke(ctx, Tax_GetTaxpayerProfile_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *taxClient) UpsertTaxpayerProfile(ctx context.Context, in *UpsertTaxpayerProfileRequest, opts ...grpc.CallOption) (*UpsertTaxpayerProfileResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpsertTaxpayerProfileResponse)
-	err := c.cc.Invoke(ctx, Tax_UpsertTaxpayerProfile_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -132,21 +106,17 @@ func (c *taxClient) ListReports(ctx context.Context, in *ListReportsRequest, opt
 // All implementations must embed UnimplementedTaxServer
 // for forward compatibility.
 //
-// Tax provides tenant tax settings and async report job APIs.
+// Tax provides tax profile management and asynchronous tax job APIs.
 type TaxServer interface {
-	// GetTaxProfile returns tax profile settings for a tenant.
+	// GetTaxProfile returns the tax profile for tenant.
 	GetTaxProfile(context.Context, *GetTaxProfileRequest) (*GetTaxProfileResponse, error)
-	// UpsertTaxProfile creates or updates tax profile settings for a tenant.
+	// UpsertTaxProfile creates or updates tenant tax profile.
 	UpsertTaxProfile(context.Context, *UpsertTaxProfileRequest) (*UpsertTaxProfileResponse, error)
-	// GetTaxpayerProfile returns taxpayer identity data for a tenant.
-	GetTaxpayerProfile(context.Context, *GetTaxpayerProfileRequest) (*GetTaxpayerProfileResponse, error)
-	// UpsertTaxpayerProfile creates or updates taxpayer identity data for a tenant.
-	UpsertTaxpayerProfile(context.Context, *UpsertTaxpayerProfileRequest) (*UpsertTaxpayerProfileResponse, error)
-	// StartReport creates a report job and returns report_id immediately.
+	// StartReport enqueues a tax calculation job.
 	StartReport(context.Context, *StartReportRequest) (*StartReportResponse, error)
-	// GetReportStatus returns report job status and generated PDF key (if completed).
+	// GetReportStatus returns one tax job by report_id.
 	GetReportStatus(context.Context, *GetReportStatusRequest) (*GetReportStatusResponse, error)
-	// ListReports lists report jobs for a tenant, optionally filtered by tax_year.
+	// ListReports returns paginated tax jobs for tenant.
 	ListReports(context.Context, *ListReportsRequest) (*ListReportsResponse, error)
 	mustEmbedUnimplementedTaxServer()
 }
@@ -163,12 +133,6 @@ func (UnimplementedTaxServer) GetTaxProfile(context.Context, *GetTaxProfileReque
 }
 func (UnimplementedTaxServer) UpsertTaxProfile(context.Context, *UpsertTaxProfileRequest) (*UpsertTaxProfileResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpsertTaxProfile not implemented")
-}
-func (UnimplementedTaxServer) GetTaxpayerProfile(context.Context, *GetTaxpayerProfileRequest) (*GetTaxpayerProfileResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetTaxpayerProfile not implemented")
-}
-func (UnimplementedTaxServer) UpsertTaxpayerProfile(context.Context, *UpsertTaxpayerProfileRequest) (*UpsertTaxpayerProfileResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method UpsertTaxpayerProfile not implemented")
 }
 func (UnimplementedTaxServer) StartReport(context.Context, *StartReportRequest) (*StartReportResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StartReport not implemented")
@@ -232,42 +196,6 @@ func _Tax_UpsertTaxProfile_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TaxServer).UpsertTaxProfile(ctx, req.(*UpsertTaxProfileRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Tax_GetTaxpayerProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTaxpayerProfileRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TaxServer).GetTaxpayerProfile(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Tax_GetTaxpayerProfile_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaxServer).GetTaxpayerProfile(ctx, req.(*GetTaxpayerProfileRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Tax_UpsertTaxpayerProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpsertTaxpayerProfileRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TaxServer).UpsertTaxpayerProfile(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Tax_UpsertTaxpayerProfile_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaxServer).UpsertTaxpayerProfile(ctx, req.(*UpsertTaxpayerProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -340,14 +268,6 @@ var Tax_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpsertTaxProfile",
 			Handler:    _Tax_UpsertTaxProfile_Handler,
-		},
-		{
-			MethodName: "GetTaxpayerProfile",
-			Handler:    _Tax_GetTaxpayerProfile_Handler,
-		},
-		{
-			MethodName: "UpsertTaxpayerProfile",
-			Handler:    _Tax_UpsertTaxpayerProfile_Handler,
 		},
 		{
 			MethodName: "StartReport",

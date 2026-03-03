@@ -23,25 +23,78 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type TaxProfile struct {
+type TaxPolicy struct {
 	state                       protoimpl.MessageState `protogen:"open.v1"`
-	TenantId                    string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Jurisdiction                string                 `protobuf:"bytes,2,opt,name=jurisdiction,proto3" json:"jurisdiction,omitempty"`
-	CostBasisMethod             string                 `protobuf:"bytes,3,opt,name=cost_basis_method,json=costBasisMethod,proto3" json:"cost_basis_method,omitempty"`
-	Timezone                    string                 `protobuf:"bytes,4,opt,name=timezone,proto3" json:"timezone,omitempty"`
-	TreatSwapAsDisposition      bool                   `protobuf:"varint,5,opt,name=treat_swap_as_disposition,json=treatSwapAsDisposition,proto3" json:"treat_swap_as_disposition,omitempty"`
-	TreatCryptoFeeAsDisposition bool                   `protobuf:"varint,6,opt,name=treat_crypto_fee_as_disposition,json=treatCryptoFeeAsDisposition,proto3" json:"treat_crypto_fee_as_disposition,omitempty"`
-	IncludeIncomeEvents         bool                   `protobuf:"varint,7,opt,name=include_income_events,json=includeIncomeEvents,proto3" json:"include_income_events,omitempty"`
-	AllowLossEventsDeduction    bool                   `protobuf:"varint,8,opt,name=allow_loss_events_deduction,json=allowLossEventsDeduction,proto3" json:"allow_loss_events_deduction,omitempty"`
-	FailOnNegativeInventory     bool                   `protobuf:"varint,9,opt,name=fail_on_negative_inventory,json=failOnNegativeInventory,proto3" json:"fail_on_negative_inventory,omitempty"`
-	FailOnMissingFiat           bool                   `protobuf:"varint,10,opt,name=fail_on_missing_fiat,json=failOnMissingFiat,proto3" json:"fail_on_missing_fiat,omitempty"`
+	TreatCryptoCryptoAsDisposal bool                   `protobuf:"varint,1,opt,name=treat_crypto_crypto_as_disposal,json=treatCryptoCryptoAsDisposal,proto3" json:"treat_crypto_crypto_as_disposal,omitempty"`
+	CostBasisMethod             string                 `protobuf:"bytes,2,opt,name=cost_basis_method,json=costBasisMethod,proto3" json:"cost_basis_method,omitempty"`
 	unknownFields               protoimpl.UnknownFields
 	sizeCache                   protoimpl.SizeCache
 }
 
+func (x *TaxPolicy) Reset() {
+	*x = TaxPolicy{}
+	mi := &file_tax_v1_tax_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaxPolicy) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaxPolicy) ProtoMessage() {}
+
+func (x *TaxPolicy) ProtoReflect() protoreflect.Message {
+	mi := &file_tax_v1_tax_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaxPolicy.ProtoReflect.Descriptor instead.
+func (*TaxPolicy) Descriptor() ([]byte, []int) {
+	return file_tax_v1_tax_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *TaxPolicy) GetTreatCryptoCryptoAsDisposal() bool {
+	if x != nil {
+		return x.TreatCryptoCryptoAsDisposal
+	}
+	return false
+}
+
+func (x *TaxPolicy) GetCostBasisMethod() string {
+	if x != nil {
+		return x.CostBasisMethod
+	}
+	return ""
+}
+
+type TaxProfile struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	TenantId           string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Inn                string                 `protobuf:"bytes,2,opt,name=inn,proto3" json:"inn,omitempty"`
+	LastName           string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
+	FirstName          string                 `protobuf:"bytes,4,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
+	MiddleName         string                 `protobuf:"bytes,5,opt,name=middle_name,json=middleName,proto3" json:"middle_name,omitempty"`
+	Jurisdiction       string                 `protobuf:"bytes,7,opt,name=jurisdiction,proto3" json:"jurisdiction,omitempty"`
+	Timezone           string                 `protobuf:"bytes,8,opt,name=timezone,proto3" json:"timezone,omitempty"`
+	Phone              string                 `protobuf:"bytes,9,opt,name=phone,proto3" json:"phone,omitempty"`
+	Wallets            []string               `protobuf:"bytes,10,rep,name=wallets,proto3" json:"wallets,omitempty"`
+	TaxResidencyStatus string                 `protobuf:"bytes,11,opt,name=tax_residency_status,json=taxResidencyStatus,proto3" json:"tax_residency_status,omitempty"`
+	TaxpayerType       string                 `protobuf:"bytes,12,opt,name=taxpayer_type,json=taxpayerType,proto3" json:"taxpayer_type,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
 func (x *TaxProfile) Reset() {
 	*x = TaxProfile{}
-	mi := &file_tax_v1_tax_proto_msgTypes[0]
+	mi := &file_tax_v1_tax_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -53,7 +106,7 @@ func (x *TaxProfile) String() string {
 func (*TaxProfile) ProtoMessage() {}
 
 func (x *TaxProfile) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[0]
+	mi := &file_tax_v1_tax_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -66,12 +119,40 @@ func (x *TaxProfile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaxProfile.ProtoReflect.Descriptor instead.
 func (*TaxProfile) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{0}
+	return file_tax_v1_tax_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *TaxProfile) GetTenantId() string {
 	if x != nil {
 		return x.TenantId
+	}
+	return ""
+}
+
+func (x *TaxProfile) GetInn() string {
+	if x != nil {
+		return x.Inn
+	}
+	return ""
+}
+
+func (x *TaxProfile) GetLastName() string {
+	if x != nil {
+		return x.LastName
+	}
+	return ""
+}
+
+func (x *TaxProfile) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *TaxProfile) GetMiddleName() string {
+	if x != nil {
+		return x.MiddleName
 	}
 	return ""
 }
@@ -83,13 +164,6 @@ func (x *TaxProfile) GetJurisdiction() string {
 	return ""
 }
 
-func (x *TaxProfile) GetCostBasisMethod() string {
-	if x != nil {
-		return x.CostBasisMethod
-	}
-	return ""
-}
-
 func (x *TaxProfile) GetTimezone() string {
 	if x != nil {
 		return x.Timezone
@@ -97,46 +171,364 @@ func (x *TaxProfile) GetTimezone() string {
 	return ""
 }
 
-func (x *TaxProfile) GetTreatSwapAsDisposition() bool {
+func (x *TaxProfile) GetPhone() string {
 	if x != nil {
-		return x.TreatSwapAsDisposition
+		return x.Phone
 	}
-	return false
+	return ""
 }
 
-func (x *TaxProfile) GetTreatCryptoFeeAsDisposition() bool {
+func (x *TaxProfile) GetWallets() []string {
 	if x != nil {
-		return x.TreatCryptoFeeAsDisposition
+		return x.Wallets
 	}
-	return false
+	return nil
 }
 
-func (x *TaxProfile) GetIncludeIncomeEvents() bool {
+func (x *TaxProfile) GetTaxResidencyStatus() string {
 	if x != nil {
-		return x.IncludeIncomeEvents
+		return x.TaxResidencyStatus
 	}
-	return false
+	return ""
 }
 
-func (x *TaxProfile) GetAllowLossEventsDeduction() bool {
+func (x *TaxProfile) GetTaxpayerType() string {
 	if x != nil {
-		return x.AllowLossEventsDeduction
+		return x.TaxpayerType
 	}
-	return false
+	return ""
 }
 
-func (x *TaxProfile) GetFailOnNegativeInventory() bool {
-	if x != nil {
-		return x.FailOnNegativeInventory
-	}
-	return false
+type TaxProfileInput struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Inn                string                 `protobuf:"bytes,1,opt,name=inn,proto3" json:"inn,omitempty"`
+	LastName           string                 `protobuf:"bytes,2,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
+	FirstName          string                 `protobuf:"bytes,3,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
+	MiddleName         string                 `protobuf:"bytes,4,opt,name=middle_name,json=middleName,proto3" json:"middle_name,omitempty"`
+	Jurisdiction       string                 `protobuf:"bytes,5,opt,name=jurisdiction,proto3" json:"jurisdiction,omitempty"`
+	Timezone           string                 `protobuf:"bytes,6,opt,name=timezone,proto3" json:"timezone,omitempty"`
+	Phone              string                 `protobuf:"bytes,7,opt,name=phone,proto3" json:"phone,omitempty"`
+	Wallets            []string               `protobuf:"bytes,8,rep,name=wallets,proto3" json:"wallets,omitempty"`
+	TaxResidencyStatus string                 `protobuf:"bytes,9,opt,name=tax_residency_status,json=taxResidencyStatus,proto3" json:"tax_residency_status,omitempty"`
+	TaxpayerType       string                 `protobuf:"bytes,10,opt,name=taxpayer_type,json=taxpayerType,proto3" json:"taxpayer_type,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
-func (x *TaxProfile) GetFailOnMissingFiat() bool {
+func (x *TaxProfileInput) Reset() {
+	*x = TaxProfileInput{}
+	mi := &file_tax_v1_tax_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaxProfileInput) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaxProfileInput) ProtoMessage() {}
+
+func (x *TaxProfileInput) ProtoReflect() protoreflect.Message {
+	mi := &file_tax_v1_tax_proto_msgTypes[2]
 	if x != nil {
-		return x.FailOnMissingFiat
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
 	}
-	return false
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaxProfileInput.ProtoReflect.Descriptor instead.
+func (*TaxProfileInput) Descriptor() ([]byte, []int) {
+	return file_tax_v1_tax_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *TaxProfileInput) GetInn() string {
+	if x != nil {
+		return x.Inn
+	}
+	return ""
+}
+
+func (x *TaxProfileInput) GetLastName() string {
+	if x != nil {
+		return x.LastName
+	}
+	return ""
+}
+
+func (x *TaxProfileInput) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *TaxProfileInput) GetMiddleName() string {
+	if x != nil {
+		return x.MiddleName
+	}
+	return ""
+}
+
+func (x *TaxProfileInput) GetJurisdiction() string {
+	if x != nil {
+		return x.Jurisdiction
+	}
+	return ""
+}
+
+func (x *TaxProfileInput) GetTimezone() string {
+	if x != nil {
+		return x.Timezone
+	}
+	return ""
+}
+
+func (x *TaxProfileInput) GetPhone() string {
+	if x != nil {
+		return x.Phone
+	}
+	return ""
+}
+
+func (x *TaxProfileInput) GetWallets() []string {
+	if x != nil {
+		return x.Wallets
+	}
+	return nil
+}
+
+func (x *TaxProfileInput) GetTaxResidencyStatus() string {
+	if x != nil {
+		return x.TaxResidencyStatus
+	}
+	return ""
+}
+
+func (x *TaxProfileInput) GetTaxpayerType() string {
+	if x != nil {
+		return x.TaxpayerType
+	}
+	return ""
+}
+
+type TaxSummary struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	TotalIncomeFiat  string                 `protobuf:"bytes,1,opt,name=total_income_fiat,json=totalIncomeFiat,proto3" json:"total_income_fiat,omitempty"`
+	TotalExpenseFiat string                 `protobuf:"bytes,2,opt,name=total_expense_fiat,json=totalExpenseFiat,proto3" json:"total_expense_fiat,omitempty"`
+	TaxBaseFiat      string                 `protobuf:"bytes,3,opt,name=tax_base_fiat,json=taxBaseFiat,proto3" json:"tax_base_fiat,omitempty"`
+	TaxDueFiat       string                 `protobuf:"bytes,4,opt,name=tax_due_fiat,json=taxDueFiat,proto3" json:"tax_due_fiat,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *TaxSummary) Reset() {
+	*x = TaxSummary{}
+	mi := &file_tax_v1_tax_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaxSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaxSummary) ProtoMessage() {}
+
+func (x *TaxSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_tax_v1_tax_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaxSummary.ProtoReflect.Descriptor instead.
+func (*TaxSummary) Descriptor() ([]byte, []int) {
+	return file_tax_v1_tax_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *TaxSummary) GetTotalIncomeFiat() string {
+	if x != nil {
+		return x.TotalIncomeFiat
+	}
+	return ""
+}
+
+func (x *TaxSummary) GetTotalExpenseFiat() string {
+	if x != nil {
+		return x.TotalExpenseFiat
+	}
+	return ""
+}
+
+func (x *TaxSummary) GetTaxBaseFiat() string {
+	if x != nil {
+		return x.TaxBaseFiat
+	}
+	return ""
+}
+
+func (x *TaxSummary) GetTaxDueFiat() string {
+	if x != nil {
+		return x.TaxDueFiat
+	}
+	return ""
+}
+
+type TaxJob struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	ReportId         string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
+	TenantId         string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	TaxYear          int32                  `protobuf:"varint,3,opt,name=tax_year,json=taxYear,proto3" json:"tax_year,omitempty"`
+	PolicySnapshot   *TaxPolicy             `protobuf:"bytes,4,opt,name=policy_snapshot,json=policySnapshot,proto3" json:"policy_snapshot,omitempty"`
+	Status           string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	Attempts         int32                  `protobuf:"varint,6,opt,name=attempts,proto3" json:"attempts,omitempty"`
+	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	StartedAt        *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	FinishedAt       *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	LastErrorCode    string                 `protobuf:"bytes,10,opt,name=last_error_code,json=lastErrorCode,proto3" json:"last_error_code,omitempty"`
+	LastErrorMessage string                 `protobuf:"bytes,11,opt,name=last_error_message,json=lastErrorMessage,proto3" json:"last_error_message,omitempty"`
+	AuditZipUrl      string                 `protobuf:"bytes,12,opt,name=audit_zip_url,json=auditZipUrl,proto3" json:"audit_zip_url,omitempty"`
+	ReportUrl        string                 `protobuf:"bytes,13,opt,name=report_url,json=reportUrl,proto3" json:"report_url,omitempty"`
+	Summary          *TaxSummary            `protobuf:"bytes,14,opt,name=summary,proto3" json:"summary,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *TaxJob) Reset() {
+	*x = TaxJob{}
+	mi := &file_tax_v1_tax_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaxJob) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaxJob) ProtoMessage() {}
+
+func (x *TaxJob) ProtoReflect() protoreflect.Message {
+	mi := &file_tax_v1_tax_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaxJob.ProtoReflect.Descriptor instead.
+func (*TaxJob) Descriptor() ([]byte, []int) {
+	return file_tax_v1_tax_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *TaxJob) GetReportId() string {
+	if x != nil {
+		return x.ReportId
+	}
+	return ""
+}
+
+func (x *TaxJob) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *TaxJob) GetTaxYear() int32 {
+	if x != nil {
+		return x.TaxYear
+	}
+	return 0
+}
+
+func (x *TaxJob) GetPolicySnapshot() *TaxPolicy {
+	if x != nil {
+		return x.PolicySnapshot
+	}
+	return nil
+}
+
+func (x *TaxJob) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *TaxJob) GetAttempts() int32 {
+	if x != nil {
+		return x.Attempts
+	}
+	return 0
+}
+
+func (x *TaxJob) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *TaxJob) GetStartedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartedAt
+	}
+	return nil
+}
+
+func (x *TaxJob) GetFinishedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FinishedAt
+	}
+	return nil
+}
+
+func (x *TaxJob) GetLastErrorCode() string {
+	if x != nil {
+		return x.LastErrorCode
+	}
+	return ""
+}
+
+func (x *TaxJob) GetLastErrorMessage() string {
+	if x != nil {
+		return x.LastErrorMessage
+	}
+	return ""
+}
+
+func (x *TaxJob) GetAuditZipUrl() string {
+	if x != nil {
+		return x.AuditZipUrl
+	}
+	return ""
+}
+
+func (x *TaxJob) GetReportUrl() string {
+	if x != nil {
+		return x.ReportUrl
+	}
+	return ""
+}
+
+func (x *TaxJob) GetSummary() *TaxSummary {
+	if x != nil {
+		return x.Summary
+	}
+	return nil
 }
 
 type GetTaxProfileRequest struct {
@@ -148,7 +540,7 @@ type GetTaxProfileRequest struct {
 
 func (x *GetTaxProfileRequest) Reset() {
 	*x = GetTaxProfileRequest{}
-	mi := &file_tax_v1_tax_proto_msgTypes[1]
+	mi := &file_tax_v1_tax_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -160,7 +552,7 @@ func (x *GetTaxProfileRequest) String() string {
 func (*GetTaxProfileRequest) ProtoMessage() {}
 
 func (x *GetTaxProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[1]
+	mi := &file_tax_v1_tax_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -173,7 +565,7 @@ func (x *GetTaxProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTaxProfileRequest.ProtoReflect.Descriptor instead.
 func (*GetTaxProfileRequest) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{1}
+	return file_tax_v1_tax_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetTaxProfileRequest) GetTenantId() string {
@@ -192,7 +584,7 @@ type GetTaxProfileResponse struct {
 
 func (x *GetTaxProfileResponse) Reset() {
 	*x = GetTaxProfileResponse{}
-	mi := &file_tax_v1_tax_proto_msgTypes[2]
+	mi := &file_tax_v1_tax_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -204,7 +596,7 @@ func (x *GetTaxProfileResponse) String() string {
 func (*GetTaxProfileResponse) ProtoMessage() {}
 
 func (x *GetTaxProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[2]
+	mi := &file_tax_v1_tax_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -217,7 +609,7 @@ func (x *GetTaxProfileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTaxProfileResponse.ProtoReflect.Descriptor instead.
 func (*GetTaxProfileResponse) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{2}
+	return file_tax_v1_tax_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetTaxProfileResponse) GetProfile() *TaxProfile {
@@ -228,24 +620,16 @@ func (x *GetTaxProfileResponse) GetProfile() *TaxProfile {
 }
 
 type UpsertTaxProfileRequest struct {
-	state                       protoimpl.MessageState `protogen:"open.v1"`
-	TenantId                    string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Jurisdiction                string                 `protobuf:"bytes,2,opt,name=jurisdiction,proto3" json:"jurisdiction,omitempty"`
-	CostBasisMethod             string                 `protobuf:"bytes,3,opt,name=cost_basis_method,json=costBasisMethod,proto3" json:"cost_basis_method,omitempty"`
-	Timezone                    string                 `protobuf:"bytes,4,opt,name=timezone,proto3" json:"timezone,omitempty"`
-	TreatSwapAsDisposition      *bool                  `protobuf:"varint,5,opt,name=treat_swap_as_disposition,json=treatSwapAsDisposition,proto3,oneof" json:"treat_swap_as_disposition,omitempty"`
-	TreatCryptoFeeAsDisposition *bool                  `protobuf:"varint,6,opt,name=treat_crypto_fee_as_disposition,json=treatCryptoFeeAsDisposition,proto3,oneof" json:"treat_crypto_fee_as_disposition,omitempty"`
-	IncludeIncomeEvents         *bool                  `protobuf:"varint,7,opt,name=include_income_events,json=includeIncomeEvents,proto3,oneof" json:"include_income_events,omitempty"`
-	AllowLossEventsDeduction    *bool                  `protobuf:"varint,8,opt,name=allow_loss_events_deduction,json=allowLossEventsDeduction,proto3,oneof" json:"allow_loss_events_deduction,omitempty"`
-	FailOnNegativeInventory     *bool                  `protobuf:"varint,9,opt,name=fail_on_negative_inventory,json=failOnNegativeInventory,proto3,oneof" json:"fail_on_negative_inventory,omitempty"`
-	FailOnMissingFiat           *bool                  `protobuf:"varint,10,opt,name=fail_on_missing_fiat,json=failOnMissingFiat,proto3,oneof" json:"fail_on_missing_fiat,omitempty"`
-	unknownFields               protoimpl.UnknownFields
-	sizeCache                   protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Profile       *TaxProfileInput       `protobuf:"bytes,2,opt,name=profile,proto3" json:"profile,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpsertTaxProfileRequest) Reset() {
 	*x = UpsertTaxProfileRequest{}
-	mi := &file_tax_v1_tax_proto_msgTypes[3]
+	mi := &file_tax_v1_tax_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -257,7 +641,7 @@ func (x *UpsertTaxProfileRequest) String() string {
 func (*UpsertTaxProfileRequest) ProtoMessage() {}
 
 func (x *UpsertTaxProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[3]
+	mi := &file_tax_v1_tax_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -270,7 +654,7 @@ func (x *UpsertTaxProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertTaxProfileRequest.ProtoReflect.Descriptor instead.
 func (*UpsertTaxProfileRequest) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{3}
+	return file_tax_v1_tax_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *UpsertTaxProfileRequest) GetTenantId() string {
@@ -280,67 +664,11 @@ func (x *UpsertTaxProfileRequest) GetTenantId() string {
 	return ""
 }
 
-func (x *UpsertTaxProfileRequest) GetJurisdiction() string {
+func (x *UpsertTaxProfileRequest) GetProfile() *TaxProfileInput {
 	if x != nil {
-		return x.Jurisdiction
+		return x.Profile
 	}
-	return ""
-}
-
-func (x *UpsertTaxProfileRequest) GetCostBasisMethod() string {
-	if x != nil {
-		return x.CostBasisMethod
-	}
-	return ""
-}
-
-func (x *UpsertTaxProfileRequest) GetTimezone() string {
-	if x != nil {
-		return x.Timezone
-	}
-	return ""
-}
-
-func (x *UpsertTaxProfileRequest) GetTreatSwapAsDisposition() bool {
-	if x != nil && x.TreatSwapAsDisposition != nil {
-		return *x.TreatSwapAsDisposition
-	}
-	return false
-}
-
-func (x *UpsertTaxProfileRequest) GetTreatCryptoFeeAsDisposition() bool {
-	if x != nil && x.TreatCryptoFeeAsDisposition != nil {
-		return *x.TreatCryptoFeeAsDisposition
-	}
-	return false
-}
-
-func (x *UpsertTaxProfileRequest) GetIncludeIncomeEvents() bool {
-	if x != nil && x.IncludeIncomeEvents != nil {
-		return *x.IncludeIncomeEvents
-	}
-	return false
-}
-
-func (x *UpsertTaxProfileRequest) GetAllowLossEventsDeduction() bool {
-	if x != nil && x.AllowLossEventsDeduction != nil {
-		return *x.AllowLossEventsDeduction
-	}
-	return false
-}
-
-func (x *UpsertTaxProfileRequest) GetFailOnNegativeInventory() bool {
-	if x != nil && x.FailOnNegativeInventory != nil {
-		return *x.FailOnNegativeInventory
-	}
-	return false
-}
-
-func (x *UpsertTaxProfileRequest) GetFailOnMissingFiat() bool {
-	if x != nil && x.FailOnMissingFiat != nil {
-		return *x.FailOnMissingFiat
-	}
-	return false
+	return nil
 }
 
 type UpsertTaxProfileResponse struct {
@@ -352,7 +680,7 @@ type UpsertTaxProfileResponse struct {
 
 func (x *UpsertTaxProfileResponse) Reset() {
 	*x = UpsertTaxProfileResponse{}
-	mi := &file_tax_v1_tax_proto_msgTypes[4]
+	mi := &file_tax_v1_tax_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -364,7 +692,7 @@ func (x *UpsertTaxProfileResponse) String() string {
 func (*UpsertTaxProfileResponse) ProtoMessage() {}
 
 func (x *UpsertTaxProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[4]
+	mi := &file_tax_v1_tax_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -377,7 +705,7 @@ func (x *UpsertTaxProfileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertTaxProfileResponse.ProtoReflect.Descriptor instead.
 func (*UpsertTaxProfileResponse) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{4}
+	return file_tax_v1_tax_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpsertTaxProfileResponse) GetProfile() *TaxProfile {
@@ -387,347 +715,28 @@ func (x *UpsertTaxProfileResponse) GetProfile() *TaxProfile {
 	return nil
 }
 
-type TaxpayerProfile struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	TenantId           string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Inn                string                 `protobuf:"bytes,2,opt,name=inn,proto3" json:"inn,omitempty"`
-	LastName           string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
-	FirstName          string                 `protobuf:"bytes,4,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
-	MiddleName         string                 `protobuf:"bytes,5,opt,name=middle_name,json=middleName,proto3" json:"middle_name,omitempty"`
-	BirthDate          string                 `protobuf:"bytes,6,opt,name=birth_date,json=birthDate,proto3" json:"birth_date,omitempty"`
-	DocumentTypeCode   string                 `protobuf:"bytes,7,opt,name=document_type_code,json=documentTypeCode,proto3" json:"document_type_code,omitempty"`
-	DocumentNumber     string                 `protobuf:"bytes,8,opt,name=document_number,json=documentNumber,proto3" json:"document_number,omitempty"`
-	TaxResidencyStatus string                 `protobuf:"bytes,9,opt,name=tax_residency_status,json=taxResidencyStatus,proto3" json:"tax_residency_status,omitempty"`
-	Phone              string                 `protobuf:"bytes,10,opt,name=phone,proto3" json:"phone,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
-}
-
-func (x *TaxpayerProfile) Reset() {
-	*x = TaxpayerProfile{}
-	mi := &file_tax_v1_tax_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TaxpayerProfile) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TaxpayerProfile) ProtoMessage() {}
-
-func (x *TaxpayerProfile) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TaxpayerProfile.ProtoReflect.Descriptor instead.
-func (*TaxpayerProfile) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *TaxpayerProfile) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-func (x *TaxpayerProfile) GetInn() string {
-	if x != nil {
-		return x.Inn
-	}
-	return ""
-}
-
-func (x *TaxpayerProfile) GetLastName() string {
-	if x != nil {
-		return x.LastName
-	}
-	return ""
-}
-
-func (x *TaxpayerProfile) GetFirstName() string {
-	if x != nil {
-		return x.FirstName
-	}
-	return ""
-}
-
-func (x *TaxpayerProfile) GetMiddleName() string {
-	if x != nil {
-		return x.MiddleName
-	}
-	return ""
-}
-
-func (x *TaxpayerProfile) GetBirthDate() string {
-	if x != nil {
-		return x.BirthDate
-	}
-	return ""
-}
-
-func (x *TaxpayerProfile) GetDocumentTypeCode() string {
-	if x != nil {
-		return x.DocumentTypeCode
-	}
-	return ""
-}
-
-func (x *TaxpayerProfile) GetDocumentNumber() string {
-	if x != nil {
-		return x.DocumentNumber
-	}
-	return ""
-}
-
-func (x *TaxpayerProfile) GetTaxResidencyStatus() string {
-	if x != nil {
-		return x.TaxResidencyStatus
-	}
-	return ""
-}
-
-func (x *TaxpayerProfile) GetPhone() string {
-	if x != nil {
-		return x.Phone
-	}
-	return ""
-}
-
-type GetTaxpayerProfileRequest struct {
+type StartReportParams struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	TaxYear       int32                  `protobuf:"varint,1,opt,name=tax_year,json=taxYear,proto3" json:"tax_year,omitempty"`
+	TaxPolicy     *TaxPolicy             `protobuf:"bytes,2,opt,name=tax_policy,json=taxPolicy,proto3" json:"tax_policy,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetTaxpayerProfileRequest) Reset() {
-	*x = GetTaxpayerProfileRequest{}
-	mi := &file_tax_v1_tax_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetTaxpayerProfileRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetTaxpayerProfileRequest) ProtoMessage() {}
-
-func (x *GetTaxpayerProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetTaxpayerProfileRequest.ProtoReflect.Descriptor instead.
-func (*GetTaxpayerProfileRequest) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *GetTaxpayerProfileRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-type GetTaxpayerProfileResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Profile       *TaxpayerProfile       `protobuf:"bytes,1,opt,name=profile,proto3" json:"profile,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetTaxpayerProfileResponse) Reset() {
-	*x = GetTaxpayerProfileResponse{}
-	mi := &file_tax_v1_tax_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetTaxpayerProfileResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetTaxpayerProfileResponse) ProtoMessage() {}
-
-func (x *GetTaxpayerProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetTaxpayerProfileResponse.ProtoReflect.Descriptor instead.
-func (*GetTaxpayerProfileResponse) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *GetTaxpayerProfileResponse) GetProfile() *TaxpayerProfile {
-	if x != nil {
-		return x.Profile
-	}
-	return nil
-}
-
-type UpsertTaxpayerProfileRequest struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	TenantId           string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Inn                string                 `protobuf:"bytes,2,opt,name=inn,proto3" json:"inn,omitempty"`
-	LastName           string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
-	FirstName          string                 `protobuf:"bytes,4,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
-	MiddleName         string                 `protobuf:"bytes,5,opt,name=middle_name,json=middleName,proto3" json:"middle_name,omitempty"`
-	BirthDate          string                 `protobuf:"bytes,6,opt,name=birth_date,json=birthDate,proto3" json:"birth_date,omitempty"`
-	DocumentTypeCode   string                 `protobuf:"bytes,7,opt,name=document_type_code,json=documentTypeCode,proto3" json:"document_type_code,omitempty"`
-	DocumentNumber     string                 `protobuf:"bytes,8,opt,name=document_number,json=documentNumber,proto3" json:"document_number,omitempty"`
-	TaxResidencyStatus string                 `protobuf:"bytes,9,opt,name=tax_residency_status,json=taxResidencyStatus,proto3" json:"tax_residency_status,omitempty"`
-	Phone              string                 `protobuf:"bytes,10,opt,name=phone,proto3" json:"phone,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
-}
-
-func (x *UpsertTaxpayerProfileRequest) Reset() {
-	*x = UpsertTaxpayerProfileRequest{}
-	mi := &file_tax_v1_tax_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpsertTaxpayerProfileRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpsertTaxpayerProfileRequest) ProtoMessage() {}
-
-func (x *UpsertTaxpayerProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpsertTaxpayerProfileRequest.ProtoReflect.Descriptor instead.
-func (*UpsertTaxpayerProfileRequest) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *UpsertTaxpayerProfileRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-func (x *UpsertTaxpayerProfileRequest) GetInn() string {
-	if x != nil {
-		return x.Inn
-	}
-	return ""
-}
-
-func (x *UpsertTaxpayerProfileRequest) GetLastName() string {
-	if x != nil {
-		return x.LastName
-	}
-	return ""
-}
-
-func (x *UpsertTaxpayerProfileRequest) GetFirstName() string {
-	if x != nil {
-		return x.FirstName
-	}
-	return ""
-}
-
-func (x *UpsertTaxpayerProfileRequest) GetMiddleName() string {
-	if x != nil {
-		return x.MiddleName
-	}
-	return ""
-}
-
-func (x *UpsertTaxpayerProfileRequest) GetBirthDate() string {
-	if x != nil {
-		return x.BirthDate
-	}
-	return ""
-}
-
-func (x *UpsertTaxpayerProfileRequest) GetDocumentTypeCode() string {
-	if x != nil {
-		return x.DocumentTypeCode
-	}
-	return ""
-}
-
-func (x *UpsertTaxpayerProfileRequest) GetDocumentNumber() string {
-	if x != nil {
-		return x.DocumentNumber
-	}
-	return ""
-}
-
-func (x *UpsertTaxpayerProfileRequest) GetTaxResidencyStatus() string {
-	if x != nil {
-		return x.TaxResidencyStatus
-	}
-	return ""
-}
-
-func (x *UpsertTaxpayerProfileRequest) GetPhone() string {
-	if x != nil {
-		return x.Phone
-	}
-	return ""
-}
-
-type UpsertTaxpayerProfileResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Profile       *TaxpayerProfile       `protobuf:"bytes,1,opt,name=profile,proto3" json:"profile,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpsertTaxpayerProfileResponse) Reset() {
-	*x = UpsertTaxpayerProfileResponse{}
+func (x *StartReportParams) Reset() {
+	*x = StartReportParams{}
 	mi := &file_tax_v1_tax_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpsertTaxpayerProfileResponse) String() string {
+func (x *StartReportParams) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpsertTaxpayerProfileResponse) ProtoMessage() {}
+func (*StartReportParams) ProtoMessage() {}
 
-func (x *UpsertTaxpayerProfileResponse) ProtoReflect() protoreflect.Message {
+func (x *StartReportParams) ProtoReflect() protoreflect.Message {
 	mi := &file_tax_v1_tax_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -739,28 +748,31 @@ func (x *UpsertTaxpayerProfileResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpsertTaxpayerProfileResponse.ProtoReflect.Descriptor instead.
-func (*UpsertTaxpayerProfileResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use StartReportParams.ProtoReflect.Descriptor instead.
+func (*StartReportParams) Descriptor() ([]byte, []int) {
 	return file_tax_v1_tax_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *UpsertTaxpayerProfileResponse) GetProfile() *TaxpayerProfile {
+func (x *StartReportParams) GetTaxYear() int32 {
 	if x != nil {
-		return x.Profile
+		return x.TaxYear
+	}
+	return 0
+}
+
+func (x *StartReportParams) GetTaxPolicy() *TaxPolicy {
+	if x != nil {
+		return x.TaxPolicy
 	}
 	return nil
 }
 
 type StartReportRequest struct {
-	state                            protoimpl.MessageState `protogen:"open.v1"`
-	TenantId                         string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	TaxYear                          int32                  `protobuf:"varint,2,opt,name=tax_year,json=taxYear,proto3" json:"tax_year,omitempty"`
-	Jurisdiction                     string                 `protobuf:"bytes,3,opt,name=jurisdiction,proto3" json:"jurisdiction,omitempty"`
-	Timezone                         string                 `protobuf:"bytes,4,opt,name=timezone,proto3" json:"timezone,omitempty"`
-	CostBasisMethod                  string                 `protobuf:"bytes,5,opt,name=cost_basis_method,json=costBasisMethod,proto3" json:"cost_basis_method,omitempty"`
-	TreatCryptoToCryptoAsDisposition bool                   `protobuf:"varint,6,opt,name=treat_crypto_to_crypto_as_disposition,json=treatCryptoToCryptoAsDisposition,proto3" json:"treat_crypto_to_crypto_as_disposition,omitempty"`
-	unknownFields                    protoimpl.UnknownFields
-	sizeCache                        protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Params        *StartReportParams     `protobuf:"bytes,2,opt,name=params,proto3" json:"params,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StartReportRequest) Reset() {
@@ -800,44 +812,17 @@ func (x *StartReportRequest) GetTenantId() string {
 	return ""
 }
 
-func (x *StartReportRequest) GetTaxYear() int32 {
+func (x *StartReportRequest) GetParams() *StartReportParams {
 	if x != nil {
-		return x.TaxYear
+		return x.Params
 	}
-	return 0
-}
-
-func (x *StartReportRequest) GetJurisdiction() string {
-	if x != nil {
-		return x.Jurisdiction
-	}
-	return ""
-}
-
-func (x *StartReportRequest) GetTimezone() string {
-	if x != nil {
-		return x.Timezone
-	}
-	return ""
-}
-
-func (x *StartReportRequest) GetCostBasisMethod() string {
-	if x != nil {
-		return x.CostBasisMethod
-	}
-	return ""
-}
-
-func (x *StartReportRequest) GetTreatCryptoToCryptoAsDisposition() bool {
-	if x != nil {
-		return x.TreatCryptoToCryptoAsDisposition
-	}
-	return false
+	return nil
 }
 
 type StartReportResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReportId      string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -875,6 +860,13 @@ func (*StartReportResponse) Descriptor() ([]byte, []int) {
 func (x *StartReportResponse) GetReportId() string {
 	if x != nil {
 		return x.ReportId
+	}
+	return ""
+}
+
+func (x *StartReportResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
 	}
 	return ""
 }
@@ -933,14 +925,7 @@ func (x *GetReportStatusRequest) GetReportId() string {
 
 type GetReportStatusResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReportId      string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
-	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
-	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
-	RequestedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=requested_at,json=requestedAt,proto3" json:"requested_at,omitempty"`
-	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
-	PdfObjectKey  string                 `protobuf:"bytes,7,opt,name=pdf_object_key,json=pdfObjectKey,proto3" json:"pdf_object_key,omitempty"`
-	DownloadUrl   string                 `protobuf:"bytes,8,opt,name=download_url,json=downloadUrl,proto3" json:"download_url,omitempty"`
+	Job           *TaxJob                `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -975,183 +960,25 @@ func (*GetReportStatusResponse) Descriptor() ([]byte, []int) {
 	return file_tax_v1_tax_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *GetReportStatusResponse) GetReportId() string {
+func (x *GetReportStatusResponse) GetJob() *TaxJob {
 	if x != nil {
-		return x.ReportId
-	}
-	return ""
-}
-
-func (x *GetReportStatusResponse) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
-func (x *GetReportStatusResponse) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
-}
-
-func (x *GetReportStatusResponse) GetRequestedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.RequestedAt
+		return x.Job
 	}
 	return nil
-}
-
-func (x *GetReportStatusResponse) GetStartedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.StartedAt
-	}
-	return nil
-}
-
-func (x *GetReportStatusResponse) GetCompletedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CompletedAt
-	}
-	return nil
-}
-
-func (x *GetReportStatusResponse) GetPdfObjectKey() string {
-	if x != nil {
-		return x.PdfObjectKey
-	}
-	return ""
-}
-
-func (x *GetReportStatusResponse) GetDownloadUrl() string {
-	if x != nil {
-		return x.DownloadUrl
-	}
-	return ""
-}
-
-type ReportListItem struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReportId      string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
-	TaxYear       int32                  `protobuf:"varint,2,opt,name=tax_year,json=taxYear,proto3" json:"tax_year,omitempty"`
-	Jurisdiction  string                 `protobuf:"bytes,3,opt,name=jurisdiction,proto3" json:"jurisdiction,omitempty"`
-	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
-	Error         string                 `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
-	RequestedAt   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=requested_at,json=requestedAt,proto3" json:"requested_at,omitempty"`
-	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
-	PdfObjectKey  string                 `protobuf:"bytes,9,opt,name=pdf_object_key,json=pdfObjectKey,proto3" json:"pdf_object_key,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ReportListItem) Reset() {
-	*x = ReportListItem{}
-	mi := &file_tax_v1_tax_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ReportListItem) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ReportListItem) ProtoMessage() {}
-
-func (x *ReportListItem) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ReportListItem.ProtoReflect.Descriptor instead.
-func (*ReportListItem) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *ReportListItem) GetReportId() string {
-	if x != nil {
-		return x.ReportId
-	}
-	return ""
-}
-
-func (x *ReportListItem) GetTaxYear() int32 {
-	if x != nil {
-		return x.TaxYear
-	}
-	return 0
-}
-
-func (x *ReportListItem) GetJurisdiction() string {
-	if x != nil {
-		return x.Jurisdiction
-	}
-	return ""
-}
-
-func (x *ReportListItem) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
-func (x *ReportListItem) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
-}
-
-func (x *ReportListItem) GetRequestedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.RequestedAt
-	}
-	return nil
-}
-
-func (x *ReportListItem) GetStartedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.StartedAt
-	}
-	return nil
-}
-
-func (x *ReportListItem) GetCompletedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CompletedAt
-	}
-	return nil
-}
-
-func (x *ReportListItem) GetPdfObjectKey() string {
-	if x != nil {
-		return x.PdfObjectKey
-	}
-	return ""
 }
 
 type ListReportsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	TaxYear       int32                  `protobuf:"varint,2,opt,name=tax_year,json=taxYear,proto3" json:"tax_year,omitempty"`
-	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
-	Offset        int32                  `protobuf:"varint,4,opt,name=offset,proto3" json:"offset,omitempty"`
+	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListReportsRequest) Reset() {
 	*x = ListReportsRequest{}
-	mi := &file_tax_v1_tax_proto_msgTypes[15]
+	mi := &file_tax_v1_tax_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1163,7 +990,7 @@ func (x *ListReportsRequest) String() string {
 func (*ListReportsRequest) ProtoMessage() {}
 
 func (x *ListReportsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[15]
+	mi := &file_tax_v1_tax_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1176,7 +1003,7 @@ func (x *ListReportsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListReportsRequest.ProtoReflect.Descriptor instead.
 func (*ListReportsRequest) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{15}
+	return file_tax_v1_tax_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListReportsRequest) GetTenantId() string {
@@ -1184,13 +1011,6 @@ func (x *ListReportsRequest) GetTenantId() string {
 		return x.TenantId
 	}
 	return ""
-}
-
-func (x *ListReportsRequest) GetTaxYear() int32 {
-	if x != nil {
-		return x.TaxYear
-	}
-	return 0
 }
 
 func (x *ListReportsRequest) GetLimit() int32 {
@@ -1209,7 +1029,7 @@ func (x *ListReportsRequest) GetOffset() int32 {
 
 type ListReportsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Reports       []*ReportListItem      `protobuf:"bytes,1,rep,name=reports,proto3" json:"reports,omitempty"`
+	Jobs          []*TaxJob              `protobuf:"bytes,1,rep,name=jobs,proto3" json:"jobs,omitempty"`
 	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1217,7 +1037,7 @@ type ListReportsResponse struct {
 
 func (x *ListReportsResponse) Reset() {
 	*x = ListReportsResponse{}
-	mi := &file_tax_v1_tax_proto_msgTypes[16]
+	mi := &file_tax_v1_tax_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1229,7 +1049,7 @@ func (x *ListReportsResponse) String() string {
 func (*ListReportsResponse) ProtoMessage() {}
 
 func (x *ListReportsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tax_v1_tax_proto_msgTypes[16]
+	mi := &file_tax_v1_tax_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1242,12 +1062,12 @@ func (x *ListReportsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListReportsResponse.ProtoReflect.Descriptor instead.
 func (*ListReportsResponse) Descriptor() ([]byte, []int) {
-	return file_tax_v1_tax_proto_rawDescGZIP(), []int{16}
+	return file_tax_v1_tax_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *ListReportsResponse) GetReports() []*ReportListItem {
+func (x *ListReportsResponse) GetJobs() []*TaxJob {
 	if x != nil {
-		return x.Reports
+		return x.Jobs
 	}
 	return nil
 }
@@ -1263,127 +1083,102 @@ var File_tax_v1_tax_proto protoreflect.FileDescriptor
 
 const file_tax_v1_tax_proto_rawDesc = "" +
 	"\n" +
-	"\x10tax/v1/tax.proto\x12\x06tax.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf7\x03\n" +
+	"\x10tax/v1/tax.proto\x12\x06tax.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"}\n" +
+	"\tTaxPolicy\x12D\n" +
+	"\x1ftreat_crypto_crypto_as_disposal\x18\x01 \x01(\bR\x1btreatCryptoCryptoAsDisposal\x12*\n" +
+	"\x11cost_basis_method\x18\x02 \x01(\tR\x0fcostBasisMethod\"\xdf\x02\n" +
 	"\n" +
 	"TaxProfile\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\"\n" +
-	"\fjurisdiction\x18\x02 \x01(\tR\fjurisdiction\x12*\n" +
-	"\x11cost_basis_method\x18\x03 \x01(\tR\x0fcostBasisMethod\x12\x1a\n" +
-	"\btimezone\x18\x04 \x01(\tR\btimezone\x129\n" +
-	"\x19treat_swap_as_disposition\x18\x05 \x01(\bR\x16treatSwapAsDisposition\x12D\n" +
-	"\x1ftreat_crypto_fee_as_disposition\x18\x06 \x01(\bR\x1btreatCryptoFeeAsDisposition\x122\n" +
-	"\x15include_income_events\x18\a \x01(\bR\x13includeIncomeEvents\x12=\n" +
-	"\x1ballow_loss_events_deduction\x18\b \x01(\bR\x18allowLossEventsDeduction\x12;\n" +
-	"\x1afail_on_negative_inventory\x18\t \x01(\bR\x17failOnNegativeInventory\x12/\n" +
-	"\x14fail_on_missing_fiat\x18\n" +
-	" \x01(\bR\x11failOnMissingFiat\"3\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x10\n" +
+	"\x03inn\x18\x02 \x01(\tR\x03inn\x12\x1b\n" +
+	"\tlast_name\x18\x03 \x01(\tR\blastName\x12\x1d\n" +
+	"\n" +
+	"first_name\x18\x04 \x01(\tR\tfirstName\x12\x1f\n" +
+	"\vmiddle_name\x18\x05 \x01(\tR\n" +
+	"middleName\x12\"\n" +
+	"\fjurisdiction\x18\a \x01(\tR\fjurisdiction\x12\x1a\n" +
+	"\btimezone\x18\b \x01(\tR\btimezone\x12\x14\n" +
+	"\x05phone\x18\t \x01(\tR\x05phone\x12\x18\n" +
+	"\awallets\x18\n" +
+	" \x03(\tR\awallets\x120\n" +
+	"\x14tax_residency_status\x18\v \x01(\tR\x12taxResidencyStatus\x12#\n" +
+	"\rtaxpayer_type\x18\f \x01(\tR\ftaxpayerType\"\xc7\x02\n" +
+	"\x0fTaxProfileInput\x12\x10\n" +
+	"\x03inn\x18\x01 \x01(\tR\x03inn\x12\x1b\n" +
+	"\tlast_name\x18\x02 \x01(\tR\blastName\x12\x1d\n" +
+	"\n" +
+	"first_name\x18\x03 \x01(\tR\tfirstName\x12\x1f\n" +
+	"\vmiddle_name\x18\x04 \x01(\tR\n" +
+	"middleName\x12\"\n" +
+	"\fjurisdiction\x18\x05 \x01(\tR\fjurisdiction\x12\x1a\n" +
+	"\btimezone\x18\x06 \x01(\tR\btimezone\x12\x14\n" +
+	"\x05phone\x18\a \x01(\tR\x05phone\x12\x18\n" +
+	"\awallets\x18\b \x03(\tR\awallets\x120\n" +
+	"\x14tax_residency_status\x18\t \x01(\tR\x12taxResidencyStatus\x12#\n" +
+	"\rtaxpayer_type\x18\n" +
+	" \x01(\tR\ftaxpayerType\"\xac\x01\n" +
+	"\n" +
+	"TaxSummary\x12*\n" +
+	"\x11total_income_fiat\x18\x01 \x01(\tR\x0ftotalIncomeFiat\x12,\n" +
+	"\x12total_expense_fiat\x18\x02 \x01(\tR\x10totalExpenseFiat\x12\"\n" +
+	"\rtax_base_fiat\x18\x03 \x01(\tR\vtaxBaseFiat\x12 \n" +
+	"\ftax_due_fiat\x18\x04 \x01(\tR\n" +
+	"taxDueFiat\"\xc7\x04\n" +
+	"\x06TaxJob\x12\x1b\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x1b\n" +
+	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12\x19\n" +
+	"\btax_year\x18\x03 \x01(\x05R\ataxYear\x12:\n" +
+	"\x0fpolicy_snapshot\x18\x04 \x01(\v2\x11.tax.v1.TaxPolicyR\x0epolicySnapshot\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x12\x1a\n" +
+	"\battempts\x18\x06 \x01(\x05R\battempts\x129\n" +
+	"\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"started_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
+	"\vfinished_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"finishedAt\x12&\n" +
+	"\x0flast_error_code\x18\n" +
+	" \x01(\tR\rlastErrorCode\x12,\n" +
+	"\x12last_error_message\x18\v \x01(\tR\x10lastErrorMessage\x12\"\n" +
+	"\raudit_zip_url\x18\f \x01(\tR\vauditZipUrl\x12\x1d\n" +
+	"\n" +
+	"report_url\x18\r \x01(\tR\treportUrl\x12,\n" +
+	"\asummary\x18\x0e \x01(\v2\x12.tax.v1.TaxSummaryR\asummary\"3\n" +
 	"\x14GetTaxProfileRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"E\n" +
 	"\x15GetTaxProfileResponse\x12,\n" +
-	"\aprofile\x18\x01 \x01(\v2\x12.tax.v1.TaxProfileR\aprofile\"\xd6\x05\n" +
+	"\aprofile\x18\x01 \x01(\v2\x12.tax.v1.TaxProfileR\aprofile\"i\n" +
 	"\x17UpsertTaxProfileRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\"\n" +
-	"\fjurisdiction\x18\x02 \x01(\tR\fjurisdiction\x12*\n" +
-	"\x11cost_basis_method\x18\x03 \x01(\tR\x0fcostBasisMethod\x12\x1a\n" +
-	"\btimezone\x18\x04 \x01(\tR\btimezone\x12>\n" +
-	"\x19treat_swap_as_disposition\x18\x05 \x01(\bH\x00R\x16treatSwapAsDisposition\x88\x01\x01\x12I\n" +
-	"\x1ftreat_crypto_fee_as_disposition\x18\x06 \x01(\bH\x01R\x1btreatCryptoFeeAsDisposition\x88\x01\x01\x127\n" +
-	"\x15include_income_events\x18\a \x01(\bH\x02R\x13includeIncomeEvents\x88\x01\x01\x12B\n" +
-	"\x1ballow_loss_events_deduction\x18\b \x01(\bH\x03R\x18allowLossEventsDeduction\x88\x01\x01\x12@\n" +
-	"\x1afail_on_negative_inventory\x18\t \x01(\bH\x04R\x17failOnNegativeInventory\x88\x01\x01\x124\n" +
-	"\x14fail_on_missing_fiat\x18\n" +
-	" \x01(\bH\x05R\x11failOnMissingFiat\x88\x01\x01B\x1c\n" +
-	"\x1a_treat_swap_as_dispositionB\"\n" +
-	" _treat_crypto_fee_as_dispositionB\x18\n" +
-	"\x16_include_income_eventsB\x1e\n" +
-	"\x1c_allow_loss_events_deductionB\x1d\n" +
-	"\x1b_fail_on_negative_inventoryB\x17\n" +
-	"\x15_fail_on_missing_fiat\"H\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x121\n" +
+	"\aprofile\x18\x02 \x01(\v2\x17.tax.v1.TaxProfileInputR\aprofile\"H\n" +
 	"\x18UpsertTaxProfileResponse\x12,\n" +
-	"\aprofile\x18\x01 \x01(\v2\x12.tax.v1.TaxProfileR\aprofile\"\xdb\x02\n" +
-	"\x0fTaxpayerProfile\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x10\n" +
-	"\x03inn\x18\x02 \x01(\tR\x03inn\x12\x1b\n" +
-	"\tlast_name\x18\x03 \x01(\tR\blastName\x12\x1d\n" +
+	"\aprofile\x18\x01 \x01(\v2\x12.tax.v1.TaxProfileR\aprofile\"`\n" +
+	"\x11StartReportParams\x12\x19\n" +
+	"\btax_year\x18\x01 \x01(\x05R\ataxYear\x120\n" +
 	"\n" +
-	"first_name\x18\x04 \x01(\tR\tfirstName\x12\x1f\n" +
-	"\vmiddle_name\x18\x05 \x01(\tR\n" +
-	"middleName\x12\x1d\n" +
-	"\n" +
-	"birth_date\x18\x06 \x01(\tR\tbirthDate\x12,\n" +
-	"\x12document_type_code\x18\a \x01(\tR\x10documentTypeCode\x12'\n" +
-	"\x0fdocument_number\x18\b \x01(\tR\x0edocumentNumber\x120\n" +
-	"\x14tax_residency_status\x18\t \x01(\tR\x12taxResidencyStatus\x12\x14\n" +
-	"\x05phone\x18\n" +
-	" \x01(\tR\x05phone\"8\n" +
-	"\x19GetTaxpayerProfileRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"O\n" +
-	"\x1aGetTaxpayerProfileResponse\x121\n" +
-	"\aprofile\x18\x01 \x01(\v2\x17.tax.v1.TaxpayerProfileR\aprofile\"\xe8\x02\n" +
-	"\x1cUpsertTaxpayerProfileRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x10\n" +
-	"\x03inn\x18\x02 \x01(\tR\x03inn\x12\x1b\n" +
-	"\tlast_name\x18\x03 \x01(\tR\blastName\x12\x1d\n" +
-	"\n" +
-	"first_name\x18\x04 \x01(\tR\tfirstName\x12\x1f\n" +
-	"\vmiddle_name\x18\x05 \x01(\tR\n" +
-	"middleName\x12\x1d\n" +
-	"\n" +
-	"birth_date\x18\x06 \x01(\tR\tbirthDate\x12,\n" +
-	"\x12document_type_code\x18\a \x01(\tR\x10documentTypeCode\x12'\n" +
-	"\x0fdocument_number\x18\b \x01(\tR\x0edocumentNumber\x120\n" +
-	"\x14tax_residency_status\x18\t \x01(\tR\x12taxResidencyStatus\x12\x14\n" +
-	"\x05phone\x18\n" +
-	" \x01(\tR\x05phone\"R\n" +
-	"\x1dUpsertTaxpayerProfileResponse\x121\n" +
-	"\aprofile\x18\x01 \x01(\v2\x17.tax.v1.TaxpayerProfileR\aprofile\"\x89\x02\n" +
+	"tax_policy\x18\x02 \x01(\v2\x11.tax.v1.TaxPolicyR\ttaxPolicy\"d\n" +
 	"\x12StartReportRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x19\n" +
-	"\btax_year\x18\x02 \x01(\x05R\ataxYear\x12\"\n" +
-	"\fjurisdiction\x18\x03 \x01(\tR\fjurisdiction\x12\x1a\n" +
-	"\btimezone\x18\x04 \x01(\tR\btimezone\x12*\n" +
-	"\x11cost_basis_method\x18\x05 \x01(\tR\x0fcostBasisMethod\x12O\n" +
-	"%treat_crypto_to_crypto_as_disposition\x18\x06 \x01(\bR treatCryptoToCryptoAsDisposition\"2\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x121\n" +
+	"\x06params\x18\x02 \x01(\v2\x19.tax.v1.StartReportParamsR\x06params\"J\n" +
 	"\x13StartReportResponse\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\tR\breportId\"R\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\"R\n" +
 	"\x16GetReportStatusRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
-	"\treport_id\x18\x02 \x01(\tR\breportId\"\xe6\x02\n" +
-	"\x17GetReportStatusResponse\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\x12=\n" +
-	"\frequested_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vrequestedAt\x129\n" +
-	"\n" +
-	"started_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12=\n" +
-	"\fcompleted_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12$\n" +
-	"\x0epdf_object_key\x18\a \x01(\tR\fpdfObjectKey\x12!\n" +
-	"\fdownload_url\x18\b \x01(\tR\vdownloadUrl\"\xf9\x02\n" +
-	"\x0eReportListItem\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x19\n" +
-	"\btax_year\x18\x02 \x01(\x05R\ataxYear\x12\"\n" +
-	"\fjurisdiction\x18\x03 \x01(\tR\fjurisdiction\x12\x16\n" +
-	"\x06status\x18\x04 \x01(\tR\x06status\x12\x14\n" +
-	"\x05error\x18\x05 \x01(\tR\x05error\x12=\n" +
-	"\frequested_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vrequestedAt\x129\n" +
-	"\n" +
-	"started_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12=\n" +
-	"\fcompleted_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12$\n" +
-	"\x0epdf_object_key\x18\t \x01(\tR\fpdfObjectKey\"z\n" +
+	"\treport_id\x18\x02 \x01(\tR\breportId\";\n" +
+	"\x17GetReportStatusResponse\x12 \n" +
+	"\x03job\x18\x01 \x01(\v2\x0e.tax.v1.TaxJobR\x03job\"_\n" +
 	"\x12ListReportsRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x19\n" +
-	"\btax_year\x18\x02 \x01(\x05R\ataxYear\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x04 \x01(\x05R\x06offset\"]\n" +
-	"\x13ListReportsResponse\x120\n" +
-	"\areports\x18\x01 \x03(\v2\x16.tax.v1.ReportListItemR\areports\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total2\xbd\a\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\"O\n" +
+	"\x13ListReportsResponse\x12\"\n" +
+	"\x04jobs\x18\x01 \x03(\v2\x0e.tax.v1.TaxJobR\x04jobs\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total2\x95\x05\n" +
 	"\x03Tax\x12y\n" +
-	"\rGetTaxProfile\x12\x1c.tax.v1.GetTaxProfileRequest\x1a\x1d.tax.v1.GetTaxProfileResponse\"+\x82\xd3\xe4\x93\x02%\x12#/v1/tenants/{tenant_id}/tax/profile\x12\x85\x01\n" +
-	"\x10UpsertTaxProfile\x12\x1f.tax.v1.UpsertTaxProfileRequest\x1a .tax.v1.UpsertTaxProfileResponse\".\x82\xd3\xe4\x93\x02(:\x01*\"#/v1/tenants/{tenant_id}/tax/profile\x12\x91\x01\n" +
-	"\x12GetTaxpayerProfile\x12!.tax.v1.GetTaxpayerProfileRequest\x1a\".tax.v1.GetTaxpayerProfileResponse\"4\x82\xd3\xe4\x93\x02.\x12,/v1/tenants/{tenant_id}/tax/taxpayer-profile\x12\x9d\x01\n" +
-	"\x15UpsertTaxpayerProfile\x12$.tax.v1.UpsertTaxpayerProfileRequest\x1a%.tax.v1.UpsertTaxpayerProfileResponse\"7\x82\xd3\xe4\x93\x021:\x01*\",/v1/tenants/{tenant_id}/tax/taxpayer-profile\x12|\n" +
-	"\vStartReport\x12\x1a.tax.v1.StartReportRequest\x1a\x1b.tax.v1.StartReportResponse\"4\x82\xd3\xe4\x93\x02.:\x01*\x1a)/v1/tenants/{tenant_id}/tax/reports:start\x12\x8b\x01\n" +
+	"\rGetTaxProfile\x12\x1c.tax.v1.GetTaxProfileRequest\x1a\x1d.tax.v1.GetTaxProfileResponse\"+\x82\xd3\xe4\x93\x02%\x12#/v1/tenants/{tenant_id}/tax/profile\x12\x8b\x01\n" +
+	"\x10UpsertTaxProfile\x12\x1f.tax.v1.UpsertTaxProfileRequest\x1a .tax.v1.UpsertTaxProfileResponse\"4\x82\xd3\xe4\x93\x02.:\aprofile\x1a#/v1/tenants/{tenant_id}/tax/profile\x12\x81\x01\n" +
+	"\vStartReport\x12\x1a.tax.v1.StartReportRequest\x1a\x1b.tax.v1.StartReportResponse\"9\x82\xd3\xe4\x93\x023:\x06params\")/v1/tenants/{tenant_id}/tax/reports:start\x12\x8b\x01\n" +
 	"\x0fGetReportStatus\x12\x1e.tax.v1.GetReportStatusRequest\x1a\x1f.tax.v1.GetReportStatusResponse\"7\x82\xd3\xe4\x93\x021\x12//v1/tenants/{tenant_id}/tax/reports/{report_id}\x12s\n" +
 	"\vListReports\x12\x1a.tax.v1.ListReportsRequest\x1a\x1b.tax.v1.ListReportsResponse\"+\x82\xd3\xe4\x93\x02%\x12#/v1/tenants/{tenant_id}/tax/reportsB6Z4github.com/NightRunner/CryptoTax-Go/gen/tax/v1;taxv1b\x06proto3"
 
@@ -1399,58 +1194,54 @@ func file_tax_v1_tax_proto_rawDescGZIP() []byte {
 	return file_tax_v1_tax_proto_rawDescData
 }
 
-var file_tax_v1_tax_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_tax_v1_tax_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_tax_v1_tax_proto_goTypes = []any{
-	(*TaxProfile)(nil),                    // 0: tax.v1.TaxProfile
-	(*GetTaxProfileRequest)(nil),          // 1: tax.v1.GetTaxProfileRequest
-	(*GetTaxProfileResponse)(nil),         // 2: tax.v1.GetTaxProfileResponse
-	(*UpsertTaxProfileRequest)(nil),       // 3: tax.v1.UpsertTaxProfileRequest
-	(*UpsertTaxProfileResponse)(nil),      // 4: tax.v1.UpsertTaxProfileResponse
-	(*TaxpayerProfile)(nil),               // 5: tax.v1.TaxpayerProfile
-	(*GetTaxpayerProfileRequest)(nil),     // 6: tax.v1.GetTaxpayerProfileRequest
-	(*GetTaxpayerProfileResponse)(nil),    // 7: tax.v1.GetTaxpayerProfileResponse
-	(*UpsertTaxpayerProfileRequest)(nil),  // 8: tax.v1.UpsertTaxpayerProfileRequest
-	(*UpsertTaxpayerProfileResponse)(nil), // 9: tax.v1.UpsertTaxpayerProfileResponse
-	(*StartReportRequest)(nil),            // 10: tax.v1.StartReportRequest
-	(*StartReportResponse)(nil),           // 11: tax.v1.StartReportResponse
-	(*GetReportStatusRequest)(nil),        // 12: tax.v1.GetReportStatusRequest
-	(*GetReportStatusResponse)(nil),       // 13: tax.v1.GetReportStatusResponse
-	(*ReportListItem)(nil),                // 14: tax.v1.ReportListItem
-	(*ListReportsRequest)(nil),            // 15: tax.v1.ListReportsRequest
-	(*ListReportsResponse)(nil),           // 16: tax.v1.ListReportsResponse
-	(*timestamppb.Timestamp)(nil),         // 17: google.protobuf.Timestamp
+	(*TaxPolicy)(nil),                // 0: tax.v1.TaxPolicy
+	(*TaxProfile)(nil),               // 1: tax.v1.TaxProfile
+	(*TaxProfileInput)(nil),          // 2: tax.v1.TaxProfileInput
+	(*TaxSummary)(nil),               // 3: tax.v1.TaxSummary
+	(*TaxJob)(nil),                   // 4: tax.v1.TaxJob
+	(*GetTaxProfileRequest)(nil),     // 5: tax.v1.GetTaxProfileRequest
+	(*GetTaxProfileResponse)(nil),    // 6: tax.v1.GetTaxProfileResponse
+	(*UpsertTaxProfileRequest)(nil),  // 7: tax.v1.UpsertTaxProfileRequest
+	(*UpsertTaxProfileResponse)(nil), // 8: tax.v1.UpsertTaxProfileResponse
+	(*StartReportParams)(nil),        // 9: tax.v1.StartReportParams
+	(*StartReportRequest)(nil),       // 10: tax.v1.StartReportRequest
+	(*StartReportResponse)(nil),      // 11: tax.v1.StartReportResponse
+	(*GetReportStatusRequest)(nil),   // 12: tax.v1.GetReportStatusRequest
+	(*GetReportStatusResponse)(nil),  // 13: tax.v1.GetReportStatusResponse
+	(*ListReportsRequest)(nil),       // 14: tax.v1.ListReportsRequest
+	(*ListReportsResponse)(nil),      // 15: tax.v1.ListReportsResponse
+	(*timestamppb.Timestamp)(nil),    // 16: google.protobuf.Timestamp
 }
 var file_tax_v1_tax_proto_depIdxs = []int32{
-	0,  // 0: tax.v1.GetTaxProfileResponse.profile:type_name -> tax.v1.TaxProfile
-	0,  // 1: tax.v1.UpsertTaxProfileResponse.profile:type_name -> tax.v1.TaxProfile
-	5,  // 2: tax.v1.GetTaxpayerProfileResponse.profile:type_name -> tax.v1.TaxpayerProfile
-	5,  // 3: tax.v1.UpsertTaxpayerProfileResponse.profile:type_name -> tax.v1.TaxpayerProfile
-	17, // 4: tax.v1.GetReportStatusResponse.requested_at:type_name -> google.protobuf.Timestamp
-	17, // 5: tax.v1.GetReportStatusResponse.started_at:type_name -> google.protobuf.Timestamp
-	17, // 6: tax.v1.GetReportStatusResponse.completed_at:type_name -> google.protobuf.Timestamp
-	17, // 7: tax.v1.ReportListItem.requested_at:type_name -> google.protobuf.Timestamp
-	17, // 8: tax.v1.ReportListItem.started_at:type_name -> google.protobuf.Timestamp
-	17, // 9: tax.v1.ReportListItem.completed_at:type_name -> google.protobuf.Timestamp
-	14, // 10: tax.v1.ListReportsResponse.reports:type_name -> tax.v1.ReportListItem
-	1,  // 11: tax.v1.Tax.GetTaxProfile:input_type -> tax.v1.GetTaxProfileRequest
-	3,  // 12: tax.v1.Tax.UpsertTaxProfile:input_type -> tax.v1.UpsertTaxProfileRequest
-	6,  // 13: tax.v1.Tax.GetTaxpayerProfile:input_type -> tax.v1.GetTaxpayerProfileRequest
-	8,  // 14: tax.v1.Tax.UpsertTaxpayerProfile:input_type -> tax.v1.UpsertTaxpayerProfileRequest
-	10, // 15: tax.v1.Tax.StartReport:input_type -> tax.v1.StartReportRequest
-	12, // 16: tax.v1.Tax.GetReportStatus:input_type -> tax.v1.GetReportStatusRequest
-	15, // 17: tax.v1.Tax.ListReports:input_type -> tax.v1.ListReportsRequest
-	2,  // 18: tax.v1.Tax.GetTaxProfile:output_type -> tax.v1.GetTaxProfileResponse
-	4,  // 19: tax.v1.Tax.UpsertTaxProfile:output_type -> tax.v1.UpsertTaxProfileResponse
-	7,  // 20: tax.v1.Tax.GetTaxpayerProfile:output_type -> tax.v1.GetTaxpayerProfileResponse
-	9,  // 21: tax.v1.Tax.UpsertTaxpayerProfile:output_type -> tax.v1.UpsertTaxpayerProfileResponse
-	11, // 22: tax.v1.Tax.StartReport:output_type -> tax.v1.StartReportResponse
-	13, // 23: tax.v1.Tax.GetReportStatus:output_type -> tax.v1.GetReportStatusResponse
-	16, // 24: tax.v1.Tax.ListReports:output_type -> tax.v1.ListReportsResponse
-	18, // [18:25] is the sub-list for method output_type
-	11, // [11:18] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	0,  // 0: tax.v1.TaxJob.policy_snapshot:type_name -> tax.v1.TaxPolicy
+	16, // 1: tax.v1.TaxJob.created_at:type_name -> google.protobuf.Timestamp
+	16, // 2: tax.v1.TaxJob.started_at:type_name -> google.protobuf.Timestamp
+	16, // 3: tax.v1.TaxJob.finished_at:type_name -> google.protobuf.Timestamp
+	3,  // 4: tax.v1.TaxJob.summary:type_name -> tax.v1.TaxSummary
+	1,  // 5: tax.v1.GetTaxProfileResponse.profile:type_name -> tax.v1.TaxProfile
+	2,  // 6: tax.v1.UpsertTaxProfileRequest.profile:type_name -> tax.v1.TaxProfileInput
+	1,  // 7: tax.v1.UpsertTaxProfileResponse.profile:type_name -> tax.v1.TaxProfile
+	0,  // 8: tax.v1.StartReportParams.tax_policy:type_name -> tax.v1.TaxPolicy
+	9,  // 9: tax.v1.StartReportRequest.params:type_name -> tax.v1.StartReportParams
+	4,  // 10: tax.v1.GetReportStatusResponse.job:type_name -> tax.v1.TaxJob
+	4,  // 11: tax.v1.ListReportsResponse.jobs:type_name -> tax.v1.TaxJob
+	5,  // 12: tax.v1.Tax.GetTaxProfile:input_type -> tax.v1.GetTaxProfileRequest
+	7,  // 13: tax.v1.Tax.UpsertTaxProfile:input_type -> tax.v1.UpsertTaxProfileRequest
+	10, // 14: tax.v1.Tax.StartReport:input_type -> tax.v1.StartReportRequest
+	12, // 15: tax.v1.Tax.GetReportStatus:input_type -> tax.v1.GetReportStatusRequest
+	14, // 16: tax.v1.Tax.ListReports:input_type -> tax.v1.ListReportsRequest
+	6,  // 17: tax.v1.Tax.GetTaxProfile:output_type -> tax.v1.GetTaxProfileResponse
+	8,  // 18: tax.v1.Tax.UpsertTaxProfile:output_type -> tax.v1.UpsertTaxProfileResponse
+	11, // 19: tax.v1.Tax.StartReport:output_type -> tax.v1.StartReportResponse
+	13, // 20: tax.v1.Tax.GetReportStatus:output_type -> tax.v1.GetReportStatusResponse
+	15, // 21: tax.v1.Tax.ListReports:output_type -> tax.v1.ListReportsResponse
+	17, // [17:22] is the sub-list for method output_type
+	12, // [12:17] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_tax_v1_tax_proto_init() }
@@ -1458,14 +1249,13 @@ func file_tax_v1_tax_proto_init() {
 	if File_tax_v1_tax_proto != nil {
 		return
 	}
-	file_tax_v1_tax_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_tax_v1_tax_proto_rawDesc), len(file_tax_v1_tax_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
