@@ -9,66 +9,36 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type InboxEvent struct {
-	EventID     uuid.UUID          `json:"eventId"`
-	ProcessedAt pgtype.Timestamptz `json:"processedAt"`
-}
-
-type OutboxEvent struct {
-	ID            uuid.UUID          `json:"id"`
-	AggregateType string             `json:"aggregateType"`
-	AggregateID   uuid.UUID          `json:"aggregateId"`
-	EventType     string             `json:"eventType"`
-	Payload       []byte             `json:"payload"`
-	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
-	PublishedAt   pgtype.Timestamptz `json:"publishedAt"`
-	Status        string             `json:"status"`
-	Attempts      int32              `json:"attempts"`
-	LastError     *string            `json:"lastError"`
-}
-
-type TaxProfile struct {
-	TenantID                    uuid.UUID          `json:"tenantId"`
-	Jurisdiction                string             `json:"jurisdiction"`
-	CostBasisMethod             string             `json:"costBasisMethod"`
-	Timezone                    string             `json:"timezone"`
-	CreatedAt                   pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt                   pgtype.Timestamptz `json:"updatedAt"`
-	TreatSwapAsDisposition      bool               `json:"treatSwapAsDisposition"`
-	TreatCryptoFeeAsDisposition bool               `json:"treatCryptoFeeAsDisposition"`
-	IncludeIncomeEvents         bool               `json:"includeIncomeEvents"`
-	AllowLossEventsDeduction    bool               `json:"allowLossEventsDeduction"`
-	FailOnNegativeInventory     bool               `json:"failOnNegativeInventory"`
-	FailOnMissingFiat           bool               `json:"failOnMissingFiat"`
-}
-
-type TaxReportJob struct {
+type TaxJob struct {
 	ID               uuid.UUID          `json:"id"`
 	TenantID         uuid.UUID          `json:"tenantId"`
 	TaxYear          int32              `json:"taxYear"`
-	Jurisdiction     string             `json:"jurisdiction"`
+	PolicySnapshot   []byte             `json:"policySnapshot"`
 	Status           string             `json:"status"`
-	RequestedAt      pgtype.Timestamptz `json:"requestedAt"`
-	StartedAt        pgtype.Timestamptz `json:"startedAt"`
-	CompletedAt      pgtype.Timestamptz `json:"completedAt"`
-	Error            *string            `json:"error"`
-	Params           []byte             `json:"params"`
+	Attempts         int32              `json:"attempts"`
+	RetryAt          pgtype.Timestamptz `json:"retryAt"`
 	Summary          []byte             `json:"summary"`
-	DatasetObjectKey *string            `json:"datasetObjectKey"`
-	PdfObjectKey     *string            `json:"pdfObjectKey"`
+	AuditZipUrl      *string            `json:"auditZipUrl"`
+	ReportUrl        *string            `json:"reportUrl"`
+	CreatedAt        pgtype.Timestamptz `json:"createdAt"`
+	StartedAt        pgtype.Timestamptz `json:"startedAt"`
+	FinishedAt       pgtype.Timestamptz `json:"finishedAt"`
+	LastErrorCode    *string            `json:"lastErrorCode"`
+	LastErrorMessage *string            `json:"lastErrorMessage"`
 }
 
-type TaxpayerProfile struct {
+type TaxProfile struct {
 	TenantID           uuid.UUID          `json:"tenantId"`
-	Inn                *string            `json:"inn"`
-	LastName           *string            `json:"lastName"`
-	FirstName          *string            `json:"firstName"`
-	MiddleName         *string            `json:"middleName"`
-	BirthDate          pgtype.Date        `json:"birthDate"`
-	DocumentTypeCode   *string            `json:"documentTypeCode"`
-	DocumentNumber     *string            `json:"documentNumber"`
-	TaxResidencyStatus *string            `json:"taxResidencyStatus"`
-	Phone              *string            `json:"phone"`
+	Inn                string             `json:"inn"`
+	LastName           string             `json:"lastName"`
+	FirstName          string             `json:"firstName"`
+	MiddleName         string             `json:"middleName"`
+	Jurisdiction       string             `json:"jurisdiction"`
+	Timezone           string             `json:"timezone"`
+	Phone              string             `json:"phone"`
+	Wallets            []byte             `json:"wallets"`
+	TaxResidencyStatus string             `json:"taxResidencyStatus"`
+	TaxpayerType       string             `json:"taxpayerType"`
 	CreatedAt          pgtype.Timestamptz `json:"createdAt"`
 	UpdatedAt          pgtype.Timestamptz `json:"updatedAt"`
 }

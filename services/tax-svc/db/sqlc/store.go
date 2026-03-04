@@ -3,8 +3,9 @@ package db
 import (
 	"context"
 
-	"github.com/NightRunner/CryptoTax-Go/pkg/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/NightRunner/CryptoTax-Go/pkg/postgres"
 )
 
 type Store interface {

@@ -11,23 +11,18 @@ import (
 )
 
 type Querier interface {
-	CountTaxReportJobs(ctx context.Context, arg CountTaxReportJobsParams) (int64, error)
-	CreateTaxReportJob(ctx context.Context, arg CreateTaxReportJobParams) (TaxReportJob, error)
-	GetTaxProfile(ctx context.Context, tenantID uuid.UUID) (GetTaxProfileRow, error)
-	GetTaxReportJob(ctx context.Context, arg GetTaxReportJobParams) (TaxReportJob, error)
-	GetTaxpayerProfile(ctx context.Context, tenantID uuid.UUID) (TaxpayerProfile, error)
-	InsertInboxEvent(ctx context.Context, eventID uuid.UUID) (int64, error)
-	InsertOutboxEvent(ctx context.Context, arg InsertOutboxEventParams) error
-	ListPendingOutboxEvents(ctx context.Context, arg ListPendingOutboxEventsParams) ([]OutboxEvent, error)
-	ListTaxReportJobs(ctx context.Context, arg ListTaxReportJobsParams) ([]TaxReportJob, error)
-	MarkOutboxEventFailed(ctx context.Context, arg MarkOutboxEventFailedParams) error
-	MarkOutboxEventPublished(ctx context.Context, id uuid.UUID) error
-	MarkTaxReportJobCompleted(ctx context.Context, arg MarkTaxReportJobCompletedParams) error
-	MarkTaxReportJobFailed(ctx context.Context, arg MarkTaxReportJobFailedParams) error
-	MarkTaxReportJobProcessing(ctx context.Context, id uuid.UUID) (int64, error)
-	UpdateTaxReportJobDataset(ctx context.Context, arg UpdateTaxReportJobDatasetParams) error
-	UpsertTaxProfile(ctx context.Context, arg UpsertTaxProfileParams) (UpsertTaxProfileRow, error)
-	UpsertTaxpayerProfile(ctx context.Context, arg UpsertTaxpayerProfileParams) (TaxpayerProfile, error)
+	ClaimNextQueuedTaxJob(ctx context.Context) (TaxJob, error)
+	CountTaxJobs(ctx context.Context, tenantID uuid.UUID) (int64, error)
+	CreateTaxJob(ctx context.Context, arg CreateTaxJobParams) (TaxJob, error)
+	DeleteTaxProfile(ctx context.Context, tenantID uuid.UUID) (int64, error)
+	GetTaxJob(ctx context.Context, arg GetTaxJobParams) (TaxJob, error)
+	GetTaxProfile(ctx context.Context, tenantID uuid.UUID) (TaxProfile, error)
+	ListTaxJobs(ctx context.Context, arg ListTaxJobsParams) ([]TaxJob, error)
+	MarkTaxJobCanceled(ctx context.Context, id uuid.UUID) error
+	MarkTaxJobFailed(ctx context.Context, arg MarkTaxJobFailedParams) error
+	RequeueTaxJob(ctx context.Context, arg RequeueTaxJobParams) error
+	SaveTaxJobResult(ctx context.Context, arg SaveTaxJobResultParams) error
+	UpsertTaxProfile(ctx context.Context, arg UpsertTaxProfileParams) (TaxProfile, error)
 }
 
 var _ Querier = (*Queries)(nil)

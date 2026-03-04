@@ -1,15 +1,16 @@
 -- name: GetTaxProfile :one
 SELECT
   tenant_id,
+  inn,
+  last_name,
+  first_name,
+  middle_name,
   jurisdiction,
-  cost_basis_method,
   timezone,
-  treat_swap_as_disposition,
-  treat_crypto_fee_as_disposition,
-  include_income_events,
-  allow_loss_events_deduction,
-  fail_on_negative_inventory,
-  fail_on_missing_fiat,
+  phone,
+  wallets,
+  tax_residency_status,
+  taxpayer_type,
   created_at,
   updated_at
 FROM tax_profile
@@ -17,33 +18,47 @@ WHERE tenant_id = $1;
 
 -- name: UpsertTaxProfile :one
 INSERT INTO tax_profile (
-  tenant_id, jurisdiction, cost_basis_method, timezone,
-  treat_swap_as_disposition, treat_crypto_fee_as_disposition, include_income_events,
-  allow_loss_events_deduction, fail_on_negative_inventory, fail_on_missing_fiat
+  tenant_id,
+  inn,
+  last_name,
+  first_name,
+  middle_name,
+  jurisdiction,
+  timezone,
+  phone,
+  wallets,
+  tax_residency_status,
+  taxpayer_type
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (tenant_id)
 DO UPDATE SET
+  inn = EXCLUDED.inn,
+  last_name = EXCLUDED.last_name,
+  first_name = EXCLUDED.first_name,
+  middle_name = EXCLUDED.middle_name,
   jurisdiction = EXCLUDED.jurisdiction,
-  cost_basis_method = EXCLUDED.cost_basis_method,
-  treat_swap_as_disposition = EXCLUDED.treat_swap_as_disposition,
-  treat_crypto_fee_as_disposition = EXCLUDED.treat_crypto_fee_as_disposition,
-  include_income_events = EXCLUDED.include_income_events,
-  allow_loss_events_deduction = EXCLUDED.allow_loss_events_deduction,
-  fail_on_negative_inventory = EXCLUDED.fail_on_negative_inventory,
-  fail_on_missing_fiat = EXCLUDED.fail_on_missing_fiat,
   timezone = EXCLUDED.timezone,
+  phone = EXCLUDED.phone,
+  wallets = EXCLUDED.wallets,
+  tax_residency_status = EXCLUDED.tax_residency_status,
+  taxpayer_type = EXCLUDED.taxpayer_type,
   updated_at = now()
 RETURNING
   tenant_id,
+  inn,
+  last_name,
+  first_name,
+  middle_name,
   jurisdiction,
-  cost_basis_method,
   timezone,
-  treat_swap_as_disposition,
-  treat_crypto_fee_as_disposition,
-  include_income_events,
-  allow_loss_events_deduction,
-  fail_on_negative_inventory,
-  fail_on_missing_fiat,
+  phone,
+  wallets,
+  tax_residency_status,
+  taxpayer_type,
   created_at,
   updated_at;
+
+-- name: DeleteTaxProfile :execrows
+DELETE FROM tax_profile
+WHERE tenant_id = $1;

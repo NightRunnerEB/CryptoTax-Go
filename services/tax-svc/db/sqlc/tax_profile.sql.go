@@ -9,56 +9,55 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const deleteTaxProfile = `-- name: DeleteTaxProfile :execrows
+DELETE FROM tax_profile
+WHERE tenant_id = $1
+`
+
+func (q *Queries) DeleteTaxProfile(ctx context.Context, tenantID uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteTaxProfile, tenantID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
 
 const getTaxProfile = `-- name: GetTaxProfile :one
 SELECT
   tenant_id,
+  inn,
+  last_name,
+  first_name,
+  middle_name,
   jurisdiction,
-  cost_basis_method,
   timezone,
-  treat_swap_as_disposition,
-  treat_crypto_fee_as_disposition,
-  include_income_events,
-  allow_loss_events_deduction,
-  fail_on_negative_inventory,
-  fail_on_missing_fiat,
+  phone,
+  wallets,
+  tax_residency_status,
+  taxpayer_type,
   created_at,
   updated_at
 FROM tax_profile
 WHERE tenant_id = $1
 `
 
-type GetTaxProfileRow struct {
-	TenantID                    uuid.UUID          `json:"tenantId"`
-	Jurisdiction                string             `json:"jurisdiction"`
-	CostBasisMethod             string             `json:"costBasisMethod"`
-	Timezone                    string             `json:"timezone"`
-	TreatSwapAsDisposition      bool               `json:"treatSwapAsDisposition"`
-	TreatCryptoFeeAsDisposition bool               `json:"treatCryptoFeeAsDisposition"`
-	IncludeIncomeEvents         bool               `json:"includeIncomeEvents"`
-	AllowLossEventsDeduction    bool               `json:"allowLossEventsDeduction"`
-	FailOnNegativeInventory     bool               `json:"failOnNegativeInventory"`
-	FailOnMissingFiat           bool               `json:"failOnMissingFiat"`
-	CreatedAt                   pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt                   pgtype.Timestamptz `json:"updatedAt"`
-}
-
-func (q *Queries) GetTaxProfile(ctx context.Context, tenantID uuid.UUID) (GetTaxProfileRow, error) {
+func (q *Queries) GetTaxProfile(ctx context.Context, tenantID uuid.UUID) (TaxProfile, error) {
 	row := q.db.QueryRow(ctx, getTaxProfile, tenantID)
-	var i GetTaxProfileRow
+	var i TaxProfile
 	err := row.Scan(
 		&i.TenantID,
+		&i.Inn,
+		&i.LastName,
+		&i.FirstName,
+		&i.MiddleName,
 		&i.Jurisdiction,
-		&i.CostBasisMethod,
 		&i.Timezone,
-		&i.TreatSwapAsDisposition,
-		&i.TreatCryptoFeeAsDisposition,
-		&i.IncludeIncomeEvents,
-		&i.AllowLossEventsDeduction,
-		&i.FailOnNegativeInventory,
-		&i.FailOnMissingFiat,
+		&i.Phone,
+		&i.Wallets,
+		&i.TaxResidencyStatus,
+		&i.TaxpayerType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -67,91 +66,89 @@ func (q *Queries) GetTaxProfile(ctx context.Context, tenantID uuid.UUID) (GetTax
 
 const upsertTaxProfile = `-- name: UpsertTaxProfile :one
 INSERT INTO tax_profile (
-  tenant_id, jurisdiction, cost_basis_method, timezone,
-  treat_swap_as_disposition, treat_crypto_fee_as_disposition, include_income_events,
-  allow_loss_events_deduction, fail_on_negative_inventory, fail_on_missing_fiat
+  tenant_id,
+  inn,
+  last_name,
+  first_name,
+  middle_name,
+  jurisdiction,
+  timezone,
+  phone,
+  wallets,
+  tax_residency_status,
+  taxpayer_type
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (tenant_id)
 DO UPDATE SET
+  inn = EXCLUDED.inn,
+  last_name = EXCLUDED.last_name,
+  first_name = EXCLUDED.first_name,
+  middle_name = EXCLUDED.middle_name,
   jurisdiction = EXCLUDED.jurisdiction,
-  cost_basis_method = EXCLUDED.cost_basis_method,
-  treat_swap_as_disposition = EXCLUDED.treat_swap_as_disposition,
-  treat_crypto_fee_as_disposition = EXCLUDED.treat_crypto_fee_as_disposition,
-  include_income_events = EXCLUDED.include_income_events,
-  allow_loss_events_deduction = EXCLUDED.allow_loss_events_deduction,
-  fail_on_negative_inventory = EXCLUDED.fail_on_negative_inventory,
-  fail_on_missing_fiat = EXCLUDED.fail_on_missing_fiat,
   timezone = EXCLUDED.timezone,
+  phone = EXCLUDED.phone,
+  wallets = EXCLUDED.wallets,
+  tax_residency_status = EXCLUDED.tax_residency_status,
+  taxpayer_type = EXCLUDED.taxpayer_type,
   updated_at = now()
 RETURNING
   tenant_id,
+  inn,
+  last_name,
+  first_name,
+  middle_name,
   jurisdiction,
-  cost_basis_method,
   timezone,
-  treat_swap_as_disposition,
-  treat_crypto_fee_as_disposition,
-  include_income_events,
-  allow_loss_events_deduction,
-  fail_on_negative_inventory,
-  fail_on_missing_fiat,
+  phone,
+  wallets,
+  tax_residency_status,
+  taxpayer_type,
   created_at,
   updated_at
 `
 
 type UpsertTaxProfileParams struct {
-	TenantID                    uuid.UUID `json:"tenantId"`
-	Jurisdiction                string    `json:"jurisdiction"`
-	CostBasisMethod             string    `json:"costBasisMethod"`
-	Timezone                    string    `json:"timezone"`
-	TreatSwapAsDisposition      bool      `json:"treatSwapAsDisposition"`
-	TreatCryptoFeeAsDisposition bool      `json:"treatCryptoFeeAsDisposition"`
-	IncludeIncomeEvents         bool      `json:"includeIncomeEvents"`
-	AllowLossEventsDeduction    bool      `json:"allowLossEventsDeduction"`
-	FailOnNegativeInventory     bool      `json:"failOnNegativeInventory"`
-	FailOnMissingFiat           bool      `json:"failOnMissingFiat"`
+	TenantID           uuid.UUID `json:"tenantId"`
+	Inn                string    `json:"inn"`
+	LastName           string    `json:"lastName"`
+	FirstName          string    `json:"firstName"`
+	MiddleName         string    `json:"middleName"`
+	Jurisdiction       string    `json:"jurisdiction"`
+	Timezone           string    `json:"timezone"`
+	Phone              string    `json:"phone"`
+	Wallets            []byte    `json:"wallets"`
+	TaxResidencyStatus string    `json:"taxResidencyStatus"`
+	TaxpayerType       string    `json:"taxpayerType"`
 }
 
-type UpsertTaxProfileRow struct {
-	TenantID                    uuid.UUID          `json:"tenantId"`
-	Jurisdiction                string             `json:"jurisdiction"`
-	CostBasisMethod             string             `json:"costBasisMethod"`
-	Timezone                    string             `json:"timezone"`
-	TreatSwapAsDisposition      bool               `json:"treatSwapAsDisposition"`
-	TreatCryptoFeeAsDisposition bool               `json:"treatCryptoFeeAsDisposition"`
-	IncludeIncomeEvents         bool               `json:"includeIncomeEvents"`
-	AllowLossEventsDeduction    bool               `json:"allowLossEventsDeduction"`
-	FailOnNegativeInventory     bool               `json:"failOnNegativeInventory"`
-	FailOnMissingFiat           bool               `json:"failOnMissingFiat"`
-	CreatedAt                   pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt                   pgtype.Timestamptz `json:"updatedAt"`
-}
-
-func (q *Queries) UpsertTaxProfile(ctx context.Context, arg UpsertTaxProfileParams) (UpsertTaxProfileRow, error) {
+func (q *Queries) UpsertTaxProfile(ctx context.Context, arg UpsertTaxProfileParams) (TaxProfile, error) {
 	row := q.db.QueryRow(ctx, upsertTaxProfile,
 		arg.TenantID,
+		arg.Inn,
+		arg.LastName,
+		arg.FirstName,
+		arg.MiddleName,
 		arg.Jurisdiction,
-		arg.CostBasisMethod,
 		arg.Timezone,
-		arg.TreatSwapAsDisposition,
-		arg.TreatCryptoFeeAsDisposition,
-		arg.IncludeIncomeEvents,
-		arg.AllowLossEventsDeduction,
-		arg.FailOnNegativeInventory,
-		arg.FailOnMissingFiat,
+		arg.Phone,
+		arg.Wallets,
+		arg.TaxResidencyStatus,
+		arg.TaxpayerType,
 	)
-	var i UpsertTaxProfileRow
+	var i TaxProfile
 	err := row.Scan(
 		&i.TenantID,
+		&i.Inn,
+		&i.LastName,
+		&i.FirstName,
+		&i.MiddleName,
 		&i.Jurisdiction,
-		&i.CostBasisMethod,
 		&i.Timezone,
-		&i.TreatSwapAsDisposition,
-		&i.TreatCryptoFeeAsDisposition,
-		&i.IncludeIncomeEvents,
-		&i.AllowLossEventsDeduction,
-		&i.FailOnNegativeInventory,
-		&i.FailOnMissingFiat,
+		&i.Phone,
+		&i.Wallets,
+		&i.TaxResidencyStatus,
+		&i.TaxpayerType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
