@@ -1,52 +1,61 @@
 package domain
 
 import (
-	"encoding/json"
+	"context"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-type ReportJobStatus string
+type TaxJobStatus string
 
 const (
-	ReportJobStatusQueued     ReportJobStatus = "queued"
-	ReportJobStatusProcessing ReportJobStatus = "processing"
-	ReportJobStatusCompleted  ReportJobStatus = "completed"
-	ReportJobStatusFailed     ReportJobStatus = "failed"
+	JobQueued   TaxJobStatus = "queued"
+	JobRunning  TaxJobStatus = "running"
+	JobSuccess  TaxJobStatus = "success"
+	JobFailed   TaxJobStatus = "failed"
+	JobCanceled TaxJobStatus = "canceled"
 )
 
-type StartReportParams struct {
-	TenantID                         uuid.UUID `json:"tenant_id"`
-	TaxYear                          int32     `json:"tax_year"`
-	Jurisdiction                     string    `json:"jurisdiction"`
-	Timezone                         string    `json:"timezone"`
-	CostBasisMethod                  string    `json:"cost_basis_method"`
-	TreatCryptoToCryptoAsDisposition bool      `json:"treat_crypto_to_crypto_as_disposition"`
+type TaxJob struct {
+	ID             uuid.UUID
+	TenantID       uuid.UUID
+	PolicySnapshot TaxPolicy
+	TaxYear        int
+
+	Status   TaxJobStatus
+	Attempts int
+
+	Summary *TaxSummary
+
+	AuditZipURL *string
+	ReportURL   *string
+
+	CreatedAt  time.Time
+	StartedAt  *time.Time
+	FinishedAt *time.Time
+
+	LastErrorCode    *string
+	LastErrorMessage *string
 }
 
-type TaxReportJob struct {
-	ID               uuid.UUID       `json:"id"`
-	TenantID         uuid.UUID       `json:"tenant_id"`
-	TaxYear          int32           `json:"tax_year"`
-	Jurisdiction     string          `json:"jurisdiction"`
-	Status           ReportJobStatus `json:"status"`
-	RequestedAt      time.Time       `json:"requested_at"`
-	StartedAt        *time.Time      `json:"started_at,omitempty"`
-	CompletedAt      *time.Time      `json:"completed_at,omitempty"`
-	Error            *string         `json:"error,omitempty"`
-	Params           json.RawMessage `json:"params"`
-	Summary          json.RawMessage `json:"summary,omitempty"`
-	DatasetObjectKey *string         `json:"dataset_object_key,omitempty"`
-	PDFObjectKey     *string         `json:"pdf_object_key,omitempty"`
+type TaxJobUseCase interface {
+	Enqueue(ctx context.Context, tenantID uuid.UUID, taxYear int, taxPolicy TaxPolicy) (TaxJob, error)
+	GetStatus(ctx context.Context, tenantID, jobID uuid.UUID) (TaxJob, error)
+	List(ctx context.Context, tenantID uuid.UUID, limit, offset int32) ([]TaxJob, int64, error)
 }
 
-type TaxReportJobPage struct {
-	Reports []TaxReportJob `json:"reports"`
-	Total   int64          `json:"total"`
+type TaxJobRepo interface {
+	Create(ctx context.Context, job TaxJob) (TaxJob, error)
+	Get(ctx context.Context, tenantID, jobID uuid.UUID) (TaxJob, error)
+	List(ctx context.Context, tenantID uuid.UUID, limit, offset int32) ([]TaxJob, int64, error)
+	ClaimNextQueued(ctx context.Context) (*TaxJob, error)
+	Requeue(ctx context.Context, jobID uuid.UUID, retryAt time.Time, errCode, errMsg string) error
+	SaveResult(ctx context.Context, jobID uuid.UUID, summary TaxSummary, auditZipURL *string, reportURL *string) error
+	MarkFailed(ctx context.Context, jobID uuid.UUID, errCode, errMsg string) error
+	MarkCanceled(ctx context.Context, jobID uuid.UUID) error
 }
 
-type ReportStatusView struct {
-	Job         TaxReportJob `json:"job"`
-	DownloadURL *string      `json:"download_url,omitempty"`
+type TaxJobWorkerUseCase interface {
+	ProcessNextQueuedJob(ctx context.Context) (bool, error)
 }

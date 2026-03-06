@@ -1,24 +1,69 @@
 package domain
 
 import (
-	"time"
+	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 )
 
+type TaxResidency string
+
+const (
+	Resident    TaxResidency = "RESIDENT"
+	NonResident TaxResidency = "NON_RESIDENT"
+)
+
+func (r TaxResidency) Validate() error {
+	switch r {
+	case Resident, NonResident:
+		return nil
+	default:
+		return fmt.Errorf("unsupported tax residency status: %s", r)
+	}
+}
+
+type TaxPayerType string
+
+const (
+	INDIVIDUAL      TaxPayerType = "INDIVIDUAL"
+	SOLE_PROPRIETOR TaxPayerType = "SOLE_PROPRIETOR"
+	LEGAL_ENTITY    TaxPayerType = "LEGAL_ENTITY"
+)
+
+func (t TaxPayerType) Validate() error {
+	switch t {
+	case INDIVIDUAL, SOLE_PROPRIETOR, LEGAL_ENTITY:
+		return nil
+	default:
+		return fmt.Errorf("unsupported taxpayer type: %s", t)
+	}
+}
+
+type Wallet string
+
 type TaxProfile struct {
-	TenantID        uuid.UUID `json:"tenant_id"`
-	Jurisdiction    string    `json:"jurisdiction"`
-	CostBasisMethod string    `json:"cost_basis_method"`
-	Timezone        string    `json:"timezone"`
+	TenantID           uuid.UUID    `json:"tenant_id"`
+	INN                string       `json:"inn"`
+	LastName           string       `json:"last_name"`
+	FirstName          string       `json:"first_name"`
+	MiddleName         string       `json:"middle_name"`
+	Jurisdiction       Jurisdiction `json:"jurisdiction"`
+	Timezone           string       `json:"timezone"` // IANA timezone
+	Phone              string       `json:"phone"`
+	Wallets            []Wallet     `json:"wallets"`
+	TaxResidencyStatus TaxResidency `json:"tax_residency_status"`
+	TaxPayerType       TaxPayerType `json:"taxpayer_type"`
+}
 
-	TreatSwapAsDisposition      bool `json:"treat_swap_as_disposition"`
-	TreatCryptoFeeAsDisposition bool `json:"treat_crypto_fee_as_disposition"`
-	IncludeIncomeEvents         bool `json:"include_income_events"`
-	AllowLossEventsDeduction    bool `json:"allow_loss_events_deduction"`
-	FailOnNegativeInventory     bool `json:"fail_on_negative_inventory"`
-	FailOnMissingFiat           bool `json:"fail_on_missing_fiat"`
+type TaxProfileUseCase interface {
+	Upsert(ctx context.Context, p TaxProfile) error
+	Get(ctx context.Context, tenantID uuid.UUID) (TaxProfile, error)
+	Delete(ctx context.Context, tenantID uuid.UUID) error
+}
 
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+type TaxProfileRepo interface {
+	Upsert(ctx context.Context, p TaxProfile) error
+	Get(ctx context.Context, tenantID uuid.UUID) (TaxProfile, error)
+	Delete(ctx context.Context, tenantID uuid.UUID) error
 }
