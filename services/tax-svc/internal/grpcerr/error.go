@@ -88,12 +88,16 @@ func mapCodeToGRPC(c apperr.ErrorCode) codes.Code {
 		return codes.NotFound
 	case apperr.ErrConflict:
 		return codes.AlreadyExists
+	case apperr.ErrJobClaimConflict:
+		return codes.Aborted
 	case apperr.ErrNeedsPriceResolution, apperr.ErrNegativeInventory:
 		return codes.FailedPrecondition
 	case apperr.ErrInvalidTxShape, apperr.ErrUnsupportedKind:
 		return codes.InvalidArgument
-	case apperr.ErrAggregationUnavailable, apperr.ErrStorageUnavailable, apperr.ErrAggregationFetchFailed, apperr.ErrMinIOUploadFailed, apperr.ErrRabbitPublishFailed:
+	case apperr.ErrAggregationUnavailable, apperr.ErrStorageUnavailable, apperr.ErrAggregationFetchFailed, apperr.ErrMinIOUploadFailed:
 		return codes.Unavailable
+	case apperr.ErrNotImplemented:
+		return codes.Unimplemented
 	default:
 		return codes.Internal
 	}

@@ -50,6 +50,16 @@ func Internal(msg string, cause error, meta map[string]string, details ...Detail
 	}
 }
 
+func NotImplemented(msg string, cause error, meta map[string]string) *Error {
+	return &Error{
+		Op:    Op(),
+		Code:  ErrNotImplemented,
+		Msg:   msg,
+		Meta:  meta,
+		Cause: cause,
+	}
+}
+
 func AggregationUnavailable(msg string, cause error, meta map[string]string) *Error {
 	return &Error{
 		Op:    Op(),
@@ -100,6 +110,16 @@ func StorageBadResponse(msg string, cause error, meta map[string]string) *Error 
 	}
 }
 
+func JobClaimConflict(msg string, cause error, meta map[string]string) *Error {
+	return &Error{
+		Op:    Op(),
+		Code:  ErrJobClaimConflict,
+		Msg:   msg,
+		Meta:  meta,
+		Cause: cause,
+	}
+}
+
 func NeedsPriceResolution(msg string, cause error, meta map[string]string) *Error {
 	return &Error{
 		Op:    Op(),
@@ -144,16 +164,6 @@ func MinIOUploadFailed(msg string, cause error, meta map[string]string) *Error {
 	return &Error{
 		Op:    Op(),
 		Code:  ErrMinIOUploadFailed,
-		Msg:   msg,
-		Meta:  meta,
-		Cause: cause,
-	}
-}
-
-func RabbitPublishFailed(msg string, cause error, meta map[string]string) *Error {
-	return &Error{
-		Op:    Op(),
-		Code:  ErrRabbitPublishFailed,
 		Msg:   msg,
 		Meta:  meta,
 		Cause: cause,

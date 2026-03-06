@@ -9,17 +9,18 @@ const (
 	ErrInvalidArgument        ErrorCode = "INVALID_ARGUMENT"
 	ErrConflict               ErrorCode = "CONFLICT"
 	ErrInternal               ErrorCode = "INTERNAL_ERROR"
+	ErrNotImplemented         ErrorCode = "NOT_IMPLEMENTED"
 	ErrAggregationUnavailable ErrorCode = "AGGREGATION_UNAVAILABLE"
 	ErrAggregationBadResponse ErrorCode = "AGGREGATION_BAD_RESPONSE"
 	ErrAggregationFetchFailed ErrorCode = "AGGREGATION_FETCH_FAILED"
 	ErrStorageUnavailable     ErrorCode = "STORAGE_UNAVAILABLE"
 	ErrStorageBadResponse     ErrorCode = "STORAGE_BAD_RESPONSE"
+	ErrJobClaimConflict       ErrorCode = "JOB_CLAIM_CONFLICT"
 	ErrNeedsPriceResolution   ErrorCode = "NEEDS_PRICE_RESOLUTION"
 	ErrNegativeInventory      ErrorCode = "NEGATIVE_INVENTORY"
 	ErrInvalidTxShape         ErrorCode = "INVALID_TX_SHAPE"
 	ErrUnsupportedKind        ErrorCode = "UNSUPPORTED_KIND"
 	ErrMinIOUploadFailed      ErrorCode = "MINIO_UPLOAD_FAILED"
-	ErrRabbitPublishFailed    ErrorCode = "RABBIT_PUBLISH_FAILED"
 )
 
 type Detail interface {
