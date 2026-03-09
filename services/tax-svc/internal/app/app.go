@@ -12,25 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	taxv1 "github.com/NightRunner/CryptoTax-Go/gen/tax/v1"
-	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
-	"github.com/NightRunner/CryptoTax-Go/pkg/postgres"
-	"github.com/NightRunner/CryptoTax-Go/pkg/telemetry"
-	db "github.com/NightRunner/CryptoTax-Go/services/tax-svc/db/sqlc"
-	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/clients/aggregation"
-	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/clients/rabbit"
-	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/config"
-	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/consumer"
-	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain"
-	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/infra/repo"
-	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/infra/storage"
-	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/interceptors"
-	grpcserver "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/server"
-	usecase "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/usecases"
-	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/worker"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.opentelemetry.io/contrib/bridges/otelzap"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -41,6 +26,24 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/stats"
 	"google.golang.org/protobuf/proto"
+
+	taxv1 "github.com/NightRunner/CryptoTax-Go/gen/tax/v1"
+	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
+	"github.com/NightRunner/CryptoTax-Go/pkg/postgres"
+	"github.com/NightRunner/CryptoTax-Go/pkg/telemetry"
+	db "github.com/NightRunner/CryptoTax-Go/services/tax-svc/db/sqlc"
+	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/clients/aggregation"
+	reportclient "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/clients/report"
+	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/config"
+	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/engines"
+	engineskz "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/engines/kz"
+	enginesru "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/engines/ru"
+	repository "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/infra/repo"
+	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/infra/storage"
+	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/interceptors"
+	grpcserver "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/server"
+	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/usecases"
+	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/worker"
 )
 
 var interruptSignals = []os.Signal{
@@ -100,45 +103,40 @@ func Run(cfg *config.Config) {
 	}
 	defer aggregationClient.Close()
 
+	reportClient, err := reportclient.NewClient(ctx, cfg.Report.Addr, cfg.Report.Timeout)
+	if err != nil {
+		log.Fatal("cannot create report client", zap.Error(err))
+	}
+	defer reportClient.Close()
+
 	objectStorage, err := storage.NewMinIOStorage(cfg.MinIO)
 	if err != nil {
 		log.Fatal("cannot create storage client", zap.Error(err))
 	}
 
-	eventPublisher, err := rabbit.NewPublisher(cfg.Rabbit)
-	if err != nil {
-		log.Fatal("cannot create rabbit publisher", zap.Error(err))
-	}
-	defer eventPublisher.Close()
-
 	taxProfileRepo := repository.NewTaxProfileRepo(store)
-	taxpayerProfileRepo := repository.NewTaxpayerProfileRepo(store)
-	reportJobRepo := repository.NewTaxReportJobRepo(store)
-	outboxRepo := repository.NewOutboxRepo(store)
-	inboxRepo := repository.NewInboxRepo(store)
-
-	taxProfileUC := usecase.NewTaxProfileUC(
-		taxProfileRepo,
-		cfg.Defaults.Jurisdiction,
-		cfg.Defaults.Timezone,
-		cfg.Defaults.CostBasis,
+	taxJobRepo := repository.NewTaxJobRepo(store)
+	engineRegistry, err := engines.NewRegistry(
+		enginesru.New(),
+		engineskz.New(),
 	)
-	taxpayerProfileUC := usecase.NewTaxpayerProfileUC(taxpayerProfileRepo)
-	reportUC, reportPipelineUC := usecase.NewReportUC(
-		store,
-		reportJobRepo,
+	if err != nil {
+		log.Fatal("cannot create engines registry", zap.Error(err))
+	}
+
+	taxProfileUC := usecases.NewTaxProfileUC(taxProfileRepo, engineRegistry)
+	taxJobUC := usecases.NewTaxJobUC(taxJobRepo, taxProfileRepo)
+	taxJobWorkerUC := usecases.NewTaxJobWorkerUC(
+		taxJobRepo,
 		taxProfileRepo,
-		taxpayerProfileRepo,
-		inboxRepo,
 		aggregationClient,
+		reportClient,
 		objectStorage,
-		cfg.Defaults.Jurisdiction,
-		cfg.Defaults.Timezone,
-		cfg.Defaults.CostBasis,
-		cfg.Worker.TreatCryptoToCryptoAsDisposition,
-		cfg.Worker.TemplateVersion,
-		cfg.Aggregation.PageLimit,
+		engineRegistry,
 		cfg.MinIO.PresignTTL,
+		cfg.Worker.RetryMaxAttempts,
+		cfg.Worker.RetryBaseDelay,
+		cfg.Worker.RetryMaxDelay,
 	)
 
 	statsHandler := otelgrpc.NewServerHandler(
@@ -153,32 +151,19 @@ func Run(cfg *config.Config) {
 		statsHandler,
 		telemetryProviders,
 		taxProfileUC,
-		taxpayerProfileUC,
-		reportUC,
+		taxJobUC,
 	)
 
 	runGateway(ctx, waitGroup, &cfg.HTTP, cfg.GRPC.Addr)
 
-	outboxDispatcher := worker.NewOutboxDispatcher(cfg.Rabbit, outboxRepo, eventPublisher, log)
-	jobRequestedConsumer := consumer.NewTaxReportJobRequestedConsumer(cfg.Rabbit, reportPipelineUC, log)
-	renderEventsConsumer := consumer.NewReportRenderEventsConsumer(cfg.Rabbit, reportPipelineUC, log)
-
+	taxJobWorker := worker.NewTaxJobWorker(
+		taxJobWorkerUC,
+		log,
+		cfg.Worker.PollInterval,
+		cfg.Worker.IdleSleep,
+	)
 	waitGroup.Go(func() error {
-		return outboxDispatcher.Start(ctx)
-	})
-	waitGroup.Go(func() error {
-		return jobRequestedConsumer.Start(ctx)
-	})
-	waitGroup.Go(func() error {
-		return renderEventsConsumer.Start(ctx)
-	})
-	waitGroup.Go(func() error {
-		<-ctx.Done()
-		var joinErr error
-		joinErr = errors.Join(joinErr, jobRequestedConsumer.Close())
-		joinErr = errors.Join(joinErr, renderEventsConsumer.Close())
-		joinErr = errors.Join(joinErr, eventPublisher.Close())
-		return joinErr
+		return taxJobWorker.Start(ctx)
 	})
 
 	if err := waitGroup.Wait(); err != nil {
@@ -192,12 +177,11 @@ func runGrpcServer(
 	cfg *config.Config,
 	statsHandler stats.Handler,
 	telemetryProviders *telemetry.Providers,
-	taxProfileUC domain.TaxProfileUseCase,
-	taxpayerProfileUC domain.TaxpayerProfileUseCase,
-	reportUC domain.ReportUseCase,
+	taxProfileUC *usecases.TaxProfileUC,
+	taxJobUC *usecases.TaxJobUC,
 ) {
 	log := logger.FromContext(ctx)
-	server := grpcserver.NewTaxServer(taxProfileUC, taxpayerProfileUC, reportUC)
+	server := grpcserver.NewTaxServer(taxProfileUC, taxJobUC)
 
 	grpcServer := grpc.NewServer(
 		grpc.StatsHandler(statsHandler),
@@ -259,9 +243,10 @@ func runGateway(ctx context.Context, waitGroup *errgroup.Group, cfg *config.HTTP
 		log.Fatal("failed to register gateway", zap.Error(err))
 	}
 
+	handler := otelhttp.NewHandler(mux, "grpc-gateway-api")
 	httpServer := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           mux,
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

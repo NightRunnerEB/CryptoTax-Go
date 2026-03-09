@@ -4,9 +4,10 @@ import (
 	"os"
 	"time"
 
-	apperr "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/error"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
+
+	apperr "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/error"
 )
 
 type (
@@ -17,10 +18,9 @@ type (
 		GRPC        GRPCConfig        `yaml:"grpc"`
 		HTTP        HTTPConfig        `yaml:"http"`
 		PG          PGConfig          `yaml:"postgres"`
-		Rabbit      RabbitConfig      `yaml:"rabbitmq"`
 		Aggregation AggregationConfig `yaml:"aggregation"`
+		Report      ReportConfig      `yaml:"report"`
 		MinIO       MinIOConfig       `yaml:"minio"`
-		Defaults    DefaultsConfig    `yaml:"defaults"`
 		Worker      WorkerConfig      `yaml:"worker"`
 	}
 
@@ -58,32 +58,14 @@ type (
 		ConnAttempts   int           `yaml:"conn_attempts"`
 	}
 
-	RabbitConfig struct {
-		URL                  string        `env:"RABBIT_URL" env-required:"true"`
-		Exchange             string        `yaml:"exchange"`
-		QueueJobRequested    string        `yaml:"queue_job_requested"`
-		QueueRenderResults   string        `yaml:"queue_render_results"`
-		RoutingJobRequested  string        `yaml:"routing_job_requested"`
-		RoutingRenderRequest string        `yaml:"routing_render_request"`
-		RoutingRendered      string        `yaml:"routing_rendered"`
-		RoutingRenderFailed  string        `yaml:"routing_render_failed"`
-		ConsumerNameJobs     string        `yaml:"consumer_name_jobs"`
-		ConsumerNameResults  string        `yaml:"consumer_name_results"`
-		Prefetch             int           `yaml:"prefetch"`
-		Concurrency          int           `yaml:"concurrency"`
-		ReconnectInterval    time.Duration `yaml:"reconnect_interval"`
-		OutboxBatchSize      int32         `yaml:"outbox_batch_size"`
-		OutboxPollInterval   time.Duration `yaml:"outbox_poll_interval"`
-		OutboxMaxAttempts    int32         `yaml:"outbox_max_attempts"`
-		HandlerTimeout       time.Duration `yaml:"handler_timeout"`
-		QueueDurable         bool          `yaml:"queue_durable"`
-		SkipQueueDeclare     bool          `yaml:"skip_queue_declare"`
+	AggregationConfig struct {
+		Addr    string        `yaml:"addr" env:"AGGREGATION_SVC_ADDR" env-required:"true"`
+		Timeout time.Duration `yaml:"timeout"`
 	}
 
-	AggregationConfig struct {
-		Addr      string        `yaml:"addr"`
-		Timeout   time.Duration `yaml:"timeout"`
-		PageLimit int32         `yaml:"page_limit"`
+	ReportConfig struct {
+		Addr    string        `yaml:"addr" env:"REPORT_SVC_ADDR"`
+		Timeout time.Duration `yaml:"timeout"`
 	}
 
 	MinIOConfig struct {
@@ -95,15 +77,12 @@ type (
 		PresignTTL time.Duration `yaml:"presign_ttl"`
 	}
 
-	DefaultsConfig struct {
-		Jurisdiction string `yaml:"jurisdiction"`
-		Timezone     string `yaml:"timezone"`
-		CostBasis    string `yaml:"cost_basis_method"`
-	}
-
 	WorkerConfig struct {
-		TemplateVersion                  string `yaml:"template_version"`
-		TreatCryptoToCryptoAsDisposition bool   `yaml:"treat_crypto_to_crypto_as_disposition"`
+		PollInterval     time.Duration `yaml:"poll_interval"`
+		IdleSleep        time.Duration `yaml:"idle_sleep"`
+		RetryMaxAttempts int           `yaml:"retry_max_attempts"`
+		RetryBaseDelay   time.Duration `yaml:"retry_base_delay"`
+		RetryMaxDelay    time.Duration `yaml:"retry_max_delay"`
 	}
 )
 
@@ -162,75 +141,32 @@ func applyDefaults(cfg *Config) {
 		cfg.PG.ConnAttempts = 3
 	}
 
-	if cfg.Rabbit.Exchange == "" {
-		cfg.Rabbit.Exchange = "tax.pipeline"
-	}
-	if cfg.Rabbit.QueueJobRequested == "" {
-		cfg.Rabbit.QueueJobRequested = "tax.job.requested"
-	}
-	if cfg.Rabbit.QueueRenderResults == "" {
-		cfg.Rabbit.QueueRenderResults = "tax.render.results"
-	}
-	if cfg.Rabbit.RoutingJobRequested == "" {
-		cfg.Rabbit.RoutingJobRequested = "TaxReportJobRequested"
-	}
-	if cfg.Rabbit.RoutingRenderRequest == "" {
-		cfg.Rabbit.RoutingRenderRequest = "ReportRenderRequested"
-	}
-	if cfg.Rabbit.RoutingRendered == "" {
-		cfg.Rabbit.RoutingRendered = "ReportRendered"
-	}
-	if cfg.Rabbit.RoutingRenderFailed == "" {
-		cfg.Rabbit.RoutingRenderFailed = "ReportRenderFailed"
-	}
-	if cfg.Rabbit.ConsumerNameJobs == "" {
-		cfg.Rabbit.ConsumerNameJobs = "tax-job-requested-consumer"
-	}
-	if cfg.Rabbit.ConsumerNameResults == "" {
-		cfg.Rabbit.ConsumerNameResults = "tax-render-results-consumer"
-	}
-	if cfg.Rabbit.Prefetch <= 0 {
-		cfg.Rabbit.Prefetch = 10
-	}
-	if cfg.Rabbit.Concurrency <= 0 {
-		cfg.Rabbit.Concurrency = 1
-	}
-	if cfg.Rabbit.ReconnectInterval == 0 {
-		cfg.Rabbit.ReconnectInterval = 2 * time.Second
-	}
-	if cfg.Rabbit.OutboxBatchSize <= 0 {
-		cfg.Rabbit.OutboxBatchSize = 100
-	}
-	if cfg.Rabbit.OutboxPollInterval == 0 {
-		cfg.Rabbit.OutboxPollInterval = time.Second
-	}
-	if cfg.Rabbit.OutboxMaxAttempts <= 0 {
-		cfg.Rabbit.OutboxMaxAttempts = 10
-	}
-	if cfg.Rabbit.HandlerTimeout == 0 {
-		cfg.Rabbit.HandlerTimeout = 30 * time.Second
-	}
 	if cfg.Aggregation.Timeout == 0 {
 		cfg.Aggregation.Timeout = 10 * time.Second
 	}
-	if cfg.Aggregation.PageLimit <= 0 {
-		cfg.Aggregation.PageLimit = 1000
+	if cfg.Report.Addr == "" {
+		cfg.Report.Addr = "127.0.0.1:8098"
+	}
+	if cfg.Report.Timeout == 0 {
+		cfg.Report.Timeout = 10 * time.Second
 	}
 
 	if cfg.MinIO.PresignTTL == 0 {
 		cfg.MinIO.PresignTTL = 15 * time.Minute
 	}
-
-	if cfg.Defaults.Jurisdiction == "" {
-		cfg.Defaults.Jurisdiction = "RU"
+	if cfg.Worker.PollInterval <= 0 {
+		cfg.Worker.PollInterval = 2 * time.Second
 	}
-	if cfg.Defaults.Timezone == "" {
-		cfg.Defaults.Timezone = "UTC"
+	if cfg.Worker.IdleSleep <= 0 {
+		cfg.Worker.IdleSleep = 500 * time.Millisecond
 	}
-	if cfg.Defaults.CostBasis == "" {
-		cfg.Defaults.CostBasis = "FIFO"
+	if cfg.Worker.RetryMaxAttempts <= 0 {
+		cfg.Worker.RetryMaxAttempts = 3
 	}
-	if cfg.Worker.TemplateVersion == "" {
-		cfg.Worker.TemplateVersion = "v1"
+	if cfg.Worker.RetryBaseDelay <= 0 {
+		cfg.Worker.RetryBaseDelay = 10 * time.Second
+	}
+	if cfg.Worker.RetryMaxDelay <= 0 {
+		cfg.Worker.RetryMaxDelay = 2 * time.Minute
 	}
 }
