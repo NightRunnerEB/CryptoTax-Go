@@ -5,13 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"strings"
 	"time"
+
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/config"
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/error"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type MinIOStorage struct {
@@ -20,6 +22,14 @@ type MinIOStorage struct {
 }
 
 func NewMinIOStorage(cfg config.MinIOConfig) (*MinIOStorage, error) {
+	bucket := strings.TrimSpace(cfg.Bucket)
+	if bucket == "" {
+		return nil, apperr.InvalidArgument("invalid minio bucket", nil, apperr.FieldViolation{
+			Field:       "minio.bucket",
+			Description: "required",
+		})
+	}
+
 	client, err := minio.New(cfg.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
 		Secure: cfg.UseSSL,
@@ -30,17 +40,27 @@ func NewMinIOStorage(cfg config.MinIOConfig) (*MinIOStorage, error) {
 		})
 	}
 
+	exists, err := client.BucketExists(context.Background(), bucket)
+	if err != nil {
+		return nil, apperr.StorageUnavailable("check minio bucket failed", err, map[string]string{
+			"endpoint": cfg.Endpoint,
+			"bucket":   bucket,
+		})
+	}
+	if !exists {
+		return nil, apperr.StorageUnavailable("minio bucket does not exist", nil, map[string]string{
+			"endpoint": cfg.Endpoint,
+			"bucket":   bucket,
+		})
+	}
+
 	return &MinIOStorage{
 		client: client,
-		bucket: cfg.Bucket,
+		bucket: bucket,
 	}, nil
 }
 
 func (s *MinIOStorage) UploadJSON(ctx context.Context, objectKey string, payload any) error {
-	if s == nil || s.client == nil {
-		return apperr.Internal("storage client is not initialized", nil, nil)
-	}
-
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return apperr.StorageBadResponse("marshal payload failed", err, map[string]string{
@@ -63,9 +83,6 @@ func (s *MinIOStorage) UploadJSON(ctx context.Context, objectKey string, payload
 }
 
 func (s *MinIOStorage) PresignGet(ctx context.Context, objectKey string, ttl time.Duration) (string, error) {
-	if s == nil || s.client == nil {
-		return "", apperr.Internal("storage client is not initialized", nil, nil)
-	}
 	if ttl <= 0 {
 		ttl = 15 * time.Minute
 	}
