@@ -6,15 +6,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	aggregationv1 "github.com/NightRunner/CryptoTax-Go/gen/aggregation/v1"
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/config"
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/error"
-	"github.com/google/uuid"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Client struct {
@@ -23,6 +28,10 @@ type Client struct {
 	conn    *grpc.ClientConn
 	client  aggregationv1.AggregationClient
 }
+
+const headerTenantID = "x-tenant-id"
+
+const aggregationDataNotReadyReason = "DATA_NOT_READY"
 
 func NewClient(ctx context.Context, cfg config.AggregationConfig) (*Client, error) {
 	conn, err := grpc.NewClient(cfg.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -41,7 +50,7 @@ func NewClient(ctx context.Context, cfg config.AggregationConfig) (*Client, erro
 }
 
 func (c *Client) Close() error {
-	if c == nil || c.conn == nil {
+	if c.conn == nil {
 		return nil
 	}
 	return c.conn.Close()
@@ -51,11 +60,7 @@ func (c *Client) ListTransactionsByRange(
 	ctx context.Context,
 	tenantID uuid.UUID,
 	fromUTC, toUTC time.Time,
-	limit, offset int32,
 ) ([]domain.AggregatedTransaction, error) {
-	if c == nil || c.client == nil {
-		return nil, apperr.Internal("aggregation client is not initialized", nil, nil)
-	}
 	if tenantID == uuid.Nil {
 		return nil, apperr.InvalidArgument("invalid tenant id", nil, apperr.FieldViolation{
 			Field:       "tenant_id",
@@ -74,21 +79,50 @@ func (c *Client) ListTransactionsByRange(
 		ctx, cancel = context.WithTimeout(ctx, c.timeout)
 		defer cancel()
 	}
+	ctx = metadata.AppendToOutgoingContext(ctx, headerTenantID, tenantID.String())
 	resp, err := c.client.ListTransactionsByRange(ctx, &aggregationv1.ListTransactionsByRangeRequest{
 		TenantId: tenantID.String(),
 		FromUtc:  timestamppb.New(fromUTC),
 		ToUtc:    timestamppb.New(toUTC),
-		Limit:    limit,
-		Offset:   offset,
+		Limit:    1_000_000, // unlimited for now, can add pagination later if needed
+		Offset:   0,
 	})
 	if err != nil {
-		return nil, apperr.AggregationUnavailable("aggregation ListTransactionsByRange failed", err, map[string]string{
+		meta := map[string]string{
 			"tenant_id": tenantID.String(),
-		})
+		}
+		if st, ok := status.FromError(err); ok {
+			meta["grpc_code"] = st.Code().String()
+			if info := aggregationErrorInfo(st); info != nil {
+				meta["aggregation_reason"] = info.GetReason()
+				for k, v := range info.GetMetadata() {
+					meta["aggregation_"+k] = v
+				}
+			}
+			switch st.Code() {
+			case codes.Unavailable, codes.DeadlineExceeded, codes.ResourceExhausted:
+				return nil, apperr.AggregationUnavailable("aggregation ListTransactionsByRange failed", err, meta)
+			case codes.FailedPrecondition:
+				if info := aggregationErrorInfo(st); info != nil && info.GetReason() == aggregationDataNotReadyReason {
+					return nil, apperr.NeedsPriceResolution(
+						"aggregation data is not ready, resolve fiat valuations and retry",
+						err,
+						meta,
+					)
+				}
+				return nil, apperr.AggregationBadResponse("aggregation ListTransactionsByRange returned non-retryable status", err, meta)
+			case codes.InvalidArgument, codes.NotFound, codes.PermissionDenied, codes.Unauthenticated:
+				return nil, apperr.AggregationBadResponse("aggregation ListTransactionsByRange returned non-retryable status", err, meta)
+			default:
+				return nil, apperr.AggregationFetchFailed("aggregation ListTransactionsByRange failed", err, meta)
+			}
+		}
+		return nil, apperr.AggregationFetchFailed("aggregation ListTransactionsByRange failed", err, meta)
 	}
 
-	out := make([]domain.AggregatedTransaction, 0, len(resp.GetTransactions()))
-	for _, tx := range resp.GetTransactions() {
+	batch := resp.GetTransactions()
+	out := make([]domain.AggregatedTransaction, 0, len(batch))
+	for _, tx := range batch {
 		if tx == nil {
 			continue
 		}
@@ -107,24 +141,22 @@ func (c *Client) ListTransactionsByRange(
 			Source:         tx.GetSource(),
 			ImportID:       importID,
 			TimeUTC:        tx.GetTimeUtc().AsTime().UTC(),
-			Kind:           tx.GetKind(),
+			Kind:           domain.Kind(tx.GetKind()),
 			InMoney:        parseMoneyLeg(structMap(tx.GetInMoney())),
 			OutMoney:       parseMoneyLeg(structMap(tx.GetOutMoney())),
 			FeeMoney:       parseMoneyLeg(structMap(tx.GetFeeMoney())),
-			ContractSymbol: nilIfEmpty(tx.GetContractSymbol()),
-			DerivativeKind: nilIfEmpty(tx.GetDerivativeKind()),
-			PositionID:     nilIfEmpty(tx.GetPositionId()),
-			OrderID:        nilIfEmpty(tx.GetOrderId()),
-			TxHash:         nilIfEmpty(tx.GetTxHash()),
-			Note:           nilIfEmpty(tx.GetNote()),
-			TxFingerprint:  tx.GetTxFingerprint(),
+			ContractSymbol: tx.ContractSymbol,
+			PositionID:     tx.PositionId,
+			OrderID:        tx.OrderId,
+			TxHash:         tx.TxHash,
 		}
 		out = append(out, item)
 	}
+
 	return out, nil
 }
 
-var _ domain.AggregationClient = (*Client)(nil)
+var _ domain.AggregatedTxProvider = (*Client)(nil)
 
 func parseMoneyLeg(raw map[string]any) *domain.MoneyLeg {
 	if len(raw) == 0 {
@@ -136,25 +168,7 @@ func parseMoneyLeg(raw map[string]any) *domain.MoneyLeg {
 		CryptoAmount: asString(raw["crypto_amount"]),
 	}
 	if fiat := strings.TrimSpace(asString(raw["fiat_amount"])); fiat != "" {
-		leg.FiatAmount = &fiat
-	}
-	if rawErr, ok := raw["error"].(map[string]any); ok {
-		mappedErr := &domain.FiatLegError{
-			Code: asString(rawErr["code"]),
-		}
-		if rawCandidates, ok := rawErr["candidates"].([]any); ok {
-			for _, candidate := range rawCandidates {
-				cMap, ok := candidate.(map[string]any)
-				if !ok {
-					continue
-				}
-				mappedErr.Candidates = append(mappedErr.Candidates, domain.FiatLegCandidate{
-					CoinID: asString(cMap["coin_id"]),
-					Name:   asString(cMap["name"]),
-				})
-			}
-		}
-		leg.Error = mappedErr
+		leg.FiatAmount = fiat
 	}
 	return leg
 }
@@ -177,11 +191,15 @@ func asString(v any) string {
 	}
 }
 
-func nilIfEmpty(v string) *string {
-	v = strings.TrimSpace(v)
-	if v == "" {
+func aggregationErrorInfo(st *status.Status) *errdetails.ErrorInfo {
+	if st == nil {
 		return nil
 	}
-	out := v
-	return &out
+	for _, detail := range st.Details() {
+		info, ok := detail.(*errdetails.ErrorInfo)
+		if ok {
+			return info
+		}
+	}
+	return nil
 }
