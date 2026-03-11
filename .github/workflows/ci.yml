@@ -17,6 +17,8 @@ jobs:
           - pkg
           - services/price-svc
           - services/aggregation-svc
+          - services/report-svc
+          - services/tax-svc
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,6 +48,8 @@ jobs:
           - pkg
           - services/price-svc
           - services/aggregation-svc
+          - services/report-svc
+          - services/tax-svc
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -72,6 +76,8 @@ jobs:
           - pkg
           - services/price-svc
           - services/aggregation-svc
+          - services/report-svc
+          - services/tax-svc
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -34,7 +34,7 @@ func (store *SQLStore) ExecTx(ctx context.Context, fn func(*Queries) error) erro
 		_ = tx.Rollback(ctx)
 	}()
 
-	q := store.Queries.WithTx(tx)
+	q := store.WithTx(tx)
 	if err := fn(q); err != nil {
 		return err
 	}
