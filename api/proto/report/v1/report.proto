@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package report.v1;
+
+option go_package = "github.com/NightRunner/CryptoTax-Go/gen/report/v1;reportv1";
+
+// Report handles report rendering requests from tax-svc.
+service Report {
+  // RequestRender asks report-svc to render a report from a prepared dataset.
+  rpc RequestRender(RequestRenderRequest) returns (RequestRenderResponse);
+}
+
+message RequestRenderRequest {
+  string report_id = 1;
+  string tenant_id = 2;
+  string jurisdiction = 3;
+  int32 tax_year = 4;
+  string dataset_object_key = 5;
+  string template_version = 6;
+}
+
+message RequestRenderResponse {}
+
