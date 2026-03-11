@@ -11,9 +11,6 @@ linters:
     - staticcheck
     - unused
     - ineffassign
-  disable:
-    - errcheck
-    - revive
 
 issues:
   exclude-use-default: false
