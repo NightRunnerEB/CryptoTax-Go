@@ -309,12 +309,16 @@ func (x *ListTransactionsByImportResponse) GetTotal() int64 {
 }
 
 type ListTransactionsByRangeRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	FromUtc       *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=from_utc,json=fromUtc,proto3" json:"from_utc,omitempty"`
-	ToUtc         *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=to_utc,json=toUtc,proto3" json:"to_utc,omitempty"`
-	Limit         int32                  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
-	Offset        int32                  `protobuf:"varint,5,opt,name=offset,proto3" json:"offset,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	FromUtc  *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=from_utc,json=fromUtc,proto3" json:"from_utc,omitempty"`
+	ToUtc    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=to_utc,json=toUtc,proto3" json:"to_utc,omitempty"`
+	Limit    int32                  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset   int32                  `protobuf:"varint,5,opt,name=offset,proto3" json:"offset,omitempty"`
+	// Optional fiat override used by tax-svc.
+	// When set, aggregation-svc re-valuates legs to this fiat on the fly
+	// and does not mutate stored read-model data.
+	TargetFiat    string `protobuf:"bytes,6,opt,name=target_fiat,json=targetFiat,proto3" json:"target_fiat,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -382,6 +386,13 @@ func (x *ListTransactionsByRangeRequest) GetOffset() int32 {
 		return x.Offset
 	}
 	return 0
+}
+
+func (x *ListTransactionsByRangeRequest) GetTargetFiat() string {
+	if x != nil {
+		return x.TargetFiat
+	}
+	return ""
 }
 
 type ListTransactionsByRangeResponse struct {
@@ -724,13 +735,15 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"\x06offset\x18\x04 \x01(\x05R\x06offset\"z\n" +
 	" ListTransactionsByImportResponse\x12@\n" +
 	"\ftransactions\x18\x01 \x03(\v2\x1c.aggregation.v1.AggregatedTxR\ftransactions\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\"\xd5\x01\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"\xf6\x01\n" +
 	"\x1eListTransactionsByRangeRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x125\n" +
 	"\bfrom_utc\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\afromUtc\x121\n" +
 	"\x06to_utc\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x05toUtc\x12\x14\n" +
 	"\x05limit\x18\x04 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x05 \x01(\x05R\x06offset\"y\n" +
+	"\x06offset\x18\x05 \x01(\x05R\x06offset\x12\x1f\n" +
+	"\vtarget_fiat\x18\x06 \x01(\tR\n" +
+	"targetFiat\"y\n" +
 	"\x1fListTransactionsByRangeResponse\x12@\n" +
 	"\ftransactions\x18\x01 \x03(\v2\x1c.aggregation.v1.AggregatedTxR\ftransactions\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\"n\n" +
