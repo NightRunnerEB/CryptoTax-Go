@@ -8,7 +8,7 @@ import (
 )
 
 type AggregatedTxProvider interface {
-	ListTransactionsByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time) ([]AggregatedTransaction, error)
+	ListTransactionsByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time, targetFiat string) ([]AggregatedTransaction, error)
 }
 
 type ObjectStorage interface {

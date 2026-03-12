@@ -60,6 +60,7 @@ func (c *Client) ListTransactionsByRange(
 	ctx context.Context,
 	tenantID uuid.UUID,
 	fromUTC, toUTC time.Time,
+	targetFiat string,
 ) ([]domain.AggregatedTransaction, error) {
 	if tenantID == uuid.Nil {
 		return nil, apperr.InvalidArgument("invalid tenant id", nil, apperr.FieldViolation{
@@ -71,6 +72,13 @@ func (c *Client) ListTransactionsByRange(
 		return nil, apperr.InvalidArgument("invalid range", nil, apperr.FieldViolation{
 			Field:       "from_utc/to_utc",
 			Description: "from_utc must be before to_utc",
+		})
+	}
+	targetFiat = strings.ToUpper(strings.TrimSpace(targetFiat))
+	if targetFiat == "" {
+		return nil, apperr.InvalidArgument("invalid target fiat", nil, apperr.FieldViolation{
+			Field:       "target_fiat",
+			Description: "required",
 		})
 	}
 
@@ -86,10 +94,12 @@ func (c *Client) ListTransactionsByRange(
 		ToUtc:    timestamppb.New(toUTC),
 		Limit:    1_000_000, // unlimited for now, can add pagination later if needed
 		Offset:   0,
+		TargetFiat: targetFiat,
 	})
 	if err != nil {
 		meta := map[string]string{
 			"tenant_id": tenantID.String(),
+			"target_fiat": targetFiat,
 		}
 		if st, ok := status.FromError(err); ok {
 			meta["grpc_code"] = st.Code().String()

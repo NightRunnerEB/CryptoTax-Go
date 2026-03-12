@@ -118,8 +118,15 @@ func (uc *TaxJobWorkerUC) processJob(ctx context.Context, job domain.TaxJob) err
 			Description: "must be valid IANA timezone",
 		})
 	}
+	targetFiat := profile.Jurisdiction.FiatCurrency()
+	if targetFiat == "" {
+		return apperr.InvalidArgument("invalid profile jurisdiction", nil, apperr.FieldViolation{
+			Field:       "tax_profile.jurisdiction",
+			Description: "unsupported or missing fiat currency",
+		})
+	}
 
-	transactions, err := uc.txProvider.ListTransactionsByRange(ctx, job.TenantID, fromUTC, toUTC)
+	transactions, err := uc.txProvider.ListTransactionsByRange(ctx, job.TenantID, fromUTC, toUTC, targetFiat)
 	if err != nil {
 		var appErr *apperr.Error
 		if errors.As(err, &appErr) && appErr != nil {
