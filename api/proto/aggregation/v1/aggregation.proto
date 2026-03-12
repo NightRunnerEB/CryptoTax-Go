@@ -84,6 +84,10 @@ message ListTransactionsByRangeRequest {
   google.protobuf.Timestamp to_utc    = 3;
   int32                     limit     = 4;
   int32                     offset    = 5;
+  // Optional fiat override used by tax-svc.
+  // When set, aggregation-svc re-valuates legs to this fiat on the fly
+  // and does not mutate stored read-model data.
+  string                    target_fiat = 6;
 }
 
 message ListTransactionsByRangeResponse {

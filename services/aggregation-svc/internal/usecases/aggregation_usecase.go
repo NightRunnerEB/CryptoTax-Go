@@ -9,6 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pricev1 "github.com/NightRunner/CryptoTax-Go/gen/price/v1"
@@ -250,7 +252,13 @@ func (u *aggregationUC) ListTransactionsByImport(ctx context.Context, tenantID, 
 	return u.txRepo.ListByImport(ctx, tenantID, importID, limit, offset)
 }
 
-func (u *aggregationUC) ListTransactionsByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32) (domain.AggregatedTxPage, error) {
+func (u *aggregationUC) ListTransactionsByRange(
+	ctx context.Context,
+	tenantID uuid.UUID,
+	fromUTC, toUTC time.Time,
+	limit, offset int32,
+	targetFiat string,
+) (domain.AggregatedTxPage, error) {
 	if u.txRepo == nil {
 		return domain.AggregatedTxPage{}, apperr.Internal("aggregated transaction repo is not configured", nil, nil)
 	}
@@ -292,6 +300,14 @@ func (u *aggregationUC) ListTransactionsByRange(ctx context.Context, tenantID uu
 	if err != nil {
 		return domain.AggregatedTxPage{}, err
 	}
+	targetFiat = strings.ToUpper(strings.TrimSpace(targetFiat))
+	if targetFiat != "" {
+		revalued, err := u.revaluateTransactionsToTargetFiat(ctx, tenantID, targetFiat, page.Transactions)
+		if err != nil {
+			return domain.AggregatedTxPage{}, err
+		}
+		page.Transactions = revalued
+	}
 	if err := ensureTransactionsReadyForTax(page.Transactions); err != nil {
 		return domain.AggregatedTxPage{}, err
 	}
@@ -329,6 +345,7 @@ func (u *aggregationUC) loadTenantSettings(ctx context.Context, tenantID uuid.UU
 		}
 		return domain.TenantSettings{}, err
 	}
+	settings.FiatCurrency = normalizeFiatForPricing(settings.FiatCurrency)
 
 	return settings, nil
 }
@@ -378,7 +395,11 @@ func (u *aggregationUC) valuateTransactions(
 			Transactions: toValuate[start:end],
 		})
 		if err != nil {
-			return nil, err
+			return nil, mapPriceValuationError("price valuation failed", err, map[string]string{
+				"tenant_id":     tenantID.String(),
+				"source":        source,
+				"fiat_currency": fiatCurrency,
+			})
 		}
 		log.Debug("valuateTransactions: batch response received",
 			zap.Int("response_size", len(resp.GetTransactions())),
@@ -392,6 +413,103 @@ func (u *aggregationUC) valuateTransactions(
 	}
 
 	return priceByTxID, nil
+}
+
+func (u *aggregationUC) revaluateTransactionsToTargetFiat(
+	ctx context.Context,
+	tenantID uuid.UUID,
+	targetFiat string,
+	txs []domain.AggregatedTransaction,
+) ([]domain.AggregatedTransaction, error) {
+	if len(txs) == 0 {
+		return txs, nil
+	}
+
+	batchSize := u.batchSize
+	if batchSize <= 0 {
+		batchSize = 10000
+	}
+
+	grouped := make(map[string][]*pricev1.TxToValuate)
+	sourcesOrder := make([]string, 0, 4)
+	for _, tx := range txs {
+		source := strings.TrimSpace(tx.Source)
+		if source == "" {
+			source = defaultImportSource
+		}
+		if _, ok := grouped[source]; !ok {
+			sourcesOrder = append(sourcesOrder, source)
+		}
+		grouped[source] = append(grouped[source], &pricev1.TxToValuate{
+			TxId:     tx.ID.String(),
+			TimeUtc:  timestamppb.New(tx.TimeUTC),
+			InMoney:  toPriceMoneyLegFromAggregated(tx.InMoney),
+			OutMoney: toPriceMoneyLegFromAggregated(tx.OutMoney),
+			FeeMoney: toPriceMoneyLegFromAggregated(tx.FeeMoney),
+		})
+	}
+
+	valuationsByTxID := make(map[string]*pricev1.ValuatedTx, len(txs))
+	for _, source := range sourcesOrder {
+		items := grouped[source]
+		for start := 0; start < len(items); start += batchSize {
+			end := start + batchSize
+			if end > len(items) {
+				end = len(items)
+			}
+
+			resp, err := u.priceClient.ValuateTransactionsBatch(ctx, &pricev1.ValuateTransactionsRequest{
+				TenantId:     tenantID.String(),
+				Source:       source,
+				FiatCurrency: targetFiat,
+				Transactions: items[start:end],
+			})
+			if err != nil {
+				return nil, mapPriceValuationError("price revaluation failed", err, map[string]string{
+					"tenant_id":   tenantID.String(),
+					"source":      source,
+					"target_fiat": targetFiat,
+				})
+			}
+
+			for _, tx := range resp.GetTransactions() {
+				if tx == nil {
+					continue
+				}
+				valuationsByTxID[tx.GetTxId()] = tx
+			}
+		}
+	}
+
+	revalued := make([]domain.AggregatedTransaction, 0, len(txs))
+	for _, tx := range txs {
+		valuated := valuationsByTxID[tx.ID.String()]
+		if valuated == nil && (tx.InMoney != nil || tx.OutMoney != nil || tx.FeeMoney != nil) {
+			return nil, apperr.DataNotReady(
+				"aggregated data is not ready for requested fiat revaluation",
+				nil,
+				map[string]string{
+					"tenant_id":   tenantID.String(),
+					"tx_id":       tx.ID.String(),
+					"target_fiat": targetFiat,
+				},
+				apperr.Validation{Violations: []apperr.FieldViolation{
+					{
+						Field:       "target_fiat",
+						Description: "revaluation response is incomplete",
+					},
+				}},
+			)
+		}
+
+		item := tx
+		item.InMoney = mergeLegFiatValuation(tx.InMoney, valuedInFiat(valuated))
+		item.OutMoney = mergeLegFiatValuation(tx.OutMoney, valuedOutFiat(valuated))
+		item.FeeMoney = mergeLegFiatValuation(tx.FeeMoney, valuedFeeFiat(valuated))
+		revalued = append(revalued, item)
+	}
+
+	return revalued, nil
 }
 
 func (u *aggregationUC) markImportFailed(ctx context.Context, event domain.ImportEvent, processingErr error) error {
@@ -413,6 +531,16 @@ func toPriceMoneyLeg(asset *domain.LedgerAsset) *pricev1.MoneyLeg {
 	return &pricev1.MoneyLeg{
 		Symbol: strings.TrimSpace(asset.Symbol),
 		Amount: strings.TrimSpace(asset.Amount),
+	}
+}
+
+func toPriceMoneyLegFromAggregated(leg *domain.MoneyLeg) *pricev1.MoneyLeg {
+	if leg == nil {
+		return nil
+	}
+	return &pricev1.MoneyLeg{
+		Symbol: strings.TrimSpace(leg.Symbol),
+		Amount: strings.TrimSpace(leg.CryptoAmount),
 	}
 }
 
@@ -484,6 +612,45 @@ func valuedFeeFiat(tx *pricev1.ValuatedTx) *pricev1.FiatLeg {
 		return nil
 	}
 	return tx.GetFeeFiat()
+}
+
+func mergeLegFiatValuation(leg *domain.MoneyLeg, fiat *pricev1.FiatLeg) *domain.MoneyLeg {
+	if leg == nil {
+		return nil
+	}
+
+	out := &domain.MoneyLeg{
+		Symbol:       strings.TrimSpace(leg.Symbol),
+		CryptoAmount: strings.TrimSpace(leg.CryptoAmount),
+	}
+
+	if fiat == nil {
+		return out
+	}
+
+	if fiatAmount := strings.TrimSpace(fiat.GetFiat()); fiatAmount != "" {
+		out.FiatAmount = &fiatAmount
+	}
+	if fiatErr := fiat.GetError(); fiatErr != nil {
+		mapped := &domain.FiatLegError{
+			Code: fiatErr.GetCode().String(),
+		}
+		if len(fiatErr.GetCandidates()) > 0 {
+			mapped.Candidates = make([]domain.FiatLegCandidate, 0, len(fiatErr.GetCandidates()))
+			for _, candidate := range fiatErr.GetCandidates() {
+				if candidate == nil {
+					continue
+				}
+				mapped.Candidates = append(mapped.Candidates, domain.FiatLegCandidate{
+					CoinID: candidate.GetCoinId(),
+					Name:   candidate.GetName(),
+				})
+			}
+		}
+		out.Error = mapped
+	}
+
+	return out
 }
 
 func ledgerTxFingerprints(txs []domain.LedgerTransaction) []map[string]string {
@@ -578,4 +745,38 @@ func legNotReadyReason(leg *domain.MoneyLeg) (string, string) {
 func legName(prefix, symbol string) string {
 	symbol = strings.TrimSpace(symbol)
 	return prefix + "." + symbol
+}
+
+func normalizeFiatForPricing(raw string) string {
+	fiat := strings.ToUpper(strings.TrimSpace(raw))
+	if fiat == "" {
+		return DefaultFiatCurrency
+	}
+	return fiat
+}
+
+func mapPriceValuationError(msg string, err error, meta map[string]string) error {
+	grpcCode, ok := grpcCodeFromErrorChain(err)
+	if ok {
+		meta["grpc_code"] = grpcCode.String()
+		switch grpcCode {
+		case codes.Unavailable, codes.DeadlineExceeded, codes.ResourceExhausted, codes.Internal:
+			return apperr.PriceUnavailable(msg, err, meta)
+		case codes.InvalidArgument, codes.FailedPrecondition, codes.NotFound, codes.PermissionDenied, codes.Unauthenticated:
+			return apperr.PriceBadResponse(msg, err, meta)
+		default:
+			return apperr.PriceBadResponse(msg, err, meta)
+		}
+	}
+
+	return apperr.PriceUnavailable(msg, err, meta)
+}
+
+func grpcCodeFromErrorChain(err error) (codes.Code, bool) {
+	for current := err; current != nil; current = errors.Unwrap(current) {
+		if st, ok := status.FromError(current); ok {
+			return st.Code(), true
+		}
+	}
+	return codes.OK, false
 }

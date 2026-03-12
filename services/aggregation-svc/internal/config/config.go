@@ -124,7 +124,7 @@ func applyDefaults(cfg *Config) {
 		cfg.Price.BatchSize = 10000
 	}
 	if cfg.Aggregation.DefaultFiatCurrency == "" {
-		cfg.Aggregation.DefaultFiatCurrency = "rub"
+		cfg.Aggregation.DefaultFiatCurrency = "RUB"
 	}
 	if cfg.Aggregation.DefaultTimezone == "" {
 		cfg.Aggregation.DefaultTimezone = "Europe/Moscow"
