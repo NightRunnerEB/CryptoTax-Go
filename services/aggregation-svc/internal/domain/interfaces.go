@@ -17,7 +17,7 @@ type AggregatedTxPage struct {
 type AggregationUseCase interface {
 	ProcessImport(ctx context.Context, event ImportEvent) error
 	ListTransactionsByImport(ctx context.Context, tenantID, importID uuid.UUID, limit, offset int32) (AggregatedTxPage, error)
-	ListTransactionsByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32) (AggregatedTxPage, error)
+	ListTransactionsByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32, targetFiat string) (AggregatedTxPage, error)
 }
 
 type TenantSettingsUseCase interface {

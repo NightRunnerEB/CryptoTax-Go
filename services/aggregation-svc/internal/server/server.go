@@ -184,7 +184,15 @@ func (s *AggregationServer) ListTransactionsByRange(ctx context.Context, req *ag
 		})
 	}
 
-	page, err := s.aggregationUC.ListTransactionsByRange(ctx, tenantID, fromUTC, toUTC, req.GetLimit(), req.GetOffset())
+	page, err := s.aggregationUC.ListTransactionsByRange(
+		ctx,
+		tenantID,
+		fromUTC,
+		toUTC,
+		req.GetLimit(),
+		req.GetOffset(),
+		req.GetTargetFiat(),
+	)
 	if err != nil {
 		return nil, err
 	}
