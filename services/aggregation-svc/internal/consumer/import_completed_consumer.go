@@ -214,8 +214,10 @@ func shouldRequeue(err error) bool {
 		return false
 	case apperr.ErrInvalidArgument:
 		return false
-	case apperr.ErrLedgerUnavailable, apperr.ErrPriceUnavailable, apperr.ErrPriceBadResponse:
+	case apperr.ErrLedgerUnavailable, apperr.ErrPriceUnavailable:
 		return true
+	case apperr.ErrPriceBadResponse:
+		return false
 	case apperr.ErrLedgerBadResponse:
 		return shouldRequeueLedgerBadResponse(ae)
 	case apperr.ErrImportLocked, apperr.ErrImportInconsistent, apperr.ErrInternal:

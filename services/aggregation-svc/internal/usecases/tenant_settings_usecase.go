@@ -79,7 +79,7 @@ func normalizeFiatCurrency(value string) string {
 	if value == "" {
 		return DefaultFiatCurrency
 	}
-	return value
+	return strings.ToUpper(value)
 }
 
 func normalizeTimezone(value string) string {

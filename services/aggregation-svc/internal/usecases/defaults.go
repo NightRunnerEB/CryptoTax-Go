@@ -1,6 +1,6 @@
 package usecase
 
 const (
-	DefaultFiatCurrency = "rub"
+	DefaultFiatCurrency = "RUB"
 	DefaultTimezone     = "Europe/Moscow"
 )
