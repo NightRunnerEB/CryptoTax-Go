@@ -109,7 +109,7 @@ func Run(cfg *config.Config) {
 	}
 	defer reportClient.Close()
 
-	objectStorage, err := storage.NewMinIOStorage(cfg.MinIO)
+	objectStorage, err := storage.NewMinIOStorage(ctx, cfg.MinIO)
 	if err != nil {
 		log.Fatal("cannot create storage client", zap.Error(err))
 	}
