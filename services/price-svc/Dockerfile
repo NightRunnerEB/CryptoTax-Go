@@ -26,6 +26,7 @@ COPY --from=build /out/price-svc /app/price-svc
 COPY services/price-svc/config.yaml /app/config.yaml
 COPY services/price-svc/assets.yaml /app/assets.yaml
 COPY --chown=nonroot:nonroot services/price-svc/KZT-USD.csv /app/KZT-USD.csv
+COPY --chown=nonroot:nonroot services/price-svc/RUB-USD.csv /app/RUB-USD.csv
 
 USER nonroot:nonroot
 EXPOSE 8093

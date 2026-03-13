@@ -155,8 +155,6 @@ func (s *KZTSource) Update(ctx context.Context) error {
 		return nil
 	}
 
-	s.store.UpsertMany(patch)
-
 	if gotReal && len(realPoints) > 0 {
 		if err := AppendKZTUSDToCSV(csvPath, realPoints); err != nil {
 			log.Error("kzt fx append csv failed", zap.Error(err))
