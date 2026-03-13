@@ -15,7 +15,6 @@ type TaxJobUC struct {
 	jobRepo     domain.TaxJobRepo
 	profileRepo domain.TaxProfileRepo
 	storage     domain.ObjectStorage
-	presignTTL  time.Duration
 }
 
 func NewTaxJobUC(
