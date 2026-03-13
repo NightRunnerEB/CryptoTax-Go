@@ -115,9 +115,13 @@ func Run(cfg *config.Config) {
 	if err != nil {
 		log.Fatal("new kzt source failed", zap.Error(err))
 	}
+	RUBSource, err := fiatfx.NewRUBSource(ctx, httpClient)
+	if err != nil {
+		log.Fatal("new rub source failed", zap.Error(err))
+	}
 
 	fxSourceRegistry := fiatfx.NewFXRegistry()
-	// fxSourceRegistry.Register(fiatfx.NewRUBSource(httpClient))
+	fxSourceRegistry.Register(RUBSource)
 	fxSourceRegistry.Register(KZTSource)
 	fxProvider := fiatfx.NewFXProvider(fxSourceRegistry)
 	// НАСТРОИТЬ CONTEXT - сейчас поставил от waitGroup
