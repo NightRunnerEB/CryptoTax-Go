@@ -125,7 +125,7 @@ func Run(cfg *config.Config) {
 	}
 
 	taxProfileUC := usecases.NewTaxProfileUC(taxProfileRepo, engineRegistry)
-	taxJobUC := usecases.NewTaxJobUC(taxJobRepo, taxProfileRepo)
+	taxJobUC := usecases.NewTaxJobUC(taxJobRepo, taxProfileRepo, objectStorage)
 	taxJobWorkerUC := usecases.NewTaxJobWorkerUC(
 		taxJobRepo,
 		taxProfileRepo,
@@ -133,7 +133,6 @@ func Run(cfg *config.Config) {
 		reportClient,
 		objectStorage,
 		engineRegistry,
-		cfg.MinIO.PresignTTL,
 		cfg.Worker.RetryMaxAttempts,
 		cfg.Worker.RetryBaseDelay,
 		cfg.Worker.RetryMaxDelay,

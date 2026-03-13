@@ -13,7 +13,7 @@ type AggregatedTxProvider interface {
 
 type ObjectStorage interface {
 	UploadJSON(ctx context.Context, objectKey string, payload any) error
-	PresignGet(ctx context.Context, objectKey string, ttl time.Duration) (string, error)
+	PresignGet(ctx context.Context, objectKey string) (string, error)
 }
 
 type ReportRenderRequest struct {

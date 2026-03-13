@@ -41,8 +41,8 @@ RETURNING
   j.attempts,
   j.retry_at,
   j.summary,
-  j.audit_zip_url,
-  j.report_url,
+  j.audit_object_key,
+  j.report_object_key,
   j.created_at,
   j.started_at,
   j.finished_at,
@@ -62,8 +62,8 @@ func (q *Queries) ClaimNextQueuedTaxJob(ctx context.Context) (TaxJob, error) {
 		&i.Attempts,
 		&i.RetryAt,
 		&i.Summary,
-		&i.AuditZipUrl,
-		&i.ReportUrl,
+		&i.AuditObjectKey,
+		&i.ReportObjectKey,
 		&i.CreatedAt,
 		&i.StartedAt,
 		&i.FinishedAt,
@@ -106,8 +106,8 @@ RETURNING
   attempts,
   retry_at,
   summary,
-  audit_zip_url,
-  report_url,
+  audit_object_key,
+  report_object_key,
   created_at,
   started_at,
   finished_at,
@@ -143,8 +143,8 @@ func (q *Queries) CreateTaxJob(ctx context.Context, arg CreateTaxJobParams) (Tax
 		&i.Attempts,
 		&i.RetryAt,
 		&i.Summary,
-		&i.AuditZipUrl,
-		&i.ReportUrl,
+		&i.AuditObjectKey,
+		&i.ReportObjectKey,
 		&i.CreatedAt,
 		&i.StartedAt,
 		&i.FinishedAt,
@@ -164,8 +164,8 @@ SELECT
   attempts,
   retry_at,
   summary,
-  audit_zip_url,
-  report_url,
+  audit_object_key,
+  report_object_key,
   created_at,
   started_at,
   finished_at,
@@ -192,8 +192,8 @@ func (q *Queries) GetTaxJob(ctx context.Context, arg GetTaxJobParams) (TaxJob, e
 		&i.Attempts,
 		&i.RetryAt,
 		&i.Summary,
-		&i.AuditZipUrl,
-		&i.ReportUrl,
+		&i.AuditObjectKey,
+		&i.ReportObjectKey,
 		&i.CreatedAt,
 		&i.StartedAt,
 		&i.FinishedAt,
@@ -213,8 +213,8 @@ SELECT
   attempts,
   retry_at,
   summary,
-  audit_zip_url,
-  report_url,
+  audit_object_key,
+  report_object_key,
   created_at,
   started_at,
   finished_at,
@@ -250,8 +250,8 @@ func (q *Queries) ListTaxJobs(ctx context.Context, arg ListTaxJobsParams) ([]Tax
 			&i.Attempts,
 			&i.RetryAt,
 			&i.Summary,
-			&i.AuditZipUrl,
-			&i.ReportUrl,
+			&i.AuditObjectKey,
+			&i.ReportObjectKey,
 			&i.CreatedAt,
 			&i.StartedAt,
 			&i.FinishedAt,
@@ -337,8 +337,8 @@ UPDATE tax_jobs
 SET
   status = 'success',
   summary = $2,
-  audit_zip_url = $3,
-  report_url = $4,
+  audit_object_key = $3,
+  report_object_key = $4,
   retry_at = now(),
   finished_at = now(),
   last_error_code = NULL,
@@ -347,18 +347,18 @@ WHERE id = $1
 `
 
 type SaveTaxJobResultParams struct {
-	ID          uuid.UUID `json:"id"`
-	Summary     []byte    `json:"summary"`
-	AuditZipUrl *string   `json:"auditZipUrl"`
-	ReportUrl   *string   `json:"reportUrl"`
+	ID              uuid.UUID `json:"id"`
+	Summary         []byte    `json:"summary"`
+	AuditObjectKey  *string   `json:"auditObjectKey"`
+	ReportObjectKey *string   `json:"reportObjectKey"`
 }
 
 func (q *Queries) SaveTaxJobResult(ctx context.Context, arg SaveTaxJobResultParams) error {
 	_, err := q.db.Exec(ctx, saveTaxJobResult,
 		arg.ID,
 		arg.Summary,
-		arg.AuditZipUrl,
-		arg.ReportUrl,
+		arg.AuditObjectKey,
+		arg.ReportObjectKey,
 	)
 	return err
 }

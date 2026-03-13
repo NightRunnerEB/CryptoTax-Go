@@ -15,9 +15,9 @@ import (
 )
 
 type MinIOStorage struct {
-	client            *miniopkg.Client
-	defaultPresignTTL time.Duration
-	log               *zap.Logger
+	client     *miniopkg.Client
+	PresignTTL time.Duration
+	log        *zap.Logger
 }
 
 func NewMinIOStorage(ctx context.Context, cfg config.MinIOConfig) (*MinIOStorage, error) {
@@ -51,9 +51,9 @@ func NewMinIOStorage(ctx context.Context, cfg config.MinIOConfig) (*MinIOStorage
 	)
 
 	return &MinIOStorage{
-		client:            client,
-		defaultPresignTTL: cfg.PresignTTL,
-		log:               log,
+		client:     client,
+		PresignTTL: cfg.PresignTTL,
+		log:        log,
 	}, nil
 }
 
@@ -91,7 +91,7 @@ func (s *MinIOStorage) UploadJSON(ctx context.Context, objectKey string, payload
 	return nil
 }
 
-func (s *MinIOStorage) PresignGet(ctx context.Context, objectKey string, ttl time.Duration) (string, error) {
+func (s *MinIOStorage) PresignGet(ctx context.Context, objectKey string) (string, error) {
 	objectKey = strings.TrimSpace(objectKey)
 	if objectKey == "" {
 		return "", apperr.InvalidArgument("invalid object key", nil, apperr.FieldViolation{
@@ -100,7 +100,7 @@ func (s *MinIOStorage) PresignGet(ctx context.Context, objectKey string, ttl tim
 		})
 	}
 
-	url, err := s.client.PresignGet(ctx, objectKey, ttl)
+	url, err := s.client.PresignGet(ctx, objectKey, s.PresignTTL)
 	if err != nil {
 		return "", mapRuntimeError("presign failed", objectKey, err)
 	}
