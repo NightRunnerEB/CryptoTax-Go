@@ -37,6 +37,10 @@ minio:
   bucket: "tax-reports"
   use_ssl: false
   presign_ttl: 15m
+  request_timeout: 10s
+  retry_max: 3
+  retry_base_delay: 200ms
+  retry_max_delay: 2s
 
 worker:
   poll_interval: 5s

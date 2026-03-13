@@ -69,12 +69,16 @@ type (
 	}
 
 	MinIOConfig struct {
-		Endpoint   string        `yaml:"endpoint"`
-		AccessKey  string        `env:"MINIO_ACCESS_KEY" env-required:"true"`
-		SecretKey  string        `env:"MINIO_SECRET_KEY" env-required:"true"`
-		Bucket     string        `yaml:"bucket"`
-		UseSSL     bool          `yaml:"use_ssl"`
-		PresignTTL time.Duration `yaml:"presign_ttl"`
+		Endpoint       string        `yaml:"endpoint"`
+		AccessKey      string        `env:"MINIO_ACCESS_KEY" env-required:"true"`
+		SecretKey      string        `env:"MINIO_SECRET_KEY" env-required:"true"`
+		Bucket         string        `yaml:"bucket"`
+		UseSSL         bool          `yaml:"use_ssl"`
+		PresignTTL     time.Duration `yaml:"presign_ttl"`
+		RequestTimeout time.Duration `yaml:"request_timeout"`
+		RetryMax       int           `yaml:"retry_max"`
+		RetryBaseDelay time.Duration `yaml:"retry_base_delay"`
+		RetryMaxDelay  time.Duration `yaml:"retry_max_delay"`
 	}
 
 	WorkerConfig struct {
@@ -153,6 +157,21 @@ func applyDefaults(cfg *Config) {
 
 	if cfg.MinIO.PresignTTL == 0 {
 		cfg.MinIO.PresignTTL = 15 * time.Minute
+	}
+	if cfg.MinIO.RequestTimeout == 0 {
+		cfg.MinIO.RequestTimeout = 10 * time.Second
+	}
+	if cfg.MinIO.RetryMax <= 0 {
+		cfg.MinIO.RetryMax = 3
+	}
+	if cfg.MinIO.RetryBaseDelay <= 0 {
+		cfg.MinIO.RetryBaseDelay = 200 * time.Millisecond
+	}
+	if cfg.MinIO.RetryMaxDelay <= 0 {
+		cfg.MinIO.RetryMaxDelay = 2 * time.Second
+	}
+	if cfg.MinIO.RetryMaxDelay < cfg.MinIO.RetryBaseDelay {
+		cfg.MinIO.RetryMaxDelay = cfg.MinIO.RetryBaseDelay
 	}
 	if cfg.Worker.PollInterval <= 0 {
 		cfg.Worker.PollInterval = 2 * time.Second
