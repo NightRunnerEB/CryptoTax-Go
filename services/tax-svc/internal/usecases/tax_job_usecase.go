@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,12 +14,18 @@ import (
 type TaxJobUC struct {
 	jobRepo     domain.TaxJobRepo
 	profileRepo domain.TaxProfileRepo
+	storage     domain.ObjectStorage
 }
 
-func NewTaxJobUC(jobRepo domain.TaxJobRepo, profileRepo domain.TaxProfileRepo) *TaxJobUC {
+func NewTaxJobUC(
+	jobRepo domain.TaxJobRepo,
+	profileRepo domain.TaxProfileRepo,
+	storage domain.ObjectStorage,
+) *TaxJobUC {
 	return &TaxJobUC{
 		jobRepo:     jobRepo,
 		profileRepo: profileRepo,
+		storage:     storage,
 	}
 }
 
@@ -73,7 +80,13 @@ func (uc *TaxJobUC) GetStatus(ctx context.Context, tenantID, jobID uuid.UUID) (d
 			Description: "required",
 		})
 	}
-	return uc.jobRepo.Get(ctx, tenantID, jobID)
+	job, err := uc.jobRepo.Get(ctx, tenantID, jobID)
+	if err != nil {
+		return domain.TaxJob{}, err
+	}
+
+	uc.attachPresignedURLs(ctx, &job)
+	return job, nil
 }
 
 func (uc *TaxJobUC) List(ctx context.Context, tenantID uuid.UUID, limit, offset int32) ([]domain.TaxJob, int64, error) {
@@ -92,7 +105,27 @@ func (uc *TaxJobUC) List(ctx context.Context, tenantID uuid.UUID, limit, offset 
 	if offset < 0 {
 		offset = 0
 	}
-	return uc.jobRepo.List(ctx, tenantID, limit, offset)
+	jobs, total, err := uc.jobRepo.List(ctx, tenantID, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := range jobs {
+		uc.attachPresignedURLs(ctx, &jobs[i])
+	}
+	return jobs, total, nil
 }
 
 var _ domain.TaxJobUseCase = (*TaxJobUC)(nil)
+
+func (uc *TaxJobUC) attachPresignedURLs(ctx context.Context, job *domain.TaxJob) {
+	if job.AuditObjectKey != nil {
+		if url, err := uc.storage.PresignGet(ctx, *job.AuditObjectKey); err == nil && strings.TrimSpace(url) != "" {
+			job.AuditZipURL = &url
+		}
+	}
+	if job.ReportObjectKey != nil {
+		if url, err := uc.storage.PresignGet(ctx, *job.ReportObjectKey); err == nil && strings.TrimSpace(url) != "" {
+			job.ReportURL = &url
+		}
+	}
+}

@@ -18,8 +18,8 @@ type TaxJob struct {
 	Attempts         int32              `json:"attempts"`
 	RetryAt          pgtype.Timestamptz `json:"retryAt"`
 	Summary          []byte             `json:"summary"`
-	AuditZipUrl      *string            `json:"auditZipUrl"`
-	ReportUrl        *string            `json:"reportUrl"`
+	AuditObjectKey   *string            `json:"auditObjectKey"`
+	ReportObjectKey  *string            `json:"reportObjectKey"`
 	CreatedAt        pgtype.Timestamptz `json:"createdAt"`
 	StartedAt        pgtype.Timestamptz `json:"startedAt"`
 	FinishedAt       pgtype.Timestamptz `json:"finishedAt"`

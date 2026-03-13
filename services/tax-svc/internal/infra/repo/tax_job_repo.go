@@ -116,8 +116,8 @@ func (r *TaxJobRepo) SaveResult(
 	ctx context.Context,
 	jobID uuid.UUID,
 	summary domain.TaxSummary,
-	auditZipURL *string,
-	reportURL *string,
+	auditObjectKey *string,
+	reportObjectKey *string,
 ) error {
 	summaryJSON, err := json.Marshal(summary)
 	if err != nil {
@@ -127,10 +127,10 @@ func (r *TaxJobRepo) SaveResult(
 	}
 
 	if err := r.store.SaveTaxJobResult(ctx, db.SaveTaxJobResultParams{
-		ID:          jobID,
-		Summary:     summaryJSON,
-		AuditZipUrl: auditZipURL,
-		ReportUrl:   reportURL,
+		ID:              jobID,
+		Summary:         summaryJSON,
+		AuditObjectKey:  auditObjectKey,
+		ReportObjectKey: reportObjectKey,
 	}); err != nil {
 		return apperr.Internal("save tax job result failed", err, map[string]string{
 			"job_id": jobID.String(),
@@ -233,8 +233,8 @@ func mapTaxJobRow(row db.TaxJob) (domain.TaxJob, error) {
 		Status:           domain.TaxJobStatus(row.Status),
 		Attempts:         int(row.Attempts),
 		Summary:          summary,
-		AuditZipURL:      row.AuditZipUrl,
-		ReportURL:        row.ReportUrl,
+		AuditObjectKey:   row.AuditObjectKey,
+		ReportObjectKey:  row.ReportObjectKey,
 		CreatedAt:        createdAt,
 		StartedAt:        startedAt,
 		FinishedAt:       finishedAt,

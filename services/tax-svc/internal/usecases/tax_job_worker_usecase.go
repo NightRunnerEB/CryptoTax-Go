@@ -24,7 +24,6 @@ type TaxJobWorkerUC struct {
 	report      domain.ReportClient
 	storage     domain.ObjectStorage
 	engines     *engines.Registry
-	presignTTL  time.Duration
 	maxAttempts int
 	baseDelay   time.Duration
 	maxDelay    time.Duration
@@ -37,7 +36,6 @@ func NewTaxJobWorkerUC(
 	report domain.ReportClient,
 	storage domain.ObjectStorage,
 	engineRegistry *engines.Registry,
-	presignTTL time.Duration,
 	maxAttempts int,
 	baseDelay time.Duration,
 	maxDelay time.Duration,
@@ -61,7 +59,6 @@ func NewTaxJobWorkerUC(
 		report:      report,
 		storage:     storage,
 		engines:     engineRegistry,
-		presignTTL:  presignTTL,
 		maxAttempts: maxAttempts,
 		baseDelay:   baseDelay,
 		maxDelay:    maxDelay,
@@ -179,12 +176,7 @@ func (uc *TaxJobWorkerUC) processJob(ctx context.Context, job domain.TaxJob) err
 		})
 	}
 
-	auditURL := objectKey
-	if url, err := uc.storage.PresignGet(ctx, objectKey, uc.presignTTL); err == nil && url != "" {
-		auditURL = url
-	}
-
-	return uc.jobRepo.SaveResult(ctx, job.ID, summary, ptr(auditURL), nil)
+	return uc.jobRepo.SaveResult(ctx, job.ID, summary, &objectKey, nil)
 }
 
 func taxYearBoundsUTC(year int, timezone string) (time.Time, time.Time, error) {
@@ -329,10 +321,6 @@ func calculateTaxDue(profile domain.TaxProfile, taxBase decimal.Decimal) decimal
 	default:
 		return decimal.Zero
 	}
-}
-
-func ptr(v string) *string {
-	return &v
 }
 
 var _ domain.TaxJobWorkerUseCase = (*TaxJobWorkerUC)(nil)

@@ -28,8 +28,10 @@ type TaxJob struct {
 
 	Summary *TaxSummary
 
-	AuditZipURL *string
-	ReportURL   *string
+	AuditObjectKey  *string
+	ReportObjectKey *string
+	AuditZipURL     *string
+	ReportURL       *string
 
 	CreatedAt  time.Time
 	StartedAt  *time.Time
@@ -51,7 +53,7 @@ type TaxJobRepo interface {
 	List(ctx context.Context, tenantID uuid.UUID, limit, offset int32) ([]TaxJob, int64, error)
 	ClaimNextQueued(ctx context.Context) (*TaxJob, error)
 	Requeue(ctx context.Context, jobID uuid.UUID, retryAt time.Time, errCode, errMsg string) error
-	SaveResult(ctx context.Context, jobID uuid.UUID, summary TaxSummary, auditZipURL *string, reportURL *string) error
+	SaveResult(ctx context.Context, jobID uuid.UUID, summary TaxSummary, auditObjectKey *string, reportObjectKey *string) error
 	MarkFailed(ctx context.Context, jobID uuid.UUID, errCode, errMsg string) error
 	MarkCanceled(ctx context.Context, jobID uuid.UUID) error
 }
