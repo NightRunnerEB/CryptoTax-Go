@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Aggregation_ListTransactionsByImport_FullMethodName = "/aggregation.v1.Aggregation/ListTransactionsByImport"
-	Aggregation_ListTransactionsByRange_FullMethodName  = "/aggregation.v1.Aggregation/ListTransactionsByRange"
-	Aggregation_GetTenantSettings_FullMethodName        = "/aggregation.v1.Aggregation/GetTenantSettings"
-	Aggregation_UpsertTenantSettings_FullMethodName     = "/aggregation.v1.Aggregation/UpsertTenantSettings"
+	Aggregation_ListTransactionsByImport_FullMethodName    = "/aggregation.v1.Aggregation/ListTransactionsByImport"
+	Aggregation_ListTransactionsByRange_FullMethodName     = "/aggregation.v1.Aggregation/ListTransactionsByRange"
+	Aggregation_GetTenantSettings_FullMethodName           = "/aggregation.v1.Aggregation/GetTenantSettings"
+	Aggregation_UpsertTenantSettings_FullMethodName        = "/aggregation.v1.Aggregation/UpsertTenantSettings"
+	Aggregation_ListSupportedFiatCurrencies_FullMethodName = "/aggregation.v1.Aggregation/ListSupportedFiatCurrencies"
 )
 
 // AggregationClient is the client API for Aggregation service.
@@ -42,6 +43,8 @@ type AggregationClient interface {
 	GetTenantSettings(ctx context.Context, in *GetTenantSettingsRequest, opts ...grpc.CallOption) (*GetTenantSettingsResponse, error)
 	// UpsertTenantSettings creates or updates aggregation settings for a tenant.
 	UpsertTenantSettings(ctx context.Context, in *UpsertTenantSettingsRequest, opts ...grpc.CallOption) (*UpsertTenantSettingsResponse, error)
+	// ListSupportedFiatCurrencies returns fiat codes supported by valuation pipeline.
+	ListSupportedFiatCurrencies(ctx context.Context, in *ListSupportedFiatCurrenciesRequest, opts ...grpc.CallOption) (*ListSupportedFiatCurrenciesResponse, error)
 }
 
 type aggregationClient struct {
@@ -92,6 +95,16 @@ func (c *aggregationClient) UpsertTenantSettings(ctx context.Context, in *Upsert
 	return out, nil
 }
 
+func (c *aggregationClient) ListSupportedFiatCurrencies(ctx context.Context, in *ListSupportedFiatCurrenciesRequest, opts ...grpc.CallOption) (*ListSupportedFiatCurrenciesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSupportedFiatCurrenciesResponse)
+	err := c.cc.Invoke(ctx, Aggregation_ListSupportedFiatCurrencies_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AggregationServer is the server API for Aggregation service.
 // All implementations must embed UnimplementedAggregationServer
 // for forward compatibility.
@@ -109,6 +122,8 @@ type AggregationServer interface {
 	GetTenantSettings(context.Context, *GetTenantSettingsRequest) (*GetTenantSettingsResponse, error)
 	// UpsertTenantSettings creates or updates aggregation settings for a tenant.
 	UpsertTenantSettings(context.Context, *UpsertTenantSettingsRequest) (*UpsertTenantSettingsResponse, error)
+	// ListSupportedFiatCurrencies returns fiat codes supported by valuation pipeline.
+	ListSupportedFiatCurrencies(context.Context, *ListSupportedFiatCurrenciesRequest) (*ListSupportedFiatCurrenciesResponse, error)
 	mustEmbedUnimplementedAggregationServer()
 }
 
@@ -130,6 +145,9 @@ func (UnimplementedAggregationServer) GetTenantSettings(context.Context, *GetTen
 }
 func (UnimplementedAggregationServer) UpsertTenantSettings(context.Context, *UpsertTenantSettingsRequest) (*UpsertTenantSettingsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpsertTenantSettings not implemented")
+}
+func (UnimplementedAggregationServer) ListSupportedFiatCurrencies(context.Context, *ListSupportedFiatCurrenciesRequest) (*ListSupportedFiatCurrenciesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSupportedFiatCurrencies not implemented")
 }
 func (UnimplementedAggregationServer) mustEmbedUnimplementedAggregationServer() {}
 func (UnimplementedAggregationServer) testEmbeddedByValue()                     {}
@@ -224,6 +242,24 @@ func _Aggregation_UpsertTenantSettings_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Aggregation_ListSupportedFiatCurrencies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSupportedFiatCurrenciesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AggregationServer).ListSupportedFiatCurrencies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Aggregation_ListSupportedFiatCurrencies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AggregationServer).ListSupportedFiatCurrencies(ctx, req.(*ListSupportedFiatCurrenciesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Aggregation_ServiceDesc is the grpc.ServiceDesc for Aggregation service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -246,6 +282,10 @@ var Aggregation_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpsertTenantSettings",
 			Handler:    _Aggregation_UpsertTenantSettings_Handler,
+		},
+		{
+			MethodName: "ListSupportedFiatCurrencies",
+			Handler:    _Aggregation_ListSupportedFiatCurrencies_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

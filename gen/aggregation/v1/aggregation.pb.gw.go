@@ -241,6 +241,27 @@ func local_request_Aggregation_UpsertTenantSettings_0(ctx context.Context, marsh
 	return msg, metadata, err
 }
 
+func request_Aggregation_ListSupportedFiatCurrencies_0(ctx context.Context, marshaler runtime.Marshaler, client AggregationClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ListSupportedFiatCurrenciesRequest
+		metadata runtime.ServerMetadata
+	)
+	if req.Body != nil {
+		_, _ = io.Copy(io.Discard, req.Body)
+	}
+	msg, err := client.ListSupportedFiatCurrencies(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Aggregation_ListSupportedFiatCurrencies_0(ctx context.Context, marshaler runtime.Marshaler, server AggregationServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ListSupportedFiatCurrenciesRequest
+		metadata runtime.ServerMetadata
+	)
+	msg, err := server.ListSupportedFiatCurrencies(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 // RegisterAggregationHandlerServer registers the http handlers for service Aggregation to "mux".
 // UnaryRPC     :call AggregationServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -326,6 +347,26 @@ func RegisterAggregationHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 		forward_Aggregation_UpsertTenantSettings_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_Aggregation_ListSupportedFiatCurrencies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/aggregation.v1.Aggregation/ListSupportedFiatCurrencies", runtime.WithHTTPPathPattern("/v1/fiat-currencies"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Aggregation_ListSupportedFiatCurrencies_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Aggregation_ListSupportedFiatCurrencies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
 	return nil
@@ -435,19 +476,38 @@ func RegisterAggregationHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		}
 		forward_Aggregation_UpsertTenantSettings_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_Aggregation_ListSupportedFiatCurrencies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/aggregation.v1.Aggregation/ListSupportedFiatCurrencies", runtime.WithHTTPPathPattern("/v1/fiat-currencies"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Aggregation_ListSupportedFiatCurrencies_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Aggregation_ListSupportedFiatCurrencies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	return nil
 }
 
 var (
-	pattern_Aggregation_ListTransactionsByImport_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v1", "tenants", "tenant_id", "imports", "import_id", "transactions"}, ""))
-	pattern_Aggregation_ListTransactionsByRange_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "tenants", "tenant_id", "transactions"}, ""))
-	pattern_Aggregation_GetTenantSettings_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "tenants", "tenant_id", "settings"}, ""))
-	pattern_Aggregation_UpsertTenantSettings_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "tenants", "tenant_id", "settings"}, ""))
+	pattern_Aggregation_ListTransactionsByImport_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v1", "tenants", "tenant_id", "imports", "import_id", "transactions"}, ""))
+	pattern_Aggregation_ListTransactionsByRange_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "tenants", "tenant_id", "transactions"}, ""))
+	pattern_Aggregation_GetTenantSettings_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "tenants", "tenant_id", "settings"}, ""))
+	pattern_Aggregation_UpsertTenantSettings_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "tenants", "tenant_id", "settings"}, ""))
+	pattern_Aggregation_ListSupportedFiatCurrencies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "fiat-currencies"}, ""))
 )
 
 var (
-	forward_Aggregation_ListTransactionsByImport_0 = runtime.ForwardResponseMessage
-	forward_Aggregation_ListTransactionsByRange_0  = runtime.ForwardResponseMessage
-	forward_Aggregation_GetTenantSettings_0        = runtime.ForwardResponseMessage
-	forward_Aggregation_UpsertTenantSettings_0     = runtime.ForwardResponseMessage
+	forward_Aggregation_ListTransactionsByImport_0    = runtime.ForwardResponseMessage
+	forward_Aggregation_ListTransactionsByRange_0     = runtime.ForwardResponseMessage
+	forward_Aggregation_GetTenantSettings_0           = runtime.ForwardResponseMessage
+	forward_Aggregation_UpsertTenantSettings_0        = runtime.ForwardResponseMessage
+	forward_Aggregation_ListSupportedFiatCurrencies_0 = runtime.ForwardResponseMessage
 )

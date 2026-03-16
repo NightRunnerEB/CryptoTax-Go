@@ -340,6 +340,45 @@ func (s *AggregationServer) UpsertTenantSettings(ctx context.Context, req *aggre
 	}, nil
 }
 
+func (s *AggregationServer) ListSupportedFiatCurrencies(
+	ctx context.Context,
+	req *aggregationv1.ListSupportedFiatCurrenciesRequest,
+) (*aggregationv1.ListSupportedFiatCurrenciesResponse, error) {
+	log := logger.FromContext(ctx)
+	if req == nil {
+		return nil, apperr.InvalidArgument(
+			"invalid request",
+			nil,
+			apperr.FieldViolation{Field: "request", Description: "required"},
+		)
+	}
+	if err := requireTenantHeader(ctx); err != nil {
+		return nil, err
+	}
+
+	if s.settingsUC == nil {
+		return nil, apperr.Internal("tenant settings usecase is not configured", nil, nil)
+	}
+
+	currencies, err := s.settingsUC.ListSupportedFiatCurrencies(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]*aggregationv1.SupportedFiatCurrency, 0, len(currencies))
+	for _, currency := range currencies {
+		items = append(items, &aggregationv1.SupportedFiatCurrency{
+			Code:        currency.Code,
+			DisplayName: currency.DisplayName,
+		})
+	}
+
+	log.Debug("ListSupportedFiatCurrencies: success", zap.Int("count", len(items)))
+	return &aggregationv1.ListSupportedFiatCurrenciesResponse{
+		Currencies: items,
+	}, nil
+}
+
 func parseUUID(s string) (uuid.UUID, error) {
 	id, err := uuid.Parse(s)
 	if err != nil {

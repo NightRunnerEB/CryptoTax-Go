@@ -45,6 +45,14 @@ service Aggregation {
       body: "*"
     };
   }
+
+  // ListSupportedFiatCurrencies returns fiat codes supported by valuation pipeline.
+  rpc ListSupportedFiatCurrencies(ListSupportedFiatCurrenciesRequest)
+  returns (ListSupportedFiatCurrenciesResponse) {
+    option (google.api.http) = {
+      get: "/v1/fiat-currencies"
+    };
+  }
 }
 
 message AggregatedTx {
@@ -117,4 +125,15 @@ message UpsertTenantSettingsRequest {
 
 message UpsertTenantSettingsResponse {
   TenantSettings settings = 1;
+}
+
+message SupportedFiatCurrency {
+  string code = 1;
+  string display_name = 2;
+}
+
+message ListSupportedFiatCurrenciesRequest {}
+
+message ListSupportedFiatCurrenciesResponse {
+  repeated SupportedFiatCurrency currencies = 1;
 }
