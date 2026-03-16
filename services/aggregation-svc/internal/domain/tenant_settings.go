@@ -12,3 +12,8 @@ type TenantSettings struct {
 	Timezone     string    `json:"timezone"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
+
+type SupportedFiatCurrency struct {
+	Code        string `json:"code"`
+	DisplayName string `json:"display_name"`
+}

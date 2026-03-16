@@ -74,6 +74,11 @@ func (u *tenantSettingsUC) Upsert(ctx context.Context, settings domain.TenantSet
 	return u.repo.Upsert(ctx, settings)
 }
 
+func (u *tenantSettingsUC) ListSupportedFiatCurrencies(ctx context.Context) ([]domain.SupportedFiatCurrency, error) {
+	_ = ctx
+	return listSupportedFiatCurrencies(), nil
+}
+
 func normalizeFiatCurrency(value string) string {
 	value = strings.TrimSpace(value)
 	if value == "" {
@@ -98,6 +103,16 @@ func validateTenantSettings(settings domain.TenantSettings) error {
 			apperr.FieldViolation{
 				Field:       "fiat_currency",
 				Description: "required",
+			},
+		)
+	}
+	if !isSupportedFiatCurrency(settings.FiatCurrency) {
+		return apperr.InvalidArgument(
+			"invalid fiat currency",
+			nil,
+			apperr.FieldViolation{
+				Field:       "fiat_currency",
+				Description: "unsupported value",
 			},
 		)
 	}

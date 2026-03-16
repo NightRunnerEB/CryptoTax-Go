@@ -23,6 +23,7 @@ type AggregationUseCase interface {
 type TenantSettingsUseCase interface {
 	Get(ctx context.Context, tenantID uuid.UUID) (TenantSettings, error)
 	Upsert(ctx context.Context, settings TenantSettings) (TenantSettings, error)
+	ListSupportedFiatCurrencies(ctx context.Context) ([]SupportedFiatCurrency, error)
 }
 
 type AggregatedTransactionRepo interface {

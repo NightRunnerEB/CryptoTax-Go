@@ -699,6 +699,138 @@ func (x *UpsertTenantSettingsResponse) GetSettings() *TenantSettings {
 	return nil
 }
 
+type SupportedFiatCurrency struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SupportedFiatCurrency) Reset() {
+	*x = SupportedFiatCurrency{}
+	mi := &file_aggregation_v1_aggregation_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SupportedFiatCurrency) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SupportedFiatCurrency) ProtoMessage() {}
+
+func (x *SupportedFiatCurrency) ProtoReflect() protoreflect.Message {
+	mi := &file_aggregation_v1_aggregation_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SupportedFiatCurrency.ProtoReflect.Descriptor instead.
+func (*SupportedFiatCurrency) Descriptor() ([]byte, []int) {
+	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *SupportedFiatCurrency) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *SupportedFiatCurrency) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+type ListSupportedFiatCurrenciesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSupportedFiatCurrenciesRequest) Reset() {
+	*x = ListSupportedFiatCurrenciesRequest{}
+	mi := &file_aggregation_v1_aggregation_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSupportedFiatCurrenciesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSupportedFiatCurrenciesRequest) ProtoMessage() {}
+
+func (x *ListSupportedFiatCurrenciesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_aggregation_v1_aggregation_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSupportedFiatCurrenciesRequest.ProtoReflect.Descriptor instead.
+func (*ListSupportedFiatCurrenciesRequest) Descriptor() ([]byte, []int) {
+	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{11}
+}
+
+type ListSupportedFiatCurrenciesResponse struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Currencies    []*SupportedFiatCurrency `protobuf:"bytes,1,rep,name=currencies,proto3" json:"currencies,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSupportedFiatCurrenciesResponse) Reset() {
+	*x = ListSupportedFiatCurrenciesResponse{}
+	mi := &file_aggregation_v1_aggregation_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSupportedFiatCurrenciesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSupportedFiatCurrenciesResponse) ProtoMessage() {}
+
+func (x *ListSupportedFiatCurrenciesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_aggregation_v1_aggregation_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSupportedFiatCurrenciesResponse.ProtoReflect.Descriptor instead.
+func (*ListSupportedFiatCurrenciesResponse) Descriptor() ([]byte, []int) {
+	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListSupportedFiatCurrenciesResponse) GetCurrencies() []*SupportedFiatCurrency {
+	if x != nil {
+		return x.Currencies
+	}
+	return nil
+}
+
 var File_aggregation_v1_aggregation_proto protoreflect.FileDescriptor
 
 const file_aggregation_v1_aggregation_proto_rawDesc = "" +
@@ -760,12 +892,21 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"\rfiat_currency\x18\x02 \x01(\tR\ffiatCurrency\x12\x1a\n" +
 	"\btimezone\x18\x03 \x01(\tR\btimezone\"Z\n" +
 	"\x1cUpsertTenantSettingsResponse\x12:\n" +
-	"\bsettings\x18\x01 \x01(\v2\x1e.aggregation.v1.TenantSettingsR\bsettings2\xb0\x05\n" +
+	"\bsettings\x18\x01 \x01(\v2\x1e.aggregation.v1.TenantSettingsR\bsettings\"N\n" +
+	"\x15SupportedFiatCurrency\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\"$\n" +
+	"\"ListSupportedFiatCurrenciesRequest\"l\n" +
+	"#ListSupportedFiatCurrenciesResponse\x12E\n" +
+	"\n" +
+	"currencies\x18\x01 \x03(\v2%.aggregation.v1.SupportedFiatCurrencyR\n" +
+	"currencies2\xd6\x06\n" +
 	"\vAggregation\x12\xbf\x01\n" +
 	"\x18ListTransactionsByImport\x12/.aggregation.v1.ListTransactionsByImportRequest\x1a0.aggregation.v1.ListTransactionsByImportResponse\"@\x82\xd3\xe4\x93\x02:\x128/v1/tenants/{tenant_id}/imports/{import_id}/transactions\x12\xa8\x01\n" +
 	"\x17ListTransactionsByRange\x12..aggregation.v1.ListTransactionsByRangeRequest\x1a/.aggregation.v1.ListTransactionsByRangeResponse\",\x82\xd3\xe4\x93\x02&\x12$/v1/tenants/{tenant_id}/transactions\x12\x92\x01\n" +
 	"\x11GetTenantSettings\x12(.aggregation.v1.GetTenantSettingsRequest\x1a).aggregation.v1.GetTenantSettingsResponse\"(\x82\xd3\xe4\x93\x02\"\x12 /v1/tenants/{tenant_id}/settings\x12\x9e\x01\n" +
-	"\x14UpsertTenantSettings\x12+.aggregation.v1.UpsertTenantSettingsRequest\x1a,.aggregation.v1.UpsertTenantSettingsResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\x1a /v1/tenants/{tenant_id}/settingsBFZDgithub.com/NightRunner/CryptoTax-Go/gen/aggregation/v1;aggregationv1b\x06proto3"
+	"\x14UpsertTenantSettings\x12+.aggregation.v1.UpsertTenantSettingsRequest\x1a,.aggregation.v1.UpsertTenantSettingsResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\x1a /v1/tenants/{tenant_id}/settings\x12\xa3\x01\n" +
+	"\x1bListSupportedFiatCurrencies\x122.aggregation.v1.ListSupportedFiatCurrenciesRequest\x1a3.aggregation.v1.ListSupportedFiatCurrenciesResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/fiat-currenciesBFZDgithub.com/NightRunner/CryptoTax-Go/gen/aggregation/v1;aggregationv1b\x06proto3"
 
 var (
 	file_aggregation_v1_aggregation_proto_rawDescOnce sync.Once
@@ -779,45 +920,51 @@ func file_aggregation_v1_aggregation_proto_rawDescGZIP() []byte {
 	return file_aggregation_v1_aggregation_proto_rawDescData
 }
 
-var file_aggregation_v1_aggregation_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_aggregation_v1_aggregation_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_aggregation_v1_aggregation_proto_goTypes = []any{
-	(*AggregatedTx)(nil),                     // 0: aggregation.v1.AggregatedTx
-	(*ListTransactionsByImportRequest)(nil),  // 1: aggregation.v1.ListTransactionsByImportRequest
-	(*ListTransactionsByImportResponse)(nil), // 2: aggregation.v1.ListTransactionsByImportResponse
-	(*ListTransactionsByRangeRequest)(nil),   // 3: aggregation.v1.ListTransactionsByRangeRequest
-	(*ListTransactionsByRangeResponse)(nil),  // 4: aggregation.v1.ListTransactionsByRangeResponse
-	(*TenantSettings)(nil),                   // 5: aggregation.v1.TenantSettings
-	(*GetTenantSettingsRequest)(nil),         // 6: aggregation.v1.GetTenantSettingsRequest
-	(*GetTenantSettingsResponse)(nil),        // 7: aggregation.v1.GetTenantSettingsResponse
-	(*UpsertTenantSettingsRequest)(nil),      // 8: aggregation.v1.UpsertTenantSettingsRequest
-	(*UpsertTenantSettingsResponse)(nil),     // 9: aggregation.v1.UpsertTenantSettingsResponse
-	(*timestamppb.Timestamp)(nil),            // 10: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),                  // 11: google.protobuf.Struct
+	(*AggregatedTx)(nil),                        // 0: aggregation.v1.AggregatedTx
+	(*ListTransactionsByImportRequest)(nil),     // 1: aggregation.v1.ListTransactionsByImportRequest
+	(*ListTransactionsByImportResponse)(nil),    // 2: aggregation.v1.ListTransactionsByImportResponse
+	(*ListTransactionsByRangeRequest)(nil),      // 3: aggregation.v1.ListTransactionsByRangeRequest
+	(*ListTransactionsByRangeResponse)(nil),     // 4: aggregation.v1.ListTransactionsByRangeResponse
+	(*TenantSettings)(nil),                      // 5: aggregation.v1.TenantSettings
+	(*GetTenantSettingsRequest)(nil),            // 6: aggregation.v1.GetTenantSettingsRequest
+	(*GetTenantSettingsResponse)(nil),           // 7: aggregation.v1.GetTenantSettingsResponse
+	(*UpsertTenantSettingsRequest)(nil),         // 8: aggregation.v1.UpsertTenantSettingsRequest
+	(*UpsertTenantSettingsResponse)(nil),        // 9: aggregation.v1.UpsertTenantSettingsResponse
+	(*SupportedFiatCurrency)(nil),               // 10: aggregation.v1.SupportedFiatCurrency
+	(*ListSupportedFiatCurrenciesRequest)(nil),  // 11: aggregation.v1.ListSupportedFiatCurrenciesRequest
+	(*ListSupportedFiatCurrenciesResponse)(nil), // 12: aggregation.v1.ListSupportedFiatCurrenciesResponse
+	(*timestamppb.Timestamp)(nil),               // 13: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),                     // 14: google.protobuf.Struct
 }
 var file_aggregation_v1_aggregation_proto_depIdxs = []int32{
-	10, // 0: aggregation.v1.AggregatedTx.time_utc:type_name -> google.protobuf.Timestamp
-	11, // 1: aggregation.v1.AggregatedTx.in_money:type_name -> google.protobuf.Struct
-	11, // 2: aggregation.v1.AggregatedTx.out_money:type_name -> google.protobuf.Struct
-	11, // 3: aggregation.v1.AggregatedTx.fee_money:type_name -> google.protobuf.Struct
+	13, // 0: aggregation.v1.AggregatedTx.time_utc:type_name -> google.protobuf.Timestamp
+	14, // 1: aggregation.v1.AggregatedTx.in_money:type_name -> google.protobuf.Struct
+	14, // 2: aggregation.v1.AggregatedTx.out_money:type_name -> google.protobuf.Struct
+	14, // 3: aggregation.v1.AggregatedTx.fee_money:type_name -> google.protobuf.Struct
 	0,  // 4: aggregation.v1.ListTransactionsByImportResponse.transactions:type_name -> aggregation.v1.AggregatedTx
-	10, // 5: aggregation.v1.ListTransactionsByRangeRequest.from_utc:type_name -> google.protobuf.Timestamp
-	10, // 6: aggregation.v1.ListTransactionsByRangeRequest.to_utc:type_name -> google.protobuf.Timestamp
+	13, // 5: aggregation.v1.ListTransactionsByRangeRequest.from_utc:type_name -> google.protobuf.Timestamp
+	13, // 6: aggregation.v1.ListTransactionsByRangeRequest.to_utc:type_name -> google.protobuf.Timestamp
 	0,  // 7: aggregation.v1.ListTransactionsByRangeResponse.transactions:type_name -> aggregation.v1.AggregatedTx
 	5,  // 8: aggregation.v1.GetTenantSettingsResponse.settings:type_name -> aggregation.v1.TenantSettings
 	5,  // 9: aggregation.v1.UpsertTenantSettingsResponse.settings:type_name -> aggregation.v1.TenantSettings
-	1,  // 10: aggregation.v1.Aggregation.ListTransactionsByImport:input_type -> aggregation.v1.ListTransactionsByImportRequest
-	3,  // 11: aggregation.v1.Aggregation.ListTransactionsByRange:input_type -> aggregation.v1.ListTransactionsByRangeRequest
-	6,  // 12: aggregation.v1.Aggregation.GetTenantSettings:input_type -> aggregation.v1.GetTenantSettingsRequest
-	8,  // 13: aggregation.v1.Aggregation.UpsertTenantSettings:input_type -> aggregation.v1.UpsertTenantSettingsRequest
-	2,  // 14: aggregation.v1.Aggregation.ListTransactionsByImport:output_type -> aggregation.v1.ListTransactionsByImportResponse
-	4,  // 15: aggregation.v1.Aggregation.ListTransactionsByRange:output_type -> aggregation.v1.ListTransactionsByRangeResponse
-	7,  // 16: aggregation.v1.Aggregation.GetTenantSettings:output_type -> aggregation.v1.GetTenantSettingsResponse
-	9,  // 17: aggregation.v1.Aggregation.UpsertTenantSettings:output_type -> aggregation.v1.UpsertTenantSettingsResponse
-	14, // [14:18] is the sub-list for method output_type
-	10, // [10:14] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	10, // 10: aggregation.v1.ListSupportedFiatCurrenciesResponse.currencies:type_name -> aggregation.v1.SupportedFiatCurrency
+	1,  // 11: aggregation.v1.Aggregation.ListTransactionsByImport:input_type -> aggregation.v1.ListTransactionsByImportRequest
+	3,  // 12: aggregation.v1.Aggregation.ListTransactionsByRange:input_type -> aggregation.v1.ListTransactionsByRangeRequest
+	6,  // 13: aggregation.v1.Aggregation.GetTenantSettings:input_type -> aggregation.v1.GetTenantSettingsRequest
+	8,  // 14: aggregation.v1.Aggregation.UpsertTenantSettings:input_type -> aggregation.v1.UpsertTenantSettingsRequest
+	11, // 15: aggregation.v1.Aggregation.ListSupportedFiatCurrencies:input_type -> aggregation.v1.ListSupportedFiatCurrenciesRequest
+	2,  // 16: aggregation.v1.Aggregation.ListTransactionsByImport:output_type -> aggregation.v1.ListTransactionsByImportResponse
+	4,  // 17: aggregation.v1.Aggregation.ListTransactionsByRange:output_type -> aggregation.v1.ListTransactionsByRangeResponse
+	7,  // 18: aggregation.v1.Aggregation.GetTenantSettings:output_type -> aggregation.v1.GetTenantSettingsResponse
+	9,  // 19: aggregation.v1.Aggregation.UpsertTenantSettings:output_type -> aggregation.v1.UpsertTenantSettingsResponse
+	12, // 20: aggregation.v1.Aggregation.ListSupportedFiatCurrencies:output_type -> aggregation.v1.ListSupportedFiatCurrenciesResponse
+	16, // [16:21] is the sub-list for method output_type
+	11, // [11:16] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_aggregation_v1_aggregation_proto_init() }
@@ -832,7 +979,7 @@ func file_aggregation_v1_aggregation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_aggregation_v1_aggregation_proto_rawDesc), len(file_aggregation_v1_aggregation_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
