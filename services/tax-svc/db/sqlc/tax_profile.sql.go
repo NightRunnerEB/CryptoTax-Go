@@ -31,7 +31,6 @@ SELECT
   last_name,
   first_name,
   middle_name,
-  jurisdiction,
   timezone,
   phone,
   wallets,
@@ -52,7 +51,6 @@ func (q *Queries) GetTaxProfile(ctx context.Context, tenantID uuid.UUID) (TaxPro
 		&i.LastName,
 		&i.FirstName,
 		&i.MiddleName,
-		&i.Jurisdiction,
 		&i.Timezone,
 		&i.Phone,
 		&i.Wallets,
@@ -71,21 +69,19 @@ INSERT INTO tax_profile (
   last_name,
   first_name,
   middle_name,
-  jurisdiction,
   timezone,
   phone,
   wallets,
   tax_residency_status,
   taxpayer_type
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ON CONFLICT (tenant_id)
 DO UPDATE SET
   inn = EXCLUDED.inn,
   last_name = EXCLUDED.last_name,
   first_name = EXCLUDED.first_name,
   middle_name = EXCLUDED.middle_name,
-  jurisdiction = EXCLUDED.jurisdiction,
   timezone = EXCLUDED.timezone,
   phone = EXCLUDED.phone,
   wallets = EXCLUDED.wallets,
@@ -98,7 +94,6 @@ RETURNING
   last_name,
   first_name,
   middle_name,
-  jurisdiction,
   timezone,
   phone,
   wallets,
@@ -114,7 +109,6 @@ type UpsertTaxProfileParams struct {
 	LastName           string    `json:"lastName"`
 	FirstName          string    `json:"firstName"`
 	MiddleName         string    `json:"middleName"`
-	Jurisdiction       string    `json:"jurisdiction"`
 	Timezone           string    `json:"timezone"`
 	Phone              string    `json:"phone"`
 	Wallets            []byte    `json:"wallets"`
@@ -129,7 +123,6 @@ func (q *Queries) UpsertTaxProfile(ctx context.Context, arg UpsertTaxProfilePara
 		arg.LastName,
 		arg.FirstName,
 		arg.MiddleName,
-		arg.Jurisdiction,
 		arg.Timezone,
 		arg.Phone,
 		arg.Wallets,
@@ -143,7 +136,6 @@ func (q *Queries) UpsertTaxProfile(ctx context.Context, arg UpsertTaxProfilePara
 		&i.LastName,
 		&i.FirstName,
 		&i.MiddleName,
-		&i.Jurisdiction,
 		&i.Timezone,
 		&i.Phone,
 		&i.Wallets,

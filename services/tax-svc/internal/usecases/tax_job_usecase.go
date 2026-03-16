@@ -50,10 +50,18 @@ func (uc *TaxJobUC) Enqueue(ctx context.Context, tenantID uuid.UUID, taxYear int
 
 	taxPolicy = taxPolicy.Normalize()
 	if err := taxPolicy.Validate(); err != nil {
-		return domain.TaxJob{}, apperr.InvalidArgument("invalid cost basis method", err, apperr.FieldViolation{
-			Field:       "tax_policy.cost_basis_method",
-			Description: "must be FIFO, LIFO or AVG",
-		})
+		return domain.TaxJob{}, apperr.InvalidArgument(
+			"invalid tax_policy",
+			err,
+			apperr.FieldViolation{
+				Field:       "tax_policy.cost_basis_method",
+				Description: "must be FIFO, LIFO or AVG",
+			},
+			apperr.FieldViolation{
+				Field:       "tax_policy.jurisdiction",
+				Description: "must be a supported jurisdiction",
+			},
+		)
 	}
 
 	job := domain.TaxJob{

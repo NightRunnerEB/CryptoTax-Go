@@ -33,7 +33,6 @@ type TaxProfile struct {
 	LastName           string             `json:"lastName"`
 	FirstName          string             `json:"firstName"`
 	MiddleName         string             `json:"middleName"`
-	Jurisdiction       string             `json:"jurisdiction"`
 	Timezone           string             `json:"timezone"`
 	Phone              string             `json:"phone"`
 	Wallets            []byte             `json:"wallets"`

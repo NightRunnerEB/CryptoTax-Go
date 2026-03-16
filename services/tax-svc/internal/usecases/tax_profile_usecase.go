@@ -12,23 +12,17 @@ import (
 )
 
 type TaxProfileUC struct {
-	repo                domain.TaxProfileRepo
-	jurisdictionSupport JurisdictionSupport
+	repo domain.TaxProfileRepo
 }
 
-type JurisdictionSupport interface {
-	Supports(j domain.Jurisdiction) bool
-}
-
-func NewTaxProfileUC(repo domain.TaxProfileRepo, jurisdictionSupport JurisdictionSupport) *TaxProfileUC {
+func NewTaxProfileUC(repo domain.TaxProfileRepo) *TaxProfileUC {
 	return &TaxProfileUC{
-		repo:                repo,
-		jurisdictionSupport: jurisdictionSupport,
+		repo: repo,
 	}
 }
 
 func (uc *TaxProfileUC) Upsert(ctx context.Context, p domain.TaxProfile) error {
-	normalized, err := validateAndNormalizeTaxProfile(p, uc.jurisdictionSupport)
+	normalized, err := validateAndNormalizeTaxProfile(p)
 	if err != nil {
 		return err
 	}
@@ -36,7 +30,7 @@ func (uc *TaxProfileUC) Upsert(ctx context.Context, p domain.TaxProfile) error {
 	return uc.repo.Upsert(ctx, normalized)
 }
 
-func validateAndNormalizeTaxProfile(p domain.TaxProfile, support JurisdictionSupport) (domain.TaxProfile, error) {
+func validateAndNormalizeTaxProfile(p domain.TaxProfile) (domain.TaxProfile, error) {
 	if p.TenantID == uuid.Nil {
 		return domain.TaxProfile{}, apperr.InvalidArgument("invalid tenant id", nil, apperr.FieldViolation{
 			Field:       "tenant_id",
@@ -66,26 +60,6 @@ func validateAndNormalizeTaxProfile(p domain.TaxProfile, support JurisdictionSup
 		return domain.TaxProfile{}, apperr.InvalidArgument("invalid inn", nil, apperr.FieldViolation{
 			Field:       "inn",
 			Description: "required",
-		})
-	}
-
-	p.Jurisdiction = domain.Jurisdiction(strings.ToUpper(strings.TrimSpace(string(p.Jurisdiction))))
-	if p.Jurisdiction == "" {
-		return domain.TaxProfile{}, apperr.InvalidArgument("invalid jurisdiction", nil, apperr.FieldViolation{
-			Field:       "jurisdiction",
-			Description: "required",
-		})
-	}
-	if err := p.Jurisdiction.Validate(); err != nil {
-		return domain.TaxProfile{}, apperr.InvalidArgument("invalid jurisdiction", err, apperr.FieldViolation{
-			Field:       "jurisdiction",
-			Description: "unsupported value",
-		})
-	}
-	if support != nil && !support.Supports(p.Jurisdiction) {
-		return domain.TaxProfile{}, apperr.InvalidArgument("invalid jurisdiction", nil, apperr.FieldViolation{
-			Field:       "jurisdiction",
-			Description: "jurisdiction engine is not configured",
 		})
 	}
 

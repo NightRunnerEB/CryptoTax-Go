@@ -5,7 +5,6 @@ CREATE TABLE
     last_name text NOT NULL,
     first_name text NOT NULL,
     middle_name text NOT NULL,
-    jurisdiction text NOT NULL,
     timezone text NOT NULL,
     phone text NOT NULL,
     wallets jsonb NOT NULL DEFAULT '[]'::jsonb,

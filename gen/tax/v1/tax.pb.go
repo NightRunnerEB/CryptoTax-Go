@@ -27,6 +27,7 @@ type TaxPolicy struct {
 	state                       protoimpl.MessageState `protogen:"open.v1"`
 	TreatCryptoCryptoAsDisposal bool                   `protobuf:"varint,1,opt,name=treat_crypto_crypto_as_disposal,json=treatCryptoCryptoAsDisposal,proto3" json:"treat_crypto_crypto_as_disposal,omitempty"`
 	CostBasisMethod             string                 `protobuf:"bytes,2,opt,name=cost_basis_method,json=costBasisMethod,proto3" json:"cost_basis_method,omitempty"`
+	Jurisdiction                string                 `protobuf:"bytes,3,opt,name=jurisdiction,proto3" json:"jurisdiction,omitempty"`
 	unknownFields               protoimpl.UnknownFields
 	sizeCache                   protoimpl.SizeCache
 }
@@ -75,6 +76,13 @@ func (x *TaxPolicy) GetCostBasisMethod() string {
 	return ""
 }
 
+func (x *TaxPolicy) GetJurisdiction() string {
+	if x != nil {
+		return x.Jurisdiction
+	}
+	return ""
+}
+
 type TaxProfile struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	TenantId           string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
@@ -82,7 +90,6 @@ type TaxProfile struct {
 	LastName           string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	FirstName          string                 `protobuf:"bytes,4,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
 	MiddleName         string                 `protobuf:"bytes,5,opt,name=middle_name,json=middleName,proto3" json:"middle_name,omitempty"`
-	Jurisdiction       string                 `protobuf:"bytes,7,opt,name=jurisdiction,proto3" json:"jurisdiction,omitempty"`
 	Timezone           string                 `protobuf:"bytes,8,opt,name=timezone,proto3" json:"timezone,omitempty"`
 	Phone              string                 `protobuf:"bytes,9,opt,name=phone,proto3" json:"phone,omitempty"`
 	Wallets            []string               `protobuf:"bytes,10,rep,name=wallets,proto3" json:"wallets,omitempty"`
@@ -157,13 +164,6 @@ func (x *TaxProfile) GetMiddleName() string {
 	return ""
 }
 
-func (x *TaxProfile) GetJurisdiction() string {
-	if x != nil {
-		return x.Jurisdiction
-	}
-	return ""
-}
-
 func (x *TaxProfile) GetTimezone() string {
 	if x != nil {
 		return x.Timezone
@@ -205,7 +205,6 @@ type TaxProfileInput struct {
 	LastName           string                 `protobuf:"bytes,2,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	FirstName          string                 `protobuf:"bytes,3,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
 	MiddleName         string                 `protobuf:"bytes,4,opt,name=middle_name,json=middleName,proto3" json:"middle_name,omitempty"`
-	Jurisdiction       string                 `protobuf:"bytes,5,opt,name=jurisdiction,proto3" json:"jurisdiction,omitempty"`
 	Timezone           string                 `protobuf:"bytes,6,opt,name=timezone,proto3" json:"timezone,omitempty"`
 	Phone              string                 `protobuf:"bytes,7,opt,name=phone,proto3" json:"phone,omitempty"`
 	Wallets            []string               `protobuf:"bytes,8,rep,name=wallets,proto3" json:"wallets,omitempty"`
@@ -269,13 +268,6 @@ func (x *TaxProfileInput) GetFirstName() string {
 func (x *TaxProfileInput) GetMiddleName() string {
 	if x != nil {
 		return x.MiddleName
-	}
-	return ""
-}
-
-func (x *TaxProfileInput) GetJurisdiction() string {
-	if x != nil {
-		return x.Jurisdiction
 	}
 	return ""
 }
@@ -1083,10 +1075,11 @@ var File_tax_v1_tax_proto protoreflect.FileDescriptor
 
 const file_tax_v1_tax_proto_rawDesc = "" +
 	"\n" +
-	"\x10tax/v1/tax.proto\x12\x06tax.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"}\n" +
+	"\x10tax/v1/tax.proto\x12\x06tax.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa1\x01\n" +
 	"\tTaxPolicy\x12D\n" +
 	"\x1ftreat_crypto_crypto_as_disposal\x18\x01 \x01(\bR\x1btreatCryptoCryptoAsDisposal\x12*\n" +
-	"\x11cost_basis_method\x18\x02 \x01(\tR\x0fcostBasisMethod\"\xdf\x02\n" +
+	"\x11cost_basis_method\x18\x02 \x01(\tR\x0fcostBasisMethod\x12\"\n" +
+	"\fjurisdiction\x18\x03 \x01(\tR\fjurisdiction\"\xcf\x02\n" +
 	"\n" +
 	"TaxProfile\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x10\n" +
@@ -1095,28 +1088,26 @@ const file_tax_v1_tax_proto_rawDesc = "" +
 	"\n" +
 	"first_name\x18\x04 \x01(\tR\tfirstName\x12\x1f\n" +
 	"\vmiddle_name\x18\x05 \x01(\tR\n" +
-	"middleName\x12\"\n" +
-	"\fjurisdiction\x18\a \x01(\tR\fjurisdiction\x12\x1a\n" +
+	"middleName\x12\x1a\n" +
 	"\btimezone\x18\b \x01(\tR\btimezone\x12\x14\n" +
 	"\x05phone\x18\t \x01(\tR\x05phone\x12\x18\n" +
 	"\awallets\x18\n" +
 	" \x03(\tR\awallets\x120\n" +
 	"\x14tax_residency_status\x18\v \x01(\tR\x12taxResidencyStatus\x12#\n" +
-	"\rtaxpayer_type\x18\f \x01(\tR\ftaxpayerType\"\xc7\x02\n" +
+	"\rtaxpayer_type\x18\f \x01(\tR\ftaxpayerTypeJ\x04\b\a\x10\bR\fjurisdiction\"\xb7\x02\n" +
 	"\x0fTaxProfileInput\x12\x10\n" +
 	"\x03inn\x18\x01 \x01(\tR\x03inn\x12\x1b\n" +
 	"\tlast_name\x18\x02 \x01(\tR\blastName\x12\x1d\n" +
 	"\n" +
 	"first_name\x18\x03 \x01(\tR\tfirstName\x12\x1f\n" +
 	"\vmiddle_name\x18\x04 \x01(\tR\n" +
-	"middleName\x12\"\n" +
-	"\fjurisdiction\x18\x05 \x01(\tR\fjurisdiction\x12\x1a\n" +
+	"middleName\x12\x1a\n" +
 	"\btimezone\x18\x06 \x01(\tR\btimezone\x12\x14\n" +
 	"\x05phone\x18\a \x01(\tR\x05phone\x12\x18\n" +
 	"\awallets\x18\b \x03(\tR\awallets\x120\n" +
 	"\x14tax_residency_status\x18\t \x01(\tR\x12taxResidencyStatus\x12#\n" +
 	"\rtaxpayer_type\x18\n" +
-	" \x01(\tR\ftaxpayerType\"\xac\x01\n" +
+	" \x01(\tR\ftaxpayerTypeJ\x04\b\x05\x10\x06R\fjurisdiction\"\xac\x01\n" +
 	"\n" +
 	"TaxSummary\x12*\n" +
 	"\x11total_income_fiat\x18\x01 \x01(\tR\x0ftotalIncomeFiat\x12,\n" +

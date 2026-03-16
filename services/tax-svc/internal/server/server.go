@@ -87,7 +87,6 @@ func (s *TaxServer) UpsertTaxProfile(ctx context.Context, req *taxv1.UpsertTaxPr
 		LastName:           profileReq.GetLastName(),
 		FirstName:          profileReq.GetFirstName(),
 		MiddleName:         profileReq.GetMiddleName(),
-		Jurisdiction:       domain.Jurisdiction(strings.TrimSpace(profileReq.GetJurisdiction())),
 		Timezone:           strings.TrimSpace(profileReq.GetTimezone()),
 		Phone:              profileReq.GetPhone(),
 		Wallets:            toWallets(profileReq.GetWallets()),
@@ -145,12 +144,20 @@ func (s *TaxServer) StartReport(ctx context.Context, req *taxv1.StartReportReque
 	taxPolicy := domain.TaxPolicy{
 		TreatCryptoCryptoAsDisposal: policy.GetTreatCryptoCryptoAsDisposal(),
 		CostBasisMethod:             domain.CostBasisMethod(policy.GetCostBasisMethod()),
+		Jurisdiction:                domain.Jurisdiction(policy.GetJurisdiction()),
 	}.Normalize()
 	if err := taxPolicy.Validate(); err != nil {
-		return nil, apperr.InvalidArgument("invalid tax_policy", err, apperr.FieldViolation{
-			Field:       "params.tax_policy.cost_basis_method",
-			Description: "must be FIFO, LIFO or AVG",
-		})
+		violations := []apperr.FieldViolation{
+			{
+				Field:       "params.tax_policy.cost_basis_method",
+				Description: "must be FIFO, LIFO or AVG",
+			},
+			{
+				Field:       "params.tax_policy.jurisdiction",
+				Description: "must be a supported jurisdiction",
+			},
+		}
+		return nil, apperr.InvalidArgument("invalid tax_policy", err, violations...)
 	}
 
 	job, err := s.taxJobUC.Enqueue(
@@ -276,7 +283,6 @@ func toProtoTaxProfile(profile domain.TaxProfile) *taxv1.TaxProfile {
 		LastName:           profile.LastName,
 		FirstName:          profile.FirstName,
 		MiddleName:         profile.MiddleName,
-		Jurisdiction:       string(profile.Jurisdiction),
 		Timezone:           profile.Timezone,
 		Phone:              profile.Phone,
 		Wallets:            wallets,
@@ -315,6 +321,7 @@ func toProtoPolicy(policy domain.TaxPolicy) *taxv1.TaxPolicy {
 	return &taxv1.TaxPolicy{
 		TreatCryptoCryptoAsDisposal: policy.TreatCryptoCryptoAsDisposal,
 		CostBasisMethod:             string(policy.CostBasisMethod),
+		Jurisdiction:                string(policy.Jurisdiction),
 	}
 }
 

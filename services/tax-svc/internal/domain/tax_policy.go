@@ -8,6 +8,7 @@ import (
 type TaxPolicy struct {
 	TreatCryptoCryptoAsDisposal bool            `json:"treat_crypto_crypto_as_disposal"`
 	CostBasisMethod             CostBasisMethod `json:"cost_basis_method"`
+	Jurisdiction                Jurisdiction    `json:"jurisdiction"`
 }
 
 type CostBasisMethod string
@@ -36,9 +37,13 @@ func (p TaxPolicy) Normalize() TaxPolicy {
 	if p.CostBasisMethod == "" {
 		p.CostBasisMethod = FIFO
 	}
+	p.Jurisdiction = Jurisdiction(strings.ToUpper(strings.TrimSpace(string(p.Jurisdiction))))
 	return p
 }
 
 func (p TaxPolicy) Validate() error {
+	if err := p.Jurisdiction.Validate(); err != nil {
+		return err
+	}
 	return p.CostBasisMethod.Validate()
 }
