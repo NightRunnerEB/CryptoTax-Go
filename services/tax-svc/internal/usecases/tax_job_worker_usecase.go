@@ -100,10 +100,10 @@ func (uc *TaxJobWorkerUC) processJob(ctx context.Context, job domain.TaxJob) err
 	if uc.engines == nil {
 		return apperr.Internal("engines registry is not configured", nil, nil)
 	}
-	engine, ok := uc.engines.Resolve(profile.Jurisdiction)
+	engine, ok := uc.engines.Resolve(job.PolicySnapshot.Jurisdiction)
 	if !ok {
 		return apperr.NotImplemented("tax engine for jurisdiction is not implemented", nil, map[string]string{
-			"jurisdiction": string(profile.Jurisdiction),
+			"jurisdiction": string(job.PolicySnapshot.Jurisdiction),
 		})
 	}
 	engineName := string(engine.Jurisdiction())
@@ -115,10 +115,10 @@ func (uc *TaxJobWorkerUC) processJob(ctx context.Context, job domain.TaxJob) err
 			Description: "must be valid IANA timezone",
 		})
 	}
-	targetFiat := profile.Jurisdiction.FiatCurrency()
+	targetFiat := job.PolicySnapshot.Jurisdiction.FiatCurrency()
 	if targetFiat == "" {
-		return apperr.InvalidArgument("invalid profile jurisdiction", nil, apperr.FieldViolation{
-			Field:       "tax_profile.jurisdiction",
+		return apperr.InvalidArgument("invalid policy jurisdiction", nil, apperr.FieldViolation{
+			Field:       "policy_snapshot.jurisdiction",
 			Description: "unsupported or missing fiat currency",
 		})
 	}
@@ -165,7 +165,7 @@ func (uc *TaxJobWorkerUC) processJob(ctx context.Context, job domain.TaxJob) err
 	if err := uc.report.RequestRender(ctx, domain.ReportRenderRequest{
 		ReportID:         job.ID,
 		TenantID:         job.TenantID,
-		Jurisdiction:     string(profile.Jurisdiction),
+		Jurisdiction:     string(job.PolicySnapshot.Jurisdiction),
 		TaxYear:          int32(job.TaxYear),
 		DatasetObjectKey: objectKey,
 		TemplateVersion:  "",
@@ -294,7 +294,7 @@ func summarizeResult(job domain.TaxJob, profile domain.TaxProfile, result engine
 	}
 
 	taxBase := totalIncome.Sub(totalExpense)
-	taxDue := calculateTaxDue(profile, taxBase)
+	taxDue := calculateTaxDue(job.PolicySnapshot.Jurisdiction, profile, taxBase)
 
 	return domain.TaxSummary{
 		TenantID:     job.TenantID,
@@ -306,12 +306,12 @@ func summarizeResult(job domain.TaxJob, profile domain.TaxProfile, result engine
 	}
 }
 
-func calculateTaxDue(profile domain.TaxProfile, taxBase decimal.Decimal) decimal.Decimal {
+func calculateTaxDue(jurisdiction domain.Jurisdiction, profile domain.TaxProfile, taxBase decimal.Decimal) decimal.Decimal {
 	if !taxBase.GreaterThan(decimal.Zero) {
 		return decimal.Zero
 	}
 
-	switch profile.Jurisdiction {
+	switch jurisdiction {
 	case domain.JurisdictionRU:
 		rate := decimal.NewFromFloat(0.13)
 		if profile.TaxResidencyStatus == domain.NonResident {

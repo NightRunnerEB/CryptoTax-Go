@@ -50,6 +50,7 @@ service Tax {
 message TaxPolicy {
   bool treat_crypto_crypto_as_disposal = 1;
   string cost_basis_method = 2;
+  string jurisdiction = 3;
 }
 
 message TaxProfile {
@@ -58,7 +59,8 @@ message TaxProfile {
   string last_name = 3;
   string first_name = 4;
   string middle_name = 5;
-  string jurisdiction = 7;
+  reserved 7;
+  reserved "jurisdiction";
   string timezone = 8;
   string phone = 9;
   repeated string wallets = 10;
@@ -71,7 +73,8 @@ message TaxProfileInput {
   string last_name = 2;
   string first_name = 3;
   string middle_name = 4;
-  string jurisdiction = 5;
+  reserved 5;
+  reserved "jurisdiction";
   string timezone = 6;
   string phone = 7;
   repeated string wallets = 8;

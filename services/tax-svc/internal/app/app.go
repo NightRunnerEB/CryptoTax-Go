@@ -124,7 +124,7 @@ func Run(cfg *config.Config) {
 		log.Fatal("cannot create engines registry", zap.Error(err))
 	}
 
-	taxProfileUC := usecases.NewTaxProfileUC(taxProfileRepo, engineRegistry)
+	taxProfileUC := usecases.NewTaxProfileUC(taxProfileRepo)
 	taxJobUC := usecases.NewTaxJobUC(taxJobRepo, taxProfileRepo, objectStorage)
 	taxJobWorkerUC := usecases.NewTaxJobWorkerUC(
 		taxJobRepo,

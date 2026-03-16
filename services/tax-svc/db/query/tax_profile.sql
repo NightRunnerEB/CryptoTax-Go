@@ -5,7 +5,6 @@ SELECT
   last_name,
   first_name,
   middle_name,
-  jurisdiction,
   timezone,
   phone,
   wallets,
@@ -23,21 +22,19 @@ INSERT INTO tax_profile (
   last_name,
   first_name,
   middle_name,
-  jurisdiction,
   timezone,
   phone,
   wallets,
   tax_residency_status,
   taxpayer_type
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ON CONFLICT (tenant_id)
 DO UPDATE SET
   inn = EXCLUDED.inn,
   last_name = EXCLUDED.last_name,
   first_name = EXCLUDED.first_name,
   middle_name = EXCLUDED.middle_name,
-  jurisdiction = EXCLUDED.jurisdiction,
   timezone = EXCLUDED.timezone,
   phone = EXCLUDED.phone,
   wallets = EXCLUDED.wallets,
@@ -50,7 +47,6 @@ RETURNING
   last_name,
   first_name,
   middle_name,
-  jurisdiction,
   timezone,
   phone,
   wallets,
