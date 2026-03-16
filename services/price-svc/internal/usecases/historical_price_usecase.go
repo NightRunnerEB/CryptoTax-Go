@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/coingecko"
@@ -11,7 +12,10 @@ import (
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 )
 
-const USD = "usd"
+const (
+	fiatUSD         = "USD"
+	quoteCurrencyUS = "usd"
+)
 
 const _marketChartPrecision = "3"
 
@@ -39,6 +43,7 @@ func NewHistoricalPriceUC(
 }
 
 func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrency string, priceKeys []domain.PriceKey) ([]domain.Fiat, error) {
+	fiatCurrency = strings.ToUpper(strings.TrimSpace(fiatCurrency))
 	if fiatCurrency == "" {
 		return nil, apperr.InvalidArgument(
 			"fiat currency is required",
@@ -172,6 +177,11 @@ func (u *historicalPriceUC) GetHistoricalPrices(ctx context.Context, fiatCurrenc
 			)
 		}
 
+		if fiatCurrency == fiatUSD {
+			out[i] = *p.PriceUsd
+			continue
+		}
+
 		rate, err := u.fxProvider.GetUSDtoFiatRate(ctx, w[i].dayStart, fiatCurrency)
 		if err != nil {
 			// distinguish unsupported fiat vs fx unavailable if your fxProvider does it
@@ -206,7 +216,7 @@ func (u *historicalPriceUC) fetchAndUpsertDay(ctx context.Context, coinID string
 
 	// CoinGecko returns points; per our agreement we normalize sequentially into buckets without flooring by timestamp.
 	precision := _marketChartPrecision
-	resp, err := u.cgClient.CoinsMarketChartRange(ctx, coinID, "usd", dayStartUTC, to, &precision)
+	resp, err := u.cgClient.CoinsMarketChartRange(ctx, coinID, quoteCurrencyUS, dayStartUTC, to, &precision)
 	if err != nil {
 		var ae *apperr.Error
 		if errors.As(err, &ae) {

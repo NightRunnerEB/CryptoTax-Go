@@ -9,14 +9,15 @@ import (
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pricev1 "github.com/NightRunner/CryptoTax-Go/gen/price/v1"
 	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
+	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/grpcerr"
 )
 
 const (
@@ -295,12 +296,22 @@ func (u *aggregationUC) ListTransactionsByRange(
 			},
 		)
 	}
+	targetFiat = strings.ToUpper(strings.TrimSpace(targetFiat))
+	if targetFiat != "" && !isSupportedFiatCurrency(targetFiat) {
+		return domain.AggregatedTxPage{}, apperr.InvalidArgument(
+			"invalid target fiat",
+			nil,
+			apperr.FieldViolation{
+				Field:       "target_fiat",
+				Description: "unsupported value",
+			},
+		)
+	}
 
 	page, err := u.txRepo.ListByRange(ctx, tenantID, fromUTC, toUTC, limit, offset)
 	if err != nil {
 		return domain.AggregatedTxPage{}, err
 	}
-	targetFiat = strings.ToUpper(strings.TrimSpace(targetFiat))
 	if targetFiat != "" {
 		revalued, err := u.revaluateTransactionsToTargetFiat(ctx, tenantID, targetFiat, page.Transactions)
 		if err != nil {
@@ -756,13 +767,15 @@ func normalizeFiatForPricing(raw string) string {
 }
 
 func mapPriceValuationError(msg string, err error, meta map[string]string) error {
-	grpcCode, ok := grpcCodeFromErrorChain(err)
+	grpcCode, st, ok := grpcerr.StatusFromErrorChain(err)
 	if ok {
 		meta["grpc_code"] = grpcCode.String()
 		switch grpcCode {
 		case codes.Unavailable, codes.DeadlineExceeded, codes.ResourceExhausted, codes.Internal:
 			return apperr.PriceUnavailable(msg, err, meta)
-		case codes.InvalidArgument, codes.FailedPrecondition, codes.NotFound, codes.PermissionDenied, codes.Unauthenticated:
+		case codes.InvalidArgument:
+			return mapPriceInvalidArgument(err, grpcerr.ErrorInfo(st), meta)
+		case codes.FailedPrecondition, codes.NotFound, codes.PermissionDenied, codes.Unauthenticated:
 			return apperr.PriceBadResponse(msg, err, meta)
 		default:
 			return apperr.PriceBadResponse(msg, err, meta)
@@ -772,11 +785,25 @@ func mapPriceValuationError(msg string, err error, meta map[string]string) error
 	return apperr.PriceUnavailable(msg, err, meta)
 }
 
-func grpcCodeFromErrorChain(err error) (codes.Code, bool) {
-	for current := err; current != nil; current = errors.Unwrap(current) {
-		if st, ok := status.FromError(current); ok {
-			return st.Code(), true
+func mapPriceInvalidArgument(err error, info *errdetails.ErrorInfo, meta map[string]string) error {
+	field := "fiat_currency"
+	if _, ok := meta["target_fiat"]; ok {
+		field = "target_fiat"
+	}
+	description := "invalid value"
+
+	if info != nil {
+		meta["price_reason"] = info.GetReason()
+		for k, v := range info.GetMetadata() {
+			meta["price_"+k] = v
+		}
+		if info.GetReason() == "UNSUPPORTED_FIAT" {
+			description = "unsupported value"
 		}
 	}
-	return codes.OK, false
+
+	return apperr.InvalidArgument("invalid fiat currency", err, apperr.FieldViolation{
+		Field:       field,
+		Description: description,
+	})
 }
