@@ -18,7 +18,205 @@ tags:
     description: Read-model transactions and aggregation settings for UI.
   - name: Tax
     description: Tax profile and tax report job lifecycle.
+  - name: Auth
+    description: User auth flows from auth-svc.
+  - name: Ledger
+    description: Import upload endpoints from ledger-svc.
 paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      operationId: authRegister
+      summary: Register user
+      servers:
+        - url: https://auth.cryptotax.example.com
+          description: Auth service production
+        - url: http://localhost:8082
+          description: Local auth-svc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterReq'
+      responses:
+        '200':
+          description: Registration accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AckResponse'
+        '409':
+          $ref: '#/components/responses/AuthConflict'
+        '422':
+          $ref: '#/components/responses/AuthUnprocessable'
+        '502':
+          $ref: '#/components/responses/AuthBadGateway'
+        '503':
+          $ref: '#/components/responses/AuthUnavailable'
+        '500':
+          $ref: '#/components/responses/AuthInternal'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: authLogin
+      summary: Login and create session
+      servers:
+        - url: https://auth.cryptotax.example.com
+          description: Auth service production
+        - url: http://localhost:8082
+          description: Local auth-svc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginReq'
+      responses:
+        '200':
+          description: Login result with user, session and tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResult'
+        '401':
+          $ref: '#/components/responses/AuthUnauthorized'
+        '403':
+          $ref: '#/components/responses/AuthForbidden'
+        '422':
+          $ref: '#/components/responses/AuthUnprocessable'
+        '500':
+          $ref: '#/components/responses/AuthInternal'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: authRefresh
+      summary: Rotate refresh token and issue new tokens
+      servers:
+        - url: https://auth.cryptotax.example.com
+          description: Auth service production
+        - url: http://localhost:8082
+          description: Local auth-svc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshReq'
+      responses:
+        '200':
+          description: New token pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tokens'
+        '401':
+          $ref: '#/components/responses/AuthUnauthorized'
+        '500':
+          $ref: '#/components/responses/AuthInternal'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: authLogout
+      summary: Logout by access token
+      servers:
+        - url: https://auth.cryptotax.example.com
+          description: Auth service production
+        - url: http://localhost:8082
+          description: Local auth-svc
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AckResponse'
+        '401':
+          $ref: '#/components/responses/AuthUnauthorized'
+        '500':
+          $ref: '#/components/responses/AuthInternal'
+
+  /auth/verify:
+    get:
+      tags: [Auth]
+      operationId: authVerifyEmail
+      summary: Verify email by one-time token
+      servers:
+        - url: https://auth.cryptotax.example.com
+          description: Auth service production
+        - url: http://localhost:8082
+          description: Local auth-svc
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AckResponse'
+        '401':
+          $ref: '#/components/responses/AuthUnauthorized'
+        '500':
+          $ref: '#/components/responses/AuthInternal'
+
+  /mexc/csv:
+    post:
+      tags: [Ledger]
+      operationId: uploadMexcCsv
+      summary: Upload and parse MEXC CSV
+      servers:
+        - url: https://ledger.cryptotax.example.com
+          description: Ledger service production
+        - url: http://localhost:8086
+          description: Local ledger-svc
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required: [file]
+      responses:
+        '200':
+          description: CSV parsed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseSuccessResponse'
+        '400':
+          $ref: '#/components/responses/LedgerBadRequest'
+        '403':
+          $ref: '#/components/responses/LedgerForbidden'
+        '404':
+          $ref: '#/components/responses/LedgerNotFound'
+        '422':
+          $ref: '#/components/responses/LedgerUnprocessable'
+        '500':
+          $ref: '#/components/responses/LedgerInternal'
+        '503':
+          $ref: '#/components/responses/LedgerUnavailable'
+
   /v1/fiat-currencies:
     get:
       tags: [Aggregation]
@@ -36,8 +234,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListSupportedFiatCurrenciesResponse'
-        default:
-          $ref: '#/components/responses/Error'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgument'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
 
   /v1/tenants/{tenant_id}/imports/{import_id}/transactions:
     get:
@@ -59,8 +259,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListTransactionsByImportResponse'
-        default:
-          $ref: '#/components/responses/Error'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgument'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
 
   /v1/tenants/{tenant_id}/settings:
     get:
@@ -79,8 +281,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetTenantSettingsResponse'
-        default:
-          $ref: '#/components/responses/Error'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgument'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
     put:
       tags: [Aggregation]
       operationId: upsertTenantSettings
@@ -103,8 +307,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UpsertTenantSettingsResponse'
-        default:
-          $ref: '#/components/responses/Error'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgument'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
 
   /v1/tenants/{tenant_id}/tax/profile:
     get:
@@ -123,8 +329,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetTaxProfileResponse'
-        default:
-          $ref: '#/components/responses/Error'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgument'
+        '404':
+          $ref: '#/components/responses/GrpcNotFound'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
     put:
       tags: [Tax]
       operationId: upsertTaxProfile
@@ -147,8 +357,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UpsertTaxProfileResponse'
-        default:
-          $ref: '#/components/responses/Error'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgument'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
 
   /v1/tenants/{tenant_id}/tax/reports:start:
     post:
@@ -173,8 +385,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StartReportResponse'
-        default:
-          $ref: '#/components/responses/Error'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgument'
+        '404':
+          $ref: '#/components/responses/GrpcNotFound'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
 
   /v1/tenants/{tenant_id}/tax/reports/{report_id}:
     get:
@@ -194,8 +410,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetReportStatusResponse'
-        default:
-          $ref: '#/components/responses/Error'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgument'
+        '404':
+          $ref: '#/components/responses/GrpcNotFound'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
 
   /v1/tenants/{tenant_id}/tax/reports:
     get:
@@ -216,8 +436,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListReportsResponse'
-        default:
-          $ref: '#/components/responses/Error'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgument'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
 
 components:
   securitySchemes:
@@ -290,26 +512,366 @@ components:
         type: string
   responses:
     Error:
-      description: Error response from grpc-gateway.
+      description: Generic grpc-gateway error response.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+    GrpcInvalidArgument:
+      description: Invalid request data (gRPC `InvalidArgument`, code `3`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    GrpcFailedPrecondition:
+      description: Request is valid but data is not ready (gRPC `FailedPrecondition`, code `9`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    GrpcNotFound:
+      description: Resource not found (gRPC `NotFound`, code `5`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    GrpcConflict:
+      description: Conflict/duplicate (gRPC `AlreadyExists` or `Aborted`, code `6`/`10`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    GrpcUnavailable:
+      description: Temporary upstream/dependency outage (gRPC `Unavailable`, code `14`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    GrpcInternal:
+      description: Internal server failure (gRPC `Internal`, code `13`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    AuthUnauthorized:
+      description: Unauthorized (`TokenInvalid`, `TokenExpired`, `InvalidCredentials`, ...).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+    AuthForbidden:
+      description: Forbidden (`UserNotVerified`, `UserBlocked`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+    AuthConflict:
+      description: Conflict (`EmailAlreadyRegistered`, ...).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+    AuthUnprocessable:
+      description: Validation error (`EmailInvalid`, `PasswordWeak`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+    AuthBadGateway:
+      description: Upstream failure (`RegistrationFailed`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+    AuthUnavailable:
+      description: Temporary outage (`EmailSendFailed`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+    AuthInternal:
+      description: Internal server error (`Storage`, `Internal`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+    LedgerBadRequest:
+      description: Bad request (missing file / malformed multipart / CSV format).
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/SimpleErrorResponse'
+              - $ref: '#/components/schemas/LedgerErrorResponse'
+    LedgerForbidden:
+      description: Missing/invalid tenant header or permission denied.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/SimpleErrorResponse'
+              - $ref: '#/components/schemas/LedgerErrorResponse'
+    LedgerNotFound:
+      description: Exchange parser not configured.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorResponse'
+    LedgerUnprocessable:
+      description: Domain validation/consistency error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LedgerErrorResponse'
+    LedgerInternal:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LedgerErrorResponse'
+    LedgerUnavailable:
+      description: Dependency unavailable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LedgerErrorResponse'
   schemas:
     ErrorResponse:
+      type: object
+      description: Standard grpc-gateway error envelope.
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: gRPC status code (`3`, `5`, `9`, `13`, `14`, ...).
+        message:
+          type: string
+          description: Human-readable error message.
+        details:
+          type: array
+          description: Optional gRPC rich error details.
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/GrpcErrorInfoDetail'
+              - $ref: '#/components/schemas/GrpcBadRequestDetail'
+              - $ref: '#/components/schemas/GrpcResourceInfoDetail'
+              - $ref: '#/components/schemas/GrpcAnyDetail'
+      required: [code, message]
+    GrpcErrorInfoDetail:
+      type: object
+      properties:
+        '@type':
+          type: string
+          example: type.googleapis.com/google.rpc.ErrorInfo
+        reason:
+          type: string
+          description: Stable machine-readable error reason (e.g. INVALID_ARGUMENT, DATA_NOT_READY).
+        domain:
+          type: string
+          description: Service domain that produced the error.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+      required: ['@type', reason, domain]
+    GrpcBadRequestDetail:
+      type: object
+      properties:
+        '@type':
+          type: string
+          example: type.googleapis.com/google.rpc.BadRequest
+        fieldViolations:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              description:
+                type: string
+            required: [field, description]
+      required: ['@type', fieldViolations]
+    GrpcResourceInfoDetail:
+      type: object
+      properties:
+        '@type':
+          type: string
+          example: type.googleapis.com/google.rpc.ResourceInfo
+        resourceType:
+          type: string
+        resourceName:
+          type: string
+      required: ['@type']
+    GrpcAnyDetail:
+      type: object
+      description: Fallback for other google.rpc detail types.
+      additionalProperties: true
+    AuthErrorResponse:
       type: object
       properties:
         code:
           type: integer
-          description: gRPC status code.
+          format: int32
         message:
           type: string
-        details:
+      required: [code, message]
+    SimpleErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    LedgerErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+      required: [code, message]
+    AckResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]
+    ParseSuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+    RegisterTaxProfile:
+      type: object
+      properties:
+        inn:
+          type: string
+        last_name:
+          type: string
+        first_name:
+          type: string
+        middle_name:
+          type: string
+        jurisdiction:
+          type: string
+        timezone:
+          type: string
+        phone:
+          type: string
+        wallets:
           type: array
           items:
-            type: object
-            additionalProperties: true
-      required: [code, message]
+            type: string
+        tax_residency_status:
+          type: string
+        taxpayer_type:
+          type: string
+      required:
+        - inn
+        - last_name
+        - first_name
+        - jurisdiction
+        - timezone
+        - tax_residency_status
+        - taxpayer_type
+    RegisterReq:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        tax_profile:
+          $ref: '#/components/schemas/RegisterTaxProfile'
+      required: [email, password, tax_profile]
+    LoginReq:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        ip:
+          type: string
+          nullable: true
+        ua:
+          type: string
+          nullable: true
+      required: [email, password]
+    RefreshReq:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+      required: [refresh_token]
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [Active, Pending, Blocked]
+        created_at:
+          type: string
+          format: date-time
+      required: [id, email, status, created_at]
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [Active, Revoked, Closed]
+        created_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+        ip:
+          type: string
+          nullable: true
+        user_agent:
+          type: string
+          nullable: true
+      required: [id, user_id, status, created_at, last_seen_at]
+    Tokens:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        access_expires_in:
+          type: integer
+          format: int64
+        refresh_expires_in:
+          type: integer
+          format: int64
+      required: [access_token, refresh_token, access_expires_in, refresh_expires_in]
+    LoginResult:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        session:
+          $ref: '#/components/schemas/Session'
+        tokens:
+          $ref: '#/components/schemas/Tokens'
+      required: [user, session, tokens]
 
     SupportedFiatCurrency:
       type: object
