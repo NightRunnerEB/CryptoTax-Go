@@ -1,0 +1,647 @@
+openapi: 3.1.0
+info:
+  title: CryptoTax Frontend REST API
+  version: 1.0.0
+  description: |
+    Frontend-facing REST API exposed through grpc-gateway behind Nginx.
+    Tenant-scoped endpoints require `X-Tenant-Id` header and path tenant consistency.
+servers:
+  - url: https://api.cryptotax.example.com
+    description: Production
+  - url: http://localhost:8080
+    description: Local gateway
+security:
+  - bearerAuth: []
+    tenantHeader: []
+tags:
+  - name: Aggregation
+    description: Read-model transactions and aggregation settings for UI.
+  - name: Tax
+    description: Tax profile and tax report job lifecycle.
+paths:
+  /v1/fiat-currencies:
+    get:
+      tags: [Aggregation]
+      operationId: listSupportedFiatCurrencies
+      summary: List supported fiat currencies
+      description: Returns fiat currencies supported by aggregation/valuation pipeline.
+      parameters:
+        - $ref: '#/components/parameters/XTenantId'
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XRoles'
+      responses:
+        '200':
+          description: Supported currencies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSupportedFiatCurrenciesResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /v1/tenants/{tenant_id}/imports/{import_id}/transactions:
+    get:
+      tags: [Aggregation]
+      operationId: listTransactionsByImport
+      summary: List aggregated transactions by import
+      parameters:
+        - $ref: '#/components/parameters/TenantIdPath'
+        - $ref: '#/components/parameters/ImportIdPath'
+        - $ref: '#/components/parameters/PaginationLimit'
+        - $ref: '#/components/parameters/PaginationOffset'
+        - $ref: '#/components/parameters/XTenantId'
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XRoles'
+      responses:
+        '200':
+          description: Paginated transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTransactionsByImportResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /v1/tenants/{tenant_id}/settings:
+    get:
+      tags: [Aggregation]
+      operationId: getTenantSettings
+      summary: Get tenant aggregation settings
+      parameters:
+        - $ref: '#/components/parameters/TenantIdPath'
+        - $ref: '#/components/parameters/XTenantId'
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XRoles'
+      responses:
+        '200':
+          description: Tenant settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTenantSettingsResponse'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Aggregation]
+      operationId: upsertTenantSettings
+      summary: Create or update tenant aggregation settings
+      parameters:
+        - $ref: '#/components/parameters/TenantIdPath'
+        - $ref: '#/components/parameters/XTenantId'
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XRoles'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertTenantSettingsBody'
+      responses:
+        '200':
+          description: Upserted tenant settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpsertTenantSettingsResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /v1/tenants/{tenant_id}/tax/profile:
+    get:
+      tags: [Tax]
+      operationId: getTaxProfile
+      summary: Get tax profile
+      parameters:
+        - $ref: '#/components/parameters/TenantIdPath'
+        - $ref: '#/components/parameters/XTenantId'
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XRoles'
+      responses:
+        '200':
+          description: Tax profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTaxProfileResponse'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Tax]
+      operationId: upsertTaxProfile
+      summary: Create or update tax profile
+      parameters:
+        - $ref: '#/components/parameters/TenantIdPath'
+        - $ref: '#/components/parameters/XTenantId'
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XRoles'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaxProfileInput'
+      responses:
+        '200':
+          description: Upserted tax profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpsertTaxProfileResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /v1/tenants/{tenant_id}/tax/reports:start:
+    post:
+      tags: [Tax]
+      operationId: startReport
+      summary: Start tax report job
+      parameters:
+        - $ref: '#/components/parameters/TenantIdPath'
+        - $ref: '#/components/parameters/XTenantId'
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XRoles'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartReportParams'
+      responses:
+        '200':
+          description: Tax job created and queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartReportResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /v1/tenants/{tenant_id}/tax/reports/{report_id}:
+    get:
+      tags: [Tax]
+      operationId: getReportStatus
+      summary: Get tax report job status
+      parameters:
+        - $ref: '#/components/parameters/TenantIdPath'
+        - $ref: '#/components/parameters/ReportIdPath'
+        - $ref: '#/components/parameters/XTenantId'
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XRoles'
+      responses:
+        '200':
+          description: Tax report job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetReportStatusResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /v1/tenants/{tenant_id}/tax/reports:
+    get:
+      tags: [Tax]
+      operationId: listReports
+      summary: List tax report jobs
+      parameters:
+        - $ref: '#/components/parameters/TenantIdPath'
+        - $ref: '#/components/parameters/PaginationLimit'
+        - $ref: '#/components/parameters/PaginationOffset'
+        - $ref: '#/components/parameters/XTenantId'
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XRoles'
+      responses:
+        '200':
+          description: Paginated report jobs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListReportsResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    tenantHeader:
+      type: apiKey
+      in: header
+      name: X-Tenant-Id
+  parameters:
+    TenantIdPath:
+      name: tenant_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ImportIdPath:
+      name: import_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ReportIdPath:
+      name: report_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PaginationLimit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 200
+    PaginationOffset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+    XTenantId:
+      name: X-Tenant-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+    XUserId:
+      name: X-User-Id
+      in: header
+      required: false
+      schema:
+        type: string
+        format: uuid
+    XRoles:
+      name: X-Roles
+      in: header
+      required: false
+      schema:
+        type: string
+  responses:
+    Error:
+      description: Error response from grpc-gateway.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: gRPC status code.
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      required: [code, message]
+
+    SupportedFiatCurrency:
+      type: object
+      properties:
+        code:
+          type: string
+          example: RUB
+        displayName:
+          type: string
+          example: Russian Ruble
+      required: [code, displayName]
+    ListSupportedFiatCurrenciesResponse:
+      type: object
+      properties:
+        currencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupportedFiatCurrency'
+      required: [currencies]
+
+    FiatLegErrorCandidate:
+      type: object
+      properties:
+        coin_id:
+          type: string
+        name:
+          type: string
+    FiatLegError:
+      type: object
+      properties:
+        code:
+          type: string
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/FiatLegErrorCandidate'
+    MoneyLeg:
+      type: object
+      properties:
+        symbol:
+          type: string
+        crypto_amount:
+          type: string
+        fiat_amount:
+          type: string
+        error:
+          $ref: '#/components/schemas/FiatLegError'
+      required: [symbol, crypto_amount]
+      additionalProperties: true
+    AggregatedTx:
+      type: object
+      properties:
+        txId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        source:
+          type: string
+        importId:
+          type: string
+          format: uuid
+        timeUtc:
+          type: string
+          format: date-time
+        kind:
+          type: string
+        inMoney:
+          $ref: '#/components/schemas/MoneyLeg'
+        outMoney:
+          $ref: '#/components/schemas/MoneyLeg'
+        feeMoney:
+          $ref: '#/components/schemas/MoneyLeg'
+        txHash:
+          type: string
+        note:
+          type: string
+        contractSymbol:
+          type: string
+        derivativeKind:
+          type: string
+        positionId:
+          type: string
+        orderId:
+          type: string
+        txFingerprint:
+          type: string
+      required:
+        - txId
+        - tenantId
+        - source
+        - importId
+        - timeUtc
+        - kind
+        - note
+        - derivativeKind
+        - txFingerprint
+    ListTransactionsByImportResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AggregatedTx'
+        total:
+          type: integer
+          format: int64
+      required: [transactions, total]
+
+    TenantSettings:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        fiatCurrency:
+          type: string
+          example: RUB
+        timezone:
+          type: string
+          example: Europe/Moscow
+      required: [tenantId, fiatCurrency, timezone]
+    UpsertTenantSettingsBody:
+      type: object
+      properties:
+        fiatCurrency:
+          type: string
+          description: Supported fiat code (e.g. USD, RUB, KZT).
+        timezone:
+          type: string
+          description: IANA timezone.
+      required: [fiatCurrency, timezone]
+    GetTenantSettingsResponse:
+      type: object
+      properties:
+        settings:
+          $ref: '#/components/schemas/TenantSettings'
+      required: [settings]
+    UpsertTenantSettingsResponse:
+      type: object
+      properties:
+        settings:
+          $ref: '#/components/schemas/TenantSettings'
+      required: [settings]
+
+    TaxPolicy:
+      type: object
+      properties:
+        treatCryptoCryptoAsDisposal:
+          type: boolean
+        costBasisMethod:
+          type: string
+          enum: [FIFO, LIFO, AVG]
+        jurisdiction:
+          type: string
+          example: RU
+      required: [treatCryptoCryptoAsDisposal, costBasisMethod, jurisdiction]
+    TaxProfile:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        inn:
+          type: string
+        lastName:
+          type: string
+        firstName:
+          type: string
+        middleName:
+          type: string
+        timezone:
+          type: string
+        phone:
+          type: string
+        wallets:
+          type: array
+          items:
+            type: string
+        taxResidencyStatus:
+          type: string
+          example: RESIDENT
+        taxpayerType:
+          type: string
+          example: INDIVIDUAL
+      required:
+        - tenantId
+        - inn
+        - lastName
+        - firstName
+        - middleName
+        - timezone
+        - phone
+        - wallets
+        - taxResidencyStatus
+        - taxpayerType
+    TaxProfileInput:
+      type: object
+      properties:
+        inn:
+          type: string
+        lastName:
+          type: string
+        firstName:
+          type: string
+        middleName:
+          type: string
+        timezone:
+          type: string
+        phone:
+          type: string
+        wallets:
+          type: array
+          items:
+            type: string
+        taxResidencyStatus:
+          type: string
+        taxpayerType:
+          type: string
+      required:
+        - inn
+        - lastName
+        - firstName
+        - middleName
+        - timezone
+        - phone
+        - wallets
+        - taxResidencyStatus
+        - taxpayerType
+    GetTaxProfileResponse:
+      type: object
+      properties:
+        profile:
+          $ref: '#/components/schemas/TaxProfile'
+      required: [profile]
+    UpsertTaxProfileResponse:
+      type: object
+      properties:
+        profile:
+          $ref: '#/components/schemas/TaxProfile'
+      required: [profile]
+
+    StartReportParams:
+      type: object
+      properties:
+        taxYear:
+          type: integer
+          format: int32
+        taxPolicy:
+          $ref: '#/components/schemas/TaxPolicy'
+      required: [taxYear, taxPolicy]
+    StartReportResponse:
+      type: object
+      properties:
+        reportId:
+          type: string
+          format: uuid
+        status:
+          type: string
+      required: [reportId, status]
+    TaxSummary:
+      type: object
+      properties:
+        totalIncomeFiat:
+          type: string
+        totalExpenseFiat:
+          type: string
+        taxBaseFiat:
+          type: string
+        taxDueFiat:
+          type: string
+      required: [totalIncomeFiat, totalExpenseFiat, taxBaseFiat, taxDueFiat]
+    TaxJob:
+      type: object
+      properties:
+        reportId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        taxYear:
+          type: integer
+          format: int32
+        policySnapshot:
+          $ref: '#/components/schemas/TaxPolicy'
+        status:
+          type: string
+        attempts:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        lastErrorCode:
+          type: string
+        lastErrorMessage:
+          type: string
+        auditZipUrl:
+          type: string
+        reportUrl:
+          type: string
+        summary:
+          $ref: '#/components/schemas/TaxSummary'
+      required:
+        - reportId
+        - tenantId
+        - taxYear
+        - policySnapshot
+        - status
+        - attempts
+    GetReportStatusResponse:
+      type: object
+      properties:
+        job:
+          $ref: '#/components/schemas/TaxJob'
+      required: [job]
+    ListReportsResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxJob'
+        total:
+          type: integer
+          format: int64
+      required: [jobs, total]

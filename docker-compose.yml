@@ -94,6 +94,44 @@ services:
     volumes:
       - miniodata:/data
 
+  minio-init:
+    image: minio/mc:latest
+    container_name: minio-init
+    depends_on:
+      - minio
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        until mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}; do sleep 1; done;
+        mc mb -p local/${MINIO_BUCKET:-tax-reports} || true;
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-tax-reports}
+
+  swagger-frontend:
+    image: swaggerapi/swagger-ui:latest
+    container_name: swagger-frontend
+    ports:
+      - "8088:8080"
+    environment:
+      SWAGGER_JSON: /spec/frontend.openapi.yaml
+    volumes:
+      - ./docs/api:/spec:ro
+    restart: unless-stopped
+
+  swagger-internal:
+    image: swaggerapi/swagger-ui:latest
+    container_name: swagger-internal
+    ports:
+      - "8089:8080"
+    environment:
+      SWAGGER_JSON: /spec/internal.openapi.yaml
+    volumes:
+      - ./docs/api:/spec:ro
+    restart: unless-stopped
+
 volumes:
   grafanadata:
   prometheusdata:

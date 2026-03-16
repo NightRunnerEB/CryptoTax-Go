@@ -1,0 +1,238 @@
+openapi: 3.1.0
+info:
+  title: CryptoTax Internal REST API
+  version: 1.0.0
+  description: |
+    Internal REST endpoints intended for in-cluster usage.
+    Primary service-to-service contracts are gRPC; this spec documents
+    internal REST routes exposed by grpc-gateway where applicable.
+servers:
+  - url: http://aggregation-svc:8095
+    description: In-cluster gateway
+  - url: http://localhost:8095
+    description: Local aggregation gateway
+security:
+  - bearerAuth: []
+    tenantHeader: []
+tags:
+  - name: AggregationInternal
+    description: Internal aggregation read-model access for tax/report workflows.
+paths:
+  /v1/tenants/{tenant_id}/transactions:
+    get:
+      tags: [AggregationInternal]
+      operationId: listTransactionsByRange
+      summary: List aggregated transactions by UTC range
+      description: |
+        Internal read endpoint for tenant transactions in time range `[from_utc, to_utc)`.
+        Supports optional `target_fiat` revaluation without mutating stored read-model.
+      parameters:
+        - $ref: '#/components/parameters/TenantIdPath'
+        - $ref: '#/components/parameters/FromUtc'
+        - $ref: '#/components/parameters/ToUtc'
+        - $ref: '#/components/parameters/PaginationLimit'
+        - $ref: '#/components/parameters/PaginationOffset'
+        - $ref: '#/components/parameters/TargetFiat'
+        - $ref: '#/components/parameters/XTenantId'
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XRoles'
+      responses:
+        '200':
+          description: Paginated transactions in range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTransactionsByRangeResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    tenantHeader:
+      type: apiKey
+      in: header
+      name: X-Tenant-Id
+  parameters:
+    TenantIdPath:
+      name: tenant_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    FromUtc:
+      name: from_utc
+      in: query
+      required: true
+      schema:
+        type: string
+        format: date-time
+      description: Inclusive UTC lower bound.
+    ToUtc:
+      name: to_utc
+      in: query
+      required: true
+      schema:
+        type: string
+        format: date-time
+      description: Exclusive UTC upper bound.
+    PaginationLimit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 10000
+    PaginationOffset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+    TargetFiat:
+      name: target_fiat
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Optional fiat override for on-the-fly revaluation (e.g. RUB, USD, KZT).
+    XTenantId:
+      name: X-Tenant-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+    XUserId:
+      name: X-User-Id
+      in: header
+      required: false
+      schema:
+        type: string
+        format: uuid
+    XRoles:
+      name: X-Roles
+      in: header
+      required: false
+      schema:
+        type: string
+  responses:
+    Error:
+      description: Error response from grpc-gateway.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: gRPC status code.
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      required: [code, message]
+
+    FiatLegErrorCandidate:
+      type: object
+      properties:
+        coin_id:
+          type: string
+        name:
+          type: string
+    FiatLegError:
+      type: object
+      properties:
+        code:
+          type: string
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/FiatLegErrorCandidate'
+    MoneyLeg:
+      type: object
+      properties:
+        symbol:
+          type: string
+        crypto_amount:
+          type: string
+        fiat_amount:
+          type: string
+        error:
+          $ref: '#/components/schemas/FiatLegError'
+      required: [symbol, crypto_amount]
+      additionalProperties: true
+    AggregatedTx:
+      type: object
+      properties:
+        txId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        source:
+          type: string
+        importId:
+          type: string
+          format: uuid
+        timeUtc:
+          type: string
+          format: date-time
+        kind:
+          type: string
+        inMoney:
+          $ref: '#/components/schemas/MoneyLeg'
+        outMoney:
+          $ref: '#/components/schemas/MoneyLeg'
+        feeMoney:
+          $ref: '#/components/schemas/MoneyLeg'
+        txHash:
+          type: string
+        note:
+          type: string
+        contractSymbol:
+          type: string
+        derivativeKind:
+          type: string
+        positionId:
+          type: string
+        orderId:
+          type: string
+        txFingerprint:
+          type: string
+      required:
+        - txId
+        - tenantId
+        - source
+        - importId
+        - timeUtc
+        - kind
+        - note
+        - derivativeKind
+        - txFingerprint
+    ListTransactionsByRangeResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AggregatedTx'
+        total:
+          type: integer
+          format: int64
+      required: [transactions, total]
