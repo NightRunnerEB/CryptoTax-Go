@@ -1,22 +1,4 @@
 services:
-  # price-svc:
-  #   build:
-  #     context: .
-  #     dockerfile: services/price-svc/Dockerfile
-  #   container_name: price-svc
-  #   ports:
-  #     - "8093:8093"
-  #   environment:
-  #     APP_VERSION: ${APP_VERSION:-0.0.0}
-  #     APP_ENV: ${APP_ENV:-prod}
-  #     DATABASE_URL: ${DATABASE_URL}
-  #     REDIS_URL: ${REDIS_URL}
-  #     OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
-  #     OTEL_EXPORTER_OTLP_INSECURE: "true"
-  #     OTEL_GO_X_DEPRECATED_RUNTIME_METRICS: "true"
-  #   depends_on:
-  #     - otel-collector
-
   loki:
     image: grafana/loki:latest
     container_name: loki
@@ -109,6 +91,23 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MINIO_BUCKET: ${MINIO_BUCKET:-tax-reports}
+
+  vault:
+    image: hashicorp/vault:1.16
+    container_name: vault
+    ports:
+      - "8200:8200"
+    cap_add:
+      - IPC_LOCK
+    command:
+      [
+        "vault",
+        "server",
+        "-dev",
+        "-dev-root-token-id=${VAULT_DEV_ROOT_TOKEN_ID:-root}",
+        "-dev-listen-address=0.0.0.0:8200"
+      ]
+    restart: unless-stopped
 
   swagger-frontend:
     image: swaggerapi/swagger-ui:latest

@@ -1,0 +1,88 @@
+replicaCount: 1
+
+strategy:
+  maxUnavailable: 0
+  maxSurge: 1
+
+image:
+  repository: cryptotax/price-svc
+  tag: dev
+  pullPolicy: Never
+
+service:
+  type: ClusterIP
+  port: 8093
+  targetPort: 8093
+
+probes:
+  startup:
+    enabled: true
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 30
+  readiness:
+    enabled: true
+    initialDelaySeconds: 8
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  liveness:
+    enabled: true
+    initialDelaySeconds: 20
+    periodSeconds: 15
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+podSecurityContext:
+  enabled: true
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  fsGroupChangePolicy: OnRootMismatch
+
+containerSecurityContext:
+  enabled: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+secrets:
+  name: price-svc-secrets
+
+externalSecret:
+  enabled: true
+  name: price-svc-externalsecret
+  refreshInterval: 1m
+  secretStoreRef:
+    name: vault-backend
+    kind: SecretStore
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  vault:
+    key: cryptotax/price-svc
+  data:
+    - secretKey: APP_VERSION
+      property: APP_VERSION
+    - secretKey: APP_ENV
+      property: APP_ENV
+    - secretKey: DATABASE_URL
+      property: DATABASE_URL
+    - secretKey: REDIS_URL
+      property: REDIS_URL
+    - secretKey: COINGECKO_API_KEY
+      property: COINGECKO_API_KEY
+    - secretKey: OTEL_EXPORTER_OTLP_ENDPOINT
+      property: OTEL_EXPORTER_OTLP_ENDPOINT
+    - secretKey: OTEL_EXPORTER_OTLP_INSECURE
+      property: OTEL_EXPORTER_OTLP_INSECURE

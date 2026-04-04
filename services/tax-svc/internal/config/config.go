@@ -35,10 +35,10 @@ type (
 	}
 
 	OTelConfig struct {
-		Endpoint                    string        `yaml:"endpoint"`
-		Insecure                    bool          `yaml:"insecure"`
-		MetricsExportInterval       time.Duration `yaml:"metrics_export_interval"`
-		RuntimeReadMemStatsInterval time.Duration `yaml:"runtime_read_mem_stats_interval"`
+		Endpoint                    string        `yaml:"endpoint" env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
+		Insecure                    bool          `yaml:"insecure" env:"OTEL_EXPORTER_OTLP_INSECURE"`
+		MetricsExportInterval       time.Duration `yaml:"metrics_export_interval" env:"OTEL_METRICS_EXPORT_INTERVAL"`
+		RuntimeReadMemStatsInterval time.Duration `yaml:"runtime_read_mem_stats_interval" env:"OTEL_RUNTIME_READ_MEM_STATS_INTERVAL"`
 	}
 
 	GRPCConfig struct {
@@ -69,7 +69,7 @@ type (
 	}
 
 	MinIOConfig struct {
-		Endpoint       string        `yaml:"endpoint"`
+		Endpoint       string        `yaml:"endpoint" env:"MINIO_ENDPOINT" env-required:"true"`
 		AccessKey      string        `env:"MINIO_ACCESS_KEY" env-required:"true"`
 		SecretKey      string        `env:"MINIO_SECRET_KEY" env-required:"true"`
 		Bucket         string        `yaml:"bucket"`

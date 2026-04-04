@@ -101,6 +101,38 @@ Ports:
 - Grafana: `localhost:3000` (admin/admin)
 - Loki: `localhost:3100`
 
+## Kubernetes (one command via Helmfile)
+
+This repo includes `helmfile.yaml.gotmpl` to deploy all backend services together:
+- local charts from this repo: `price-svc`, `aggregation-svc`, `tax-svc`
+- extra charts from sibling repo: `auth-svc`, `ledger-svc`
+
+Default path to extra charts is `../CryptoTax`.  
+Override it if needed:
+
+```sh
+export CRYPTOTAX_REPO_ROOT=/Users/evgeniybukharev/Desktop/CryptoTax
+```
+
+Commands:
+
+```sh
+make list
+make diff
+make deploy
+make stop
+make start
+make pods
+make status
+make destroy
+```
+
+Use a custom namespace:
+
+```sh
+make deploy NAMESPACE=cryptotax-dev
+```
+
 ## Development
 
 ```sh

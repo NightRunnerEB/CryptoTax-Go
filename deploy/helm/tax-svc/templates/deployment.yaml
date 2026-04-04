@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tax-svc
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.strategy.maxUnavailable }}
+      maxSurge: {{ .Values.strategy.maxSurge }}
+  selector:
+    matchLabels:
+      app: tax-svc
+  template:
+    metadata:
+      labels:
+        app: tax-svc
+    spec:
+{{- if .Values.podSecurityContext.enabled }}
+      securityContext:
+{{- toYaml (omit .Values.podSecurityContext "enabled") | nindent 8 }}
+{{- end }}
+      containers:
+        - name: tax-svc
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+{{- if .Values.containerSecurityContext.enabled }}
+          securityContext:
+{{- toYaml (omit .Values.containerSecurityContext "enabled") | nindent 12 }}
+{{- end }}
+          ports:
+            - containerPort: {{ .Values.service.grpcPort }}
+              name: grpc
+            - containerPort: {{ .Values.service.httpPort }}
+              name: http
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secrets.name }}
+{{- if .Values.probes.startup.enabled }}
+          startupProbe:
+            grpc:
+              port: {{ .Values.service.grpcPort }}
+              service: tax.v1.Tax
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+{{- end }}
+{{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            grpc:
+              port: {{ .Values.service.grpcPort }}
+              service: tax.v1.Tax
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+{{- end }}
+{{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            grpc:
+              port: {{ .Values.service.grpcPort }}
+              service: tax.v1.Tax
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+{{- end }}
+          resources:
+{{- toYaml .Values.resources | nindent 12 }}

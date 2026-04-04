@@ -1,0 +1,39 @@
+helmDefaults:
+  atomic: true
+  wait: true
+  timeout: 300
+  cleanupOnFail: true
+
+environments:
+  default:
+    values:
+      - namespace: cryptotax
+
+---
+{{- $extraRepoRoot := env "CRYPTOTAX_REPO_ROOT" | default "../CryptoTax" -}}
+
+releases:
+  - name: price-svc
+    namespace: {{ .Values.namespace }}
+    createNamespace: true
+    chart: ./deploy/helm/price-svc
+
+  - name: aggregation-svc
+    namespace: {{ .Values.namespace }}
+    createNamespace: true
+    chart: ./deploy/helm/aggregation-svc
+
+  - name: tax-svc
+    namespace: {{ .Values.namespace }}
+    createNamespace: true
+    chart: ./deploy/helm/tax-svc
+
+  - name: auth-svc
+    namespace: {{ .Values.namespace }}
+    createNamespace: true
+    chart: "{{ $extraRepoRoot }}/deploy/helm/auth-svc"
+
+  - name: ledger-svc
+    namespace: {{ .Values.namespace }}
+    createNamespace: true
+    chart: "{{ $extraRepoRoot }}/deploy/helm/ledger-svc"

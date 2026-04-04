@@ -2,7 +2,7 @@ FROM golang:1.25.1 AS build
 
 WORKDIR /workspace
 ENV CGO_ENABLED=0
-ENV GOWORK=/workspace/go.work
+ENV GOWORK=off
 
 COPY go.work go.work.sum ./
 COPY gen/go.mod gen/go.sum ./gen/
@@ -12,9 +12,9 @@ COPY services/aggregation-svc/go.mod services/aggregation-svc/go.sum ./services/
 WORKDIR /workspace/services/aggregation-svc
 RUN go mod download
 
-COPY gen ./gen
-COPY pkg ./pkg
-COPY services/aggregation-svc ./services/aggregation-svc
+COPY gen /workspace/gen
+COPY pkg /workspace/pkg
+COPY services/aggregation-svc /workspace/services/aggregation-svc
 
 RUN go build -o /out/aggregation-svc ./cmd/app
 
