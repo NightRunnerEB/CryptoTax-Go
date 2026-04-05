@@ -1,0 +1,120 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: cryptotax-api
+  namespace: cryptotax
+spec:
+  hosts:
+    - "*" # с какими доменами может работать конкретно этот VirtualService
+  gateways:
+    - cryptotax-gateway
+  http:
+    - name: auth-routes
+      match:
+        - uri:
+            prefix: /auth
+      corsPolicy:
+        allowOrigins:
+          - regex: "^http://localhost:[0-9]+$"
+          - regex: "^http://127\\.0\\.0\\.1:[0-9]+$"
+        allowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        allowHeaders:
+          - Authorization
+          - Content-Type
+          - Accept
+        maxAge: "24h"
+      route:
+        - destination:
+            host: auth-svc.cryptotax.svc.cluster.local
+            port:
+              number: 8085
+
+    - name: ledger-routes
+      match:
+        - uri:
+            exact: /mexc/csv
+        - uri:
+            exact: /v1/exchanges/supported
+      corsPolicy:
+        allowOrigins:
+          - regex: "^http://localhost:[0-9]+$"
+          - regex: "^http://127\\.0\\.0\\.1:[0-9]+$"
+        allowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        allowHeaders:
+          - Authorization
+          - Content-Type
+          - Accept
+        maxAge: "24h"
+      route:
+        - destination:
+            host: ledger-svc.cryptotax.svc.cluster.local
+            port:
+              number: 8086
+
+    - name: tax-routes
+      match:
+        - uri:
+            prefix: /v1/tax/
+      corsPolicy:
+        allowOrigins:
+          - regex: "^http://localhost:[0-9]+$"
+          - regex: "^http://127\\.0\\.0\\.1:[0-9]+$"
+        allowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        allowHeaders:
+          - Authorization
+          - Content-Type
+          - Accept
+        maxAge: "24h"
+      route:
+        - destination:
+            host: tax-svc.cryptotax.svc.cluster.local
+            port:
+              number: 8097
+
+    - name: aggregation-routes
+      match:
+        - uri:
+            exact: /v1/fiat-currencies
+        - uri:
+            exact: /v1/settings
+        - uri:
+            regex: ^/v1/imports/[^/]+/transactions$
+      corsPolicy:
+        allowOrigins:
+          - regex: "^http://localhost:[0-9]+$"
+          - regex: "^http://127\\.0\\.0\\.1:[0-9]+$"
+        allowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        allowHeaders:
+          - Authorization
+          - Content-Type
+          - Accept
+        maxAge: "24h"
+      route:
+        - destination:
+            host: aggregation-svc.cryptotax.svc.cluster.local
+            port:
+              number: 8095

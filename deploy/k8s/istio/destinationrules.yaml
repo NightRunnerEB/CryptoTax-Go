@@ -1,0 +1,64 @@
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: auth-svc
+  namespace: cryptotax
+spec:
+  host: auth-svc.cryptotax.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL # клиент и сервер будут использовать mTLS для шифрования трафика между собой
+    loadBalancer:
+      simple: LEAST_REQUEST
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: ledger-svc
+  namespace: cryptotax
+spec:
+  host: ledger-svc.cryptotax.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: aggregation-svc
+  namespace: cryptotax
+spec:
+  host: aggregation-svc.cryptotax.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: tax-svc
+  namespace: cryptotax
+spec:
+  host: tax-svc.cryptotax.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: price-svc
+  namespace: cryptotax
+spec:
+  host: price-svc.cryptotax.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST

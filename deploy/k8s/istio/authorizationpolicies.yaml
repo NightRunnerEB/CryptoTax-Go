@@ -1,0 +1,89 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: auth-svc-allow
+  namespace: cryptotax
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: auth-svc
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces: ["istio-system", "cryptotax"]
+      to:
+        - operation:
+            ports: ["8085"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: ledger-svc-allow
+  namespace: cryptotax
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ledger-svc
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces: ["istio-system", "cryptotax"]
+      to:
+        - operation:
+            ports: ["8086"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: aggregation-svc-allow
+  namespace: cryptotax
+spec:
+  selector:
+    matchLabels:
+      app: aggregation-svc
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces: ["istio-system", "cryptotax"]
+      to:
+        - operation:
+            ports: ["8094", "8095"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: tax-svc-allow
+  namespace: cryptotax
+spec:
+  selector:
+    matchLabels:
+      app: tax-svc
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces: ["istio-system", "cryptotax"]
+      to:
+        - operation:
+            ports: ["8096", "8097"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: price-svc-allow
+  namespace: cryptotax
+spec:
+  selector:
+    matchLabels:
+      app: price-svc
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces: ["istio-system", "cryptotax"]
+      to:
+        - operation:
+            ports: ["8093"]
