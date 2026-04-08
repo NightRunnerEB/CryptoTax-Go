@@ -11,10 +11,33 @@ spec:
   rules:
     - from:
         - source:
-            namespaces: ["istio-system", "cryptotax"]
+            namespaces: ["cryptotax"]
       to:
         - operation:
             ports: ["8085"]
+    - from:
+        - source:
+            namespaces: ["istio-system"]
+      to:
+        - operation:
+            ports: ["8085"]
+            methods: ["POST"]
+            paths: ["/auth/register", "/auth/login", "/auth/refresh"]
+        - operation:
+            ports: ["8085"]
+            methods: ["GET"]
+            paths: ["/auth/verify", "/.well-known/jwks.json", "/health"]
+    - from:
+        - source:
+            namespaces: ["istio-system"]
+      to:
+        - operation:
+            ports: ["8085"]
+      when:
+        - key: request.headers[x-tenant-id]
+          values: ["*"]
+        - key: request.headers[x-role]
+          values: ["*"]
 ---
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
@@ -29,10 +52,21 @@ spec:
   rules:
     - from:
         - source:
-            namespaces: ["istio-system", "cryptotax"]
+            namespaces: ["cryptotax"]
       to:
         - operation:
             ports: ["8086"]
+    - from:
+        - source:
+            namespaces: ["istio-system"]
+      to:
+        - operation:
+            ports: ["8086"]
+      when:
+        - key: request.headers[x-tenant-id]
+          values: ["*"]
+        - key: request.headers[x-role]
+          values: ["*"]
 ---
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
@@ -47,10 +81,21 @@ spec:
   rules:
     - from:
         - source:
-            namespaces: ["istio-system", "cryptotax"]
+            namespaces: ["cryptotax"]
       to:
         - operation:
             ports: ["8094", "8095"]
+    - from:
+        - source:
+            namespaces: ["istio-system"]
+      to:
+        - operation:
+            ports: ["8095"]
+      when:
+        - key: request.headers[x-tenant-id]
+          values: ["*"]
+        - key: request.headers[x-role]
+          values: ["*"]
 ---
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
@@ -65,10 +110,21 @@ spec:
   rules:
     - from:
         - source:
-            namespaces: ["istio-system", "cryptotax"]
+            namespaces: ["cryptotax"]
       to:
         - operation:
             ports: ["8096", "8097"]
+    - from:
+        - source:
+            namespaces: ["istio-system"]
+      to:
+        - operation:
+            ports: ["8097"]
+      when:
+        - key: request.headers[x-tenant-id]
+          values: ["*"]
+        - key: request.headers[x-role]
+          values: ["*"]
 ---
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
