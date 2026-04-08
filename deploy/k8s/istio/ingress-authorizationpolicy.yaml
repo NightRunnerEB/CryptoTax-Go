@@ -1,0 +1,47 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: cryptotax-ingress-authz
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: ingressgateway
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            methods: ["OPTIONS"]
+    - to:
+        - operation:
+            methods: ["POST"]
+            paths:
+              - /auth/register
+              - /auth/login
+              - /auth/refresh
+        - operation:
+            methods: ["GET"]
+            paths:
+              - /auth/verify
+              - /.well-known/jwks.json
+    - from:
+        - source:
+            requestPrincipals: ["https://auth.cryptotax.local/*"]
+      when:
+        - key: request.auth.claims[aud]
+          values: ["cryptotax.api"]
+        - key: request.auth.claims[role]
+          values: ["*"]
+      to:
+        - operation:
+            methods: ["POST"]
+            paths:
+              - /auth/logout
+        - operation:
+            paths:
+              - /mexc/csv
+              - /v1/exchanges/supported
+              - /v1/fiat-currencies
+              - /v1/settings
+              - /v1/imports/*
+              - /v1/tax/*
