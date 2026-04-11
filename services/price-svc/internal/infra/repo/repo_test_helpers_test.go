@@ -8,10 +8,13 @@ import (
 
 type fakeStore struct {
 	deleteTenantSymbolFn          func(ctx context.Context, arg db.DeleteTenantSymbolParams) (int64, error)
+	getFXRateFn                   func(ctx context.Context, arg db.GetFXRateParams) (db.FxRate, error)
 	getHistoricalPriceFn          func(ctx context.Context, arg db.GetHistoricalPriceParams) (db.HistoricalPrice, error)
 	getHistoricalPricesBatchFn    func(ctx context.Context, arg db.GetHistoricalPricesBatchParams) ([]db.GetHistoricalPricesBatchRow, error)
 	getTenantSymbolsFn            func(ctx context.Context, arg db.GetTenantSymbolsParams) ([]db.TenantSymbol, error)
+	listFXRatesByFiatFn           func(ctx context.Context, fiat string) ([]db.FxRate, error)
 	listTenantSymbolsBySourceFn   func(ctx context.Context, arg db.ListTenantSymbolsBySourceParams) ([]db.TenantSymbol, error)
+	upsertFXRateFn                func(ctx context.Context, arg db.UpsertFXRateParams) error
 	upsertHistoricalPriceFn       func(ctx context.Context, arg db.UpsertHistoricalPriceParams) error
 	upsertHistoricalPricesBatchFn func(ctx context.Context, arg db.UpsertHistoricalPricesBatchParams) error
 	upsertTenantSymbolFn          func(ctx context.Context, arg db.UpsertTenantSymbolParams) error
@@ -22,6 +25,13 @@ func (f *fakeStore) DeleteTenantSymbol(ctx context.Context, arg db.DeleteTenantS
 		return f.deleteTenantSymbolFn(ctx, arg)
 	}
 	return 0, nil
+}
+
+func (f *fakeStore) GetFXRate(ctx context.Context, arg db.GetFXRateParams) (db.FxRate, error) {
+	if f.getFXRateFn != nil {
+		return f.getFXRateFn(ctx, arg)
+	}
+	return db.FxRate{}, nil
 }
 
 func (f *fakeStore) GetHistoricalPrice(ctx context.Context, arg db.GetHistoricalPriceParams) (db.HistoricalPrice, error) {
@@ -45,11 +55,25 @@ func (f *fakeStore) GetTenantSymbols(ctx context.Context, arg db.GetTenantSymbol
 	return nil, nil
 }
 
+func (f *fakeStore) ListFXRatesByFiat(ctx context.Context, fiat string) ([]db.FxRate, error) {
+	if f.listFXRatesByFiatFn != nil {
+		return f.listFXRatesByFiatFn(ctx, fiat)
+	}
+	return nil, nil
+}
+
 func (f *fakeStore) ListTenantSymbolsBySource(ctx context.Context, arg db.ListTenantSymbolsBySourceParams) ([]db.TenantSymbol, error) {
 	if f.listTenantSymbolsBySourceFn != nil {
 		return f.listTenantSymbolsBySourceFn(ctx, arg)
 	}
 	return nil, nil
+}
+
+func (f *fakeStore) UpsertFXRate(ctx context.Context, arg db.UpsertFXRateParams) error {
+	if f.upsertFXRateFn != nil {
+		return f.upsertFXRateFn(ctx, arg)
+	}
+	return nil
 }
 
 func (f *fakeStore) UpsertHistoricalPrice(ctx context.Context, arg db.UpsertHistoricalPriceParams) error {

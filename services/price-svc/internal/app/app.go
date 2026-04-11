@@ -104,18 +104,20 @@ func Run(cfg *config.Config) {
 
 	tenantSymbolRepo := repository.NewTenantSymbolRepo(db)
 	historicalPriceRepo := repository.NewHistoricalPriceRepo(db)
+	fxRateRepo := repository.NewFXRateRepo(db)
 
 	tenantSymbolUC := usecase.NewTenantSymbolUC(tenantSymbolRepo, time.Second*5)
 
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
+	fxLocker := fiatfx.NewPGAdvisoryLocker(pg.ConnPool())
 
-	KZTSource, err := fiatfx.NewKZTSource(ctx, httpClient)
+	KZTSource, err := fiatfx.NewKZTSource(ctx, httpClient, fxRateRepo, fxLocker)
 	if err != nil {
 		log.Fatal("new kzt source failed", zap.Error(err))
 	}
-	RUBSource, err := fiatfx.NewRUBSource(ctx, httpClient)
+	RUBSource, err := fiatfx.NewRUBSource(ctx, httpClient, fxRateRepo, fxLocker)
 	if err != nil {
 		log.Fatal("new rub source failed", zap.Error(err))
 	}

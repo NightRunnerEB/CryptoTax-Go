@@ -10,10 +10,13 @@ import (
 
 type Querier interface {
 	DeleteTenantSymbol(ctx context.Context, arg DeleteTenantSymbolParams) (int64, error)
+	GetFXRate(ctx context.Context, arg GetFXRateParams) (FxRate, error)
 	GetHistoricalPrice(ctx context.Context, arg GetHistoricalPriceParams) (HistoricalPrice, error)
 	GetHistoricalPricesBatch(ctx context.Context, arg GetHistoricalPricesBatchParams) ([]GetHistoricalPricesBatchRow, error)
 	GetTenantSymbols(ctx context.Context, arg GetTenantSymbolsParams) ([]TenantSymbol, error)
+	ListFXRatesByFiat(ctx context.Context, fiat string) ([]FxRate, error)
 	ListTenantSymbolsBySource(ctx context.Context, arg ListTenantSymbolsBySourceParams) ([]TenantSymbol, error)
+	UpsertFXRate(ctx context.Context, arg UpsertFXRateParams) error
 	UpsertHistoricalPrice(ctx context.Context, arg UpsertHistoricalPriceParams) error
 	UpsertHistoricalPricesBatch(ctx context.Context, arg UpsertHistoricalPricesBatchParams) error
 	UpsertTenantSymbol(ctx context.Context, arg UpsertTenantSymbolParams) error

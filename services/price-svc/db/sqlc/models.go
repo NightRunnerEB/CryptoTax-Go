@@ -9,6 +9,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type FxRate struct {
+	Fiat      string             `json:"fiat"`
+	Day       pgtype.Date        `json:"day"`
+	Rate      pgtype.Numeric     `json:"rate"`
+	IsReal    bool               `json:"isReal"`
+	Source    string             `json:"source"`
+	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
+}
+
 type HistoricalPrice struct {
 	CoinID             string             `json:"coinId"`
 	BucketStartUtc     pgtype.Timestamptz `json:"bucketStartUtc"`

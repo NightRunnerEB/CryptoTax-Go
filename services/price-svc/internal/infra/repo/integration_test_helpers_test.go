@@ -61,6 +61,7 @@ func setupIntegrationStore(t *testing.T) db.Store {
 	files := []string{
 		"000001_tenant_symbols.up.sql",
 		"000002_historical_prices.up.sql",
+		"000003_fx_rates.up.sql",
 	}
 	for _, file := range files {
 		sqlBytes, err := os.ReadFile(filepath.Join(migrationsDir, file))

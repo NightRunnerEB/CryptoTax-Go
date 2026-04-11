@@ -1,12 +1,10 @@
 package fiatfx
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -17,17 +15,24 @@ import (
 
 	inmemory "github.com/NightRunner/CryptoTax-Go/pkg/in-memory"
 	applogger "github.com/NightRunner/CryptoTax-Go/pkg/logger"
+	"github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 )
 
 const (
 	CBRArchiveDailyURL = "https://www.cbr-xml-daily.ru/archive/%s/daily.xml"
-	rubCSVHeader       = "Date;USD"
-	rubDateFmt         = "02.01.2006"
-	rubCSVPath         = "RUB-USD.csv"
 
 	rubReqPerSec = 1
 	rubReqPerMin = 30
+
+	rubLockKey     int64 = 5090102
+	rubSourceCBR         = "cbr"
+	rubSourceCarry       = "carry"
+)
+
+var (
+	rubFollowWriterPollInterval = 2 * time.Second
+	rubFollowWriterMaxWait      = 20 * time.Minute
 )
 
 type cbrDaily struct {
@@ -43,6 +48,9 @@ type cbrDailyItem struct {
 
 type RUBSource struct {
 	httpClient *http.Client
+	repo       domain.FXRateRepo
+	locker     UpdateLocker
+	lockKey    int64
 	store      *inmemory.Store[string, Rate]
 	schedule   Schedule
 
@@ -53,11 +61,28 @@ type RUBSource struct {
 	lastDate time.Time
 }
 
-func NewRUBSource(ctx context.Context, httpClient *http.Client) (*RUBSource, error) {
+func NewRUBSource(
+	ctx context.Context,
+	httpClient *http.Client,
+	repo domain.FXRateRepo,
+	locker UpdateLocker,
+) (*RUBSource, error) {
 	loc, _ := time.LoadLocation("Europe/Moscow")
+	if httpClient == nil {
+		return nil, fmt.Errorf("rub source http client is nil")
+	}
+	if repo == nil {
+		return nil, fmt.Errorf("rub source fx repo is nil")
+	}
+	if locker == nil {
+		return nil, fmt.Errorf("rub source update locker is nil")
+	}
 
 	s := &RUBSource{
 		httpClient: httpClient,
+		repo:       repo,
+		locker:     locker,
+		lockKey:    rubLockKey,
 		store:      inmemory.NewStore[string, Rate](),
 		schedule: Schedule{
 			Loc:  loc,
@@ -66,18 +91,15 @@ func NewRUBSource(ctx context.Context, httpClient *http.Client) (*RUBSource, err
 		},
 		perSecondLimiter: rate.NewLimiter(rate.Every(time.Second/time.Duration(rubReqPerSec)), 1),
 		perMinuteLimiter: rate.NewLimiter(rate.Every(time.Minute/time.Duration(rubReqPerMin)), 1),
+		lastDate:         dateOnly(defaultFromUTC().In(loc), loc).AddDate(0, 0, -1),
 	}
 
-	data, last, err := LoadRUBUSDFromCSV(ctx, rubCSVPath, loc)
+	loaded, err := s.reloadFromRepo(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	if len(data) > 0 && !last.IsZero() {
-		s.store.ReplaceAll(data)
-		s.lastDate = last
-	} else {
-		s.lastDate = dateOnly(defaultFromUTC().In(loc), loc).AddDate(0, 0, -1)
+	if !loaded {
+		return nil, fmt.Errorf("rub source bootstrap failed: no fx rates in database")
 	}
 
 	return s, nil
@@ -94,6 +116,30 @@ func (s *RUBSource) Update(ctx context.Context) error {
 	loc := s.schedule.Loc
 	now := time.Now().In(loc)
 	log := applogger.FromContext(ctx)
+	target := dateOnly(now, loc)
+
+	if _, err := s.reloadFromRepo(ctx); err != nil {
+		return err
+	}
+
+	unlock, locked, err := s.locker.TryLock(ctx, s.lockKey)
+	if err != nil {
+		return fmt.Errorf("rub update lock acquire failed: %w", err)
+	}
+	if !locked {
+		log.Info("rub fx update skipped: lock not acquired")
+		s.waitForWriterAndReload(ctx, target, log)
+		return nil
+	}
+	defer func() {
+		if err := unlock(context.Background()); err != nil {
+			log.Warn("rub fx update lock release failed", zap.Error(err))
+		}
+	}()
+
+	if _, err := s.reloadFromRepo(ctx); err != nil {
+		return err
+	}
 
 	s.mu.Lock()
 	lastSaved := s.lastDate
@@ -109,7 +155,6 @@ func (s *RUBSource) Update(ctx context.Context) error {
 	patch := make(map[string]Rate)
 	newLastDate := time.Time{}
 	gotReal := false
-	var realPoints []csvPoint
 
 	var carry Rate
 	haveCarry := false
@@ -143,6 +188,16 @@ func (s *RUBSource) Update(ctx context.Context) error {
 
 				if haveCarry {
 					patch[key] = carry
+					if err := s.repo.Upsert(ctx, domain.FXRate{
+						Fiat:   RUB,
+						Day:    day,
+						Rate:   carry,
+						IsReal: false,
+						Source: rubSourceCarry,
+					}); err != nil {
+						return fmt.Errorf("rub upsert carry failed: %w", err)
+					}
+					newLastDate = day
 				} else {
 					log.Warn(
 						"rub fx carry fill skipped: no previous rate",
@@ -168,7 +223,15 @@ func (s *RUBSource) Update(ctx context.Context) error {
 		gotReal = true
 
 		patch[key] = usdRate
-		realPoints = append(realPoints, csvPoint{Day: day, Rate: usdRate})
+		if err := s.repo.Upsert(ctx, domain.FXRate{
+			Fiat:   RUB,
+			Day:    day,
+			Rate:   usdRate,
+			IsReal: true,
+			Source: rubSourceCBR,
+		}); err != nil {
+			return fmt.Errorf("rub upsert rate failed: %w", err)
+		}
 		newLastDate = day
 	}
 
@@ -183,17 +246,12 @@ func (s *RUBSource) Update(ctx context.Context) error {
 
 	s.store.UpsertMany(patch)
 
-	if gotReal && len(realPoints) > 0 {
-		if err := AppendRUBUSDToCSV(rubCSVPath, realPoints); err != nil {
-			log.Error("rub fx append csv failed", zap.Error(err))
-		}
-	}
-
-	if gotReal && !newLastDate.IsZero() {
+	if !newLastDate.IsZero() {
 		s.mu.Lock()
 		s.lastDate = newLastDate
 		s.mu.Unlock()
-	} else if !gotReal {
+	}
+	if !gotReal {
 		log.Warn(
 			"rub fx update had no real points (404 carry-fill only)",
 			zap.String("from", from.Format("2006-01-02")),
@@ -202,6 +260,66 @@ func (s *RUBSource) Update(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *RUBSource) waitForWriterAndReload(ctx context.Context, target time.Time, log *zap.Logger) {
+	deadline := time.Now().Add(rubFollowWriterMaxWait)
+	for {
+		loaded, err := s.reloadFromRepo(ctx)
+		if err != nil {
+			log.Warn("rub follow-writer reload failed", zap.Error(err))
+			return
+		}
+		s.mu.Lock()
+		last := s.lastDate
+		s.mu.Unlock()
+		if loaded && !last.Before(target) {
+			return
+		}
+		if time.Now().After(deadline) {
+			log.Warn(
+				"rub follow-writer timeout reached",
+				zap.String("target_day", target.Format(time.DateOnly)),
+				zap.String("last_day", last.Format(time.DateOnly)),
+			)
+			return
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(rubFollowWriterPollInterval):
+		}
+	}
+}
+
+func (s *RUBSource) reloadFromRepo(ctx context.Context) (bool, error) {
+	rows, err := s.repo.ListByFiat(ctx, RUB)
+	if err != nil {
+		return false, fmt.Errorf("rub list rates from repo failed: %w", err)
+	}
+	if len(rows) == 0 {
+		return false, nil
+	}
+
+	loc := s.schedule.Loc
+	data := make(map[string]Rate, len(rows))
+	var last time.Time
+	for _, row := range rows {
+		day := dateOnly(row.Day, loc)
+		key := dateKeyISO(day)
+		data[key] = row.Rate
+		if last.IsZero() || day.After(last) {
+			last = day
+		}
+	}
+	s.store.ReplaceAll(data)
+	if !last.IsZero() {
+		s.mu.Lock()
+		s.lastDate = last
+		s.mu.Unlock()
+	}
+	return true, nil
 }
 
 func (s *RUBSource) waitRateLimit(ctx context.Context) error {
@@ -283,125 +401,4 @@ func (s *RUBSource) bootstrapCarry(ctx context.Context, day time.Time, log *zap.
 	}
 
 	return Rate{}, false, nil
-}
-
-func LoadRUBUSDFromCSV(ctx context.Context, path string, loc *time.Location) (map[string]Rate, time.Time, error) {
-	result := make(map[string]Rate)
-	var last time.Time
-	log := applogger.FromContext(ctx)
-
-	f, err := os.Open(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.Warn("rub csv file not found, bootstrap from defaultFrom", zap.String("path", path))
-			return result, time.Time{}, nil
-		}
-		return nil, time.Time{}, err
-	}
-	defer f.Close()
-
-	log.Debug("rub csv read start", zap.String("path", path))
-
-	sc := bufio.NewScanner(f)
-	sc.Buffer(make([]byte, 0, 64*1024), 2*1024*1024)
-
-	lineNo := 0
-	for sc.Scan() {
-		lineNo++
-		line := strings.TrimSpace(sc.Text())
-		if line == "" {
-			continue
-		}
-
-		if lineNo == 1 {
-			line = strings.TrimPrefix(line, "\ufeff")
-			if strings.EqualFold(line, rubCSVHeader) {
-				continue
-			}
-		}
-
-		parts := strings.Split(line, ";")
-		if len(parts) < 2 {
-			continue
-		}
-
-		day, err := time.ParseInLocation(rubDateFmt, parts[0], loc)
-		if err != nil {
-			continue
-		}
-		day = dateOnly(day, loc)
-
-		rateStr := strings.ReplaceAll(parts[1], ",", ".")
-		rate, err := decimal.NewFromString(rateStr)
-		if err != nil || rate.IsZero() {
-			continue
-		}
-
-		key := dateKeyISO(day)
-		result[key] = rate
-
-		if last.IsZero() || day.After(last) {
-			last = day
-		}
-	}
-
-	if err := sc.Err(); err != nil {
-		return nil, time.Time{}, err
-	}
-
-	if !last.IsZero() {
-		log.Debug(
-			"rub csv read done",
-			zap.String("path", path),
-			zap.Int("rows", len(result)),
-			zap.String("last_day", last.Format("2006-01-02")),
-		)
-	} else {
-		log.Debug("rub csv read done (no rows)", zap.String("path", path))
-	}
-
-	return result, last, nil
-}
-
-func AppendRUBUSDToCSV(path string, points []csvPoint) error {
-	if len(points) == 0 {
-		return nil
-	}
-
-	var needHeader bool
-	if st, err := os.Stat(path); err != nil {
-		if os.IsNotExist(err) {
-			needHeader = true
-		} else {
-			return fmt.Errorf("stat csv: %w", err)
-		}
-	} else {
-		needHeader = st.Size() == 0
-	}
-
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		return fmt.Errorf("open csv for append: %w", err)
-	}
-	defer f.Close()
-
-	w := bufio.NewWriter(f)
-	defer w.Flush()
-
-	if needHeader {
-		if _, err := w.WriteString("\ufeff" + rubCSVHeader + "\n"); err != nil {
-			return fmt.Errorf("write header: %w", err)
-		}
-	}
-
-	for _, p := range points {
-		dayStr := p.Day.Format(rubDateFmt)
-		rateStr := strings.ReplaceAll(p.Rate.String(), ".", ",")
-
-		if _, err := w.WriteString(dayStr + ";" + rateStr + "\n"); err != nil {
-			return fmt.Errorf("write line: %w", err)
-		}
-	}
-
-	return nil
 }
