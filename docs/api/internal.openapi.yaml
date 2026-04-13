@@ -13,7 +13,7 @@ servers:
     description: Local aggregation gateway
 security:
   - bearerAuth: []
-    tenantHeader: []
+    userHeader: []
 tags:
   - name: AggregationInternal
     description: Internal aggregation read-model access for tax/report workflows.
@@ -22,16 +22,16 @@ tags:
   - name: AuthInternal
     description: Internal auth endpoints (Rust auth-svc).
 paths:
-  /v1/tenants/{tenant_id}/transactions:
+  /v1/users/{user_id}/transactions:
     get:
       tags: [AggregationInternal]
       operationId: listTransactionsByRange
       summary: List aggregated transactions by UTC range
       description: |
-        Internal read endpoint for tenant transactions in time range `[from_utc, to_utc)`.
+        Internal read endpoint for user transactions in time range `[from_utc, to_utc)`.
         Supports optional `target_fiat` revaluation without mutating stored read-model.
       parameters:
-        - $ref: '#/components/parameters/TenantIdPath'
+        - $ref: '#/components/parameters/UserIdPath'
         - $ref: '#/components/parameters/FromUtc'
         - $ref: '#/components/parameters/ToUtc'
         - $ref: '#/components/parameters/PaginationLimit'
@@ -51,7 +51,7 @@ paths:
         '500':
           $ref: '#/components/responses/GrpcInternal'
 
-  /v1/tenants/{tenant_id}/imports/{import_id}/transactions:
+  /v1/users/{user_id}/imports/{import_id}/transactions:
     get:
       tags: [LedgerInternal]
       operationId: ledgerListImportTransactions
@@ -62,7 +62,7 @@ paths:
         - url: http://localhost:8086
           description: Local ledger-svc
       parameters:
-        - $ref: '#/components/parameters/TenantIdPath'
+        - $ref: '#/components/parameters/UserIdPath'
         - $ref: '#/components/parameters/ImportIdPath'
       responses:
         '200':
@@ -255,13 +255,13 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-    tenantHeader:
+    userHeader:
       type: apiKey
       in: header
-      name: X-Tenant-Id
+      name: X-User-Id
   parameters:
-    TenantIdPath:
-      name: tenant_id
+    UserIdPath:
+      name: user_id
       in: path
       required: true
       schema:
@@ -314,8 +314,8 @@ components:
       schema:
         type: string
       description: Optional fiat override for on-the-fly revaluation (e.g. RUB, USD, KZT).
-    XTenantId:
-      name: X-Tenant-Id
+    XUserId:
+      name: X-User-Id
       in: header
       required: true
       schema:
@@ -366,7 +366,7 @@ components:
           schema:
             $ref: '#/components/schemas/SimpleErrorResponse'
     LedgerNotFound:
-      description: Import not found (or belongs to another tenant).
+      description: Import not found (or belongs to another user).
       content:
         application/json:
           schema:
@@ -700,7 +700,7 @@ components:
         txId:
           type: string
           format: uuid
-        tenantId:
+        userId:
           type: string
           format: uuid
         source:
@@ -735,7 +735,7 @@ components:
           type: string
       required:
         - txId
-        - tenantId
+        - userId
         - source
         - importId
         - timeUtc

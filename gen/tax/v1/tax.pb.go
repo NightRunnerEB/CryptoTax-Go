@@ -85,7 +85,7 @@ func (x *TaxPolicy) GetJurisdiction() string {
 
 type TaxProfile struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	TenantId           string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId             string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Inn                string                 `protobuf:"bytes,2,opt,name=inn,proto3" json:"inn,omitempty"`
 	LastName           string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
 	FirstName          string                 `protobuf:"bytes,4,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
@@ -129,9 +129,9 @@ func (*TaxProfile) Descriptor() ([]byte, []int) {
 	return file_tax_v1_tax_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *TaxProfile) GetTenantId() string {
+func (x *TaxProfile) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -378,7 +378,7 @@ func (x *TaxSummary) GetTaxDueFiat() string {
 type TaxJob struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	ReportId         string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
-	TenantId         string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId           string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	TaxYear          int32                  `protobuf:"varint,3,opt,name=tax_year,json=taxYear,proto3" json:"tax_year,omitempty"`
 	PolicySnapshot   *TaxPolicy             `protobuf:"bytes,4,opt,name=policy_snapshot,json=policySnapshot,proto3" json:"policy_snapshot,omitempty"`
 	Status           string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
@@ -432,9 +432,9 @@ func (x *TaxJob) GetReportId() string {
 	return ""
 }
 
-func (x *TaxJob) GetTenantId() string {
+func (x *TaxJob) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -525,7 +525,7 @@ func (x *TaxJob) GetSummary() *TaxSummary {
 
 type GetTaxProfileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -560,9 +560,9 @@ func (*GetTaxProfileRequest) Descriptor() ([]byte, []int) {
 	return file_tax_v1_tax_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *GetTaxProfileRequest) GetTenantId() string {
+func (x *GetTaxProfileRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -613,7 +613,7 @@ func (x *GetTaxProfileResponse) GetProfile() *TaxProfile {
 
 type UpsertTaxProfileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Profile       *TaxProfileInput       `protobuf:"bytes,2,opt,name=profile,proto3" json:"profile,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -649,9 +649,9 @@ func (*UpsertTaxProfileRequest) Descriptor() ([]byte, []int) {
 	return file_tax_v1_tax_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *UpsertTaxProfileRequest) GetTenantId() string {
+func (x *UpsertTaxProfileRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -761,7 +761,7 @@ func (x *StartReportParams) GetTaxPolicy() *TaxPolicy {
 
 type StartReportRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Params        *StartReportParams     `protobuf:"bytes,2,opt,name=params,proto3" json:"params,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -797,9 +797,9 @@ func (*StartReportRequest) Descriptor() ([]byte, []int) {
 	return file_tax_v1_tax_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *StartReportRequest) GetTenantId() string {
+func (x *StartReportRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -865,7 +865,7 @@ func (x *StartReportResponse) GetStatus() string {
 
 type GetReportStatusRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	ReportId      string                 `protobuf:"bytes,2,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -901,9 +901,9 @@ func (*GetReportStatusRequest) Descriptor() ([]byte, []int) {
 	return file_tax_v1_tax_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *GetReportStatusRequest) GetTenantId() string {
+func (x *GetReportStatusRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -961,7 +961,7 @@ func (x *GetReportStatusResponse) GetJob() *TaxJob {
 
 type ListReportsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
 	Offset        int32                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -998,9 +998,9 @@ func (*ListReportsRequest) Descriptor() ([]byte, []int) {
 	return file_tax_v1_tax_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *ListReportsRequest) GetTenantId() string {
+func (x *ListReportsRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -1079,10 +1079,10 @@ const file_tax_v1_tax_proto_rawDesc = "" +
 	"\tTaxPolicy\x12D\n" +
 	"\x1ftreat_crypto_crypto_as_disposal\x18\x01 \x01(\bR\x1btreatCryptoCryptoAsDisposal\x12*\n" +
 	"\x11cost_basis_method\x18\x02 \x01(\tR\x0fcostBasisMethod\x12\"\n" +
-	"\fjurisdiction\x18\x03 \x01(\tR\fjurisdiction\"\xcf\x02\n" +
+	"\fjurisdiction\x18\x03 \x01(\tR\fjurisdiction\"\xcb\x02\n" +
 	"\n" +
-	"TaxProfile\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x10\n" +
+	"TaxProfile\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x10\n" +
 	"\x03inn\x18\x02 \x01(\tR\x03inn\x12\x1b\n" +
 	"\tlast_name\x18\x03 \x01(\tR\blastName\x12\x1d\n" +
 	"\n" +
@@ -1114,10 +1114,10 @@ const file_tax_v1_tax_proto_rawDesc = "" +
 	"\x12total_expense_fiat\x18\x02 \x01(\tR\x10totalExpenseFiat\x12\"\n" +
 	"\rtax_base_fiat\x18\x03 \x01(\tR\vtaxBaseFiat\x12 \n" +
 	"\ftax_due_fiat\x18\x04 \x01(\tR\n" +
-	"taxDueFiat\"\xc7\x04\n" +
+	"taxDueFiat\"\xc3\x04\n" +
 	"\x06TaxJob\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x1b\n" +
-	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12\x19\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x19\n" +
 	"\btax_year\x18\x03 \x01(\x05R\ataxYear\x12:\n" +
 	"\x0fpolicy_snapshot\x18\x04 \x01(\v2\x11.tax.v1.TaxPolicyR\x0epolicySnapshot\x12\x16\n" +
 	"\x06status\x18\x05 \x01(\tR\x06status\x12\x1a\n" +
@@ -1134,33 +1134,33 @@ const file_tax_v1_tax_proto_rawDesc = "" +
 	"\raudit_zip_url\x18\f \x01(\tR\vauditZipUrl\x12\x1d\n" +
 	"\n" +
 	"report_url\x18\r \x01(\tR\treportUrl\x12,\n" +
-	"\asummary\x18\x0e \x01(\v2\x12.tax.v1.TaxSummaryR\asummary\"3\n" +
-	"\x14GetTaxProfileRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"E\n" +
+	"\asummary\x18\x0e \x01(\v2\x12.tax.v1.TaxSummaryR\asummary\"/\n" +
+	"\x14GetTaxProfileRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"E\n" +
 	"\x15GetTaxProfileResponse\x12,\n" +
-	"\aprofile\x18\x01 \x01(\v2\x12.tax.v1.TaxProfileR\aprofile\"i\n" +
-	"\x17UpsertTaxProfileRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x121\n" +
+	"\aprofile\x18\x01 \x01(\v2\x12.tax.v1.TaxProfileR\aprofile\"e\n" +
+	"\x17UpsertTaxProfileRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x121\n" +
 	"\aprofile\x18\x02 \x01(\v2\x17.tax.v1.TaxProfileInputR\aprofile\"H\n" +
 	"\x18UpsertTaxProfileResponse\x12,\n" +
 	"\aprofile\x18\x01 \x01(\v2\x12.tax.v1.TaxProfileR\aprofile\"`\n" +
 	"\x11StartReportParams\x12\x19\n" +
 	"\btax_year\x18\x01 \x01(\x05R\ataxYear\x120\n" +
 	"\n" +
-	"tax_policy\x18\x02 \x01(\v2\x11.tax.v1.TaxPolicyR\ttaxPolicy\"d\n" +
-	"\x12StartReportRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x121\n" +
+	"tax_policy\x18\x02 \x01(\v2\x11.tax.v1.TaxPolicyR\ttaxPolicy\"`\n" +
+	"\x12StartReportRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x121\n" +
 	"\x06params\x18\x02 \x01(\v2\x19.tax.v1.StartReportParamsR\x06params\"J\n" +
 	"\x13StartReportResponse\x12\x1b\n" +
 	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\"R\n" +
-	"\x16GetReportStatusRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\"N\n" +
+	"\x16GetReportStatusRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
 	"\treport_id\x18\x02 \x01(\tR\breportId\";\n" +
 	"\x17GetReportStatusResponse\x12 \n" +
-	"\x03job\x18\x01 \x01(\v2\x0e.tax.v1.TaxJobR\x03job\"_\n" +
-	"\x12ListReportsRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x14\n" +
+	"\x03job\x18\x01 \x01(\v2\x0e.tax.v1.TaxJobR\x03job\"[\n" +
+	"\x12ListReportsRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x03 \x01(\x05R\x06offset\"O\n" +
 	"\x13ListReportsResponse\x12\"\n" +

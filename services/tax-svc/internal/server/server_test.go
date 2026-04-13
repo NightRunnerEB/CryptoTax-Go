@@ -16,7 +16,7 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/mocks"
 )
 
-func TestTaxServer_UpsertTaxProfile_MissingTenantHeader(t *testing.T) {
+func TestTaxServer_UpsertTaxProfile_MissingUserHeader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -48,15 +48,15 @@ func TestTaxServer_UpsertTaxProfile_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	profileUC := mocks.NewMockTaxProfileUseCase(ctrl)
 	jobUC := mocks.NewMockTaxJobUseCase(ctrl)
 	srv := NewTaxServer(profileUC, jobUC)
-	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerTenantID, tenantID.String()))
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerUserID, userID.String()))
 
 	profileUC.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, got domain.TaxProfile) error {
-		if got.TenantID != tenantID {
-			t.Fatalf("tenant mismatch: got %s want %s", got.TenantID, tenantID)
+		if got.UserID != userID {
+			t.Fatalf("user mismatch: got %s want %s", got.UserID, userID)
 		}
 		if got.Timezone != "Europe/Moscow" {
 			t.Fatalf("timezone mismatch: %q", got.Timezone)
@@ -70,8 +70,8 @@ func TestTaxServer_UpsertTaxProfile_Success(t *testing.T) {
 		return nil
 	}).Times(1)
 
-	profileUC.EXPECT().Get(gomock.Any(), tenantID).Return(domain.TaxProfile{
-		TenantID:           tenantID,
+	profileUC.EXPECT().Get(gomock.Any(), userID).Return(domain.TaxProfile{
+		UserID:             userID,
 		INN:                "123456789012",
 		LastName:           "Petrov",
 		FirstName:          "Ivan",
@@ -93,7 +93,7 @@ func TestTaxServer_UpsertTaxProfile_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpsertTaxProfile() unexpected error: %v", err)
 	}
-	if resp.GetProfile() == nil || resp.GetProfile().GetTenantId() != tenantID.String() {
+	if resp.GetProfile() == nil || resp.GetProfile().GetUserId() != userID.String() {
 		t.Fatalf("unexpected profile response: %+v", resp.GetProfile())
 	}
 }
@@ -108,7 +108,7 @@ func TestTaxServer_StartReport_InvalidPolicy(t *testing.T) {
 	)
 
 	_, err := srv.StartReport(context.Background(), &taxv1.StartReportRequest{
-		TenantId: uuid.New().String(),
+		UserId: uuid.New().String(),
 		Params: &taxv1.StartReportParams{
 			TaxYear: 2025,
 			TaxPolicy: &taxv1.TaxPolicy{
@@ -127,13 +127,13 @@ func TestTaxServer_StartReport_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobID := uuid.New()
 	jobUC := mocks.NewMockTaxJobUseCase(ctrl)
 	srv := NewTaxServer(mocks.NewMockTaxProfileUseCase(ctrl), jobUC)
-	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerTenantID, tenantID.String()))
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerUserID, userID.String()))
 
-	jobUC.EXPECT().Enqueue(gomock.Any(), tenantID, 2025, domain.TaxPolicy{
+	jobUC.EXPECT().Enqueue(gomock.Any(), userID, 2025, domain.TaxPolicy{
 		TreatCryptoCryptoAsDisposal: true,
 		CostBasisMethod:             domain.FIFO,
 		Jurisdiction:                domain.JurisdictionRU,
@@ -167,7 +167,7 @@ func TestTaxServer_GetReportStatus_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobID := uuid.New()
 	auditURL := "https://minio.local/audit"
 	startedAt := time.Now().UTC().Add(-time.Minute)
@@ -175,11 +175,11 @@ func TestTaxServer_GetReportStatus_Success(t *testing.T) {
 
 	jobUC := mocks.NewMockTaxJobUseCase(ctrl)
 	srv := NewTaxServer(mocks.NewMockTaxProfileUseCase(ctrl), jobUC)
-	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerTenantID, tenantID.String()))
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerUserID, userID.String()))
 
-	jobUC.EXPECT().GetStatus(gomock.Any(), tenantID, jobID).Return(domain.TaxJob{
+	jobUC.EXPECT().GetStatus(gomock.Any(), userID, jobID).Return(domain.TaxJob{
 		ID:             jobID,
-		TenantID:       tenantID,
+		UserID:         userID,
 		TaxYear:        2025,
 		Status:         domain.JobSuccess,
 		PolicySnapshot: domain.TaxPolicy{Jurisdiction: domain.JurisdictionRU, CostBasisMethod: domain.FIFO},
@@ -203,7 +203,7 @@ func TestTaxServer_GetReportStatus_Success(t *testing.T) {
 	}
 }
 
-func TestTaxServer_ListReports_MissingTenantHeader(t *testing.T) {
+func TestTaxServer_ListReports_MissingUserHeader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 

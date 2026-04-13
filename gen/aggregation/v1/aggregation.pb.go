@@ -27,7 +27,7 @@ const (
 type AggregatedTx struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	TxId           string                 `protobuf:"bytes,1,opt,name=tx_id,json=txId,proto3" json:"tx_id,omitempty"`
-	TenantId       string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId         string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Source         string                 `protobuf:"bytes,4,opt,name=source,proto3" json:"source,omitempty"`
 	ImportId       string                 `protobuf:"bytes,5,opt,name=import_id,json=importId,proto3" json:"import_id,omitempty"`
 	TimeUtc        *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=time_utc,json=timeUtc,proto3" json:"time_utc,omitempty"`
@@ -83,9 +83,9 @@ func (x *AggregatedTx) GetTxId() string {
 	return ""
 }
 
-func (x *AggregatedTx) GetTenantId() string {
+func (x *AggregatedTx) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -190,7 +190,7 @@ func (x *AggregatedTx) GetTxFingerprint() string {
 
 type ListTransactionsByImportRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	ImportId      string                 `protobuf:"bytes,2,opt,name=import_id,json=importId,proto3" json:"import_id,omitempty"`
 	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	Offset        int32                  `protobuf:"varint,4,opt,name=offset,proto3" json:"offset,omitempty"`
@@ -228,9 +228,9 @@ func (*ListTransactionsByImportRequest) Descriptor() ([]byte, []int) {
 	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ListTransactionsByImportRequest) GetTenantId() string {
+func (x *ListTransactionsByImportRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -309,12 +309,12 @@ func (x *ListTransactionsByImportResponse) GetTotal() int64 {
 }
 
 type ListTransactionsByRangeRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	TenantId string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	FromUtc  *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=from_utc,json=fromUtc,proto3" json:"from_utc,omitempty"`
-	ToUtc    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=to_utc,json=toUtc,proto3" json:"to_utc,omitempty"`
-	Limit    int32                  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
-	Offset   int32                  `protobuf:"varint,5,opt,name=offset,proto3" json:"offset,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	UserId  string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	FromUtc *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=from_utc,json=fromUtc,proto3" json:"from_utc,omitempty"`
+	ToUtc   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=to_utc,json=toUtc,proto3" json:"to_utc,omitempty"`
+	Limit   int32                  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset  int32                  `protobuf:"varint,5,opt,name=offset,proto3" json:"offset,omitempty"`
 	// Optional fiat override used by tax-svc.
 	// When set, aggregation-svc re-valuates legs to this fiat on the fly
 	// and does not mutate stored read-model data.
@@ -353,9 +353,9 @@ func (*ListTransactionsByRangeRequest) Descriptor() ([]byte, []int) {
 	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *ListTransactionsByRangeRequest) GetTenantId() string {
+func (x *ListTransactionsByRangeRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -447,29 +447,29 @@ func (x *ListTransactionsByRangeResponse) GetTotal() int64 {
 	return 0
 }
 
-type TenantSettings struct {
+type UserSettings struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	FiatCurrency  string                 `protobuf:"bytes,2,opt,name=fiat_currency,json=fiatCurrency,proto3" json:"fiat_currency,omitempty"`
 	Timezone      string                 `protobuf:"bytes,3,opt,name=timezone,proto3" json:"timezone,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TenantSettings) Reset() {
-	*x = TenantSettings{}
+func (x *UserSettings) Reset() {
+	*x = UserSettings{}
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TenantSettings) String() string {
+func (x *UserSettings) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TenantSettings) ProtoMessage() {}
+func (*UserSettings) ProtoMessage() {}
 
-func (x *TenantSettings) ProtoReflect() protoreflect.Message {
+func (x *UserSettings) ProtoReflect() protoreflect.Message {
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -481,53 +481,53 @@ func (x *TenantSettings) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TenantSettings.ProtoReflect.Descriptor instead.
-func (*TenantSettings) Descriptor() ([]byte, []int) {
+// Deprecated: Use UserSettings.ProtoReflect.Descriptor instead.
+func (*UserSettings) Descriptor() ([]byte, []int) {
 	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *TenantSettings) GetTenantId() string {
+func (x *UserSettings) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
 
-func (x *TenantSettings) GetFiatCurrency() string {
+func (x *UserSettings) GetFiatCurrency() string {
 	if x != nil {
 		return x.FiatCurrency
 	}
 	return ""
 }
 
-func (x *TenantSettings) GetTimezone() string {
+func (x *UserSettings) GetTimezone() string {
 	if x != nil {
 		return x.Timezone
 	}
 	return ""
 }
 
-type GetTenantSettingsRequest struct {
+type GetUserSettingsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetTenantSettingsRequest) Reset() {
-	*x = GetTenantSettingsRequest{}
+func (x *GetUserSettingsRequest) Reset() {
+	*x = GetUserSettingsRequest{}
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetTenantSettingsRequest) String() string {
+func (x *GetUserSettingsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetTenantSettingsRequest) ProtoMessage() {}
+func (*GetUserSettingsRequest) ProtoMessage() {}
 
-func (x *GetTenantSettingsRequest) ProtoReflect() protoreflect.Message {
+func (x *GetUserSettingsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -539,39 +539,39 @@ func (x *GetTenantSettingsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetTenantSettingsRequest.ProtoReflect.Descriptor instead.
-func (*GetTenantSettingsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetUserSettingsRequest.ProtoReflect.Descriptor instead.
+func (*GetUserSettingsRequest) Descriptor() ([]byte, []int) {
 	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *GetTenantSettingsRequest) GetTenantId() string {
+func (x *GetUserSettingsRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
 
-type GetTenantSettingsResponse struct {
+type GetUserSettingsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Settings      *TenantSettings        `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	Settings      *UserSettings          `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetTenantSettingsResponse) Reset() {
-	*x = GetTenantSettingsResponse{}
+func (x *GetUserSettingsResponse) Reset() {
+	*x = GetUserSettingsResponse{}
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetTenantSettingsResponse) String() string {
+func (x *GetUserSettingsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetTenantSettingsResponse) ProtoMessage() {}
+func (*GetUserSettingsResponse) ProtoMessage() {}
 
-func (x *GetTenantSettingsResponse) ProtoReflect() protoreflect.Message {
+func (x *GetUserSettingsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -583,41 +583,41 @@ func (x *GetTenantSettingsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetTenantSettingsResponse.ProtoReflect.Descriptor instead.
-func (*GetTenantSettingsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetUserSettingsResponse.ProtoReflect.Descriptor instead.
+func (*GetUserSettingsResponse) Descriptor() ([]byte, []int) {
 	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *GetTenantSettingsResponse) GetSettings() *TenantSettings {
+func (x *GetUserSettingsResponse) GetSettings() *UserSettings {
 	if x != nil {
 		return x.Settings
 	}
 	return nil
 }
 
-type UpsertTenantSettingsRequest struct {
+type UpsertUserSettingsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	FiatCurrency  string                 `protobuf:"bytes,2,opt,name=fiat_currency,json=fiatCurrency,proto3" json:"fiat_currency,omitempty"`
 	Timezone      string                 `protobuf:"bytes,3,opt,name=timezone,proto3" json:"timezone,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpsertTenantSettingsRequest) Reset() {
-	*x = UpsertTenantSettingsRequest{}
+func (x *UpsertUserSettingsRequest) Reset() {
+	*x = UpsertUserSettingsRequest{}
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpsertTenantSettingsRequest) String() string {
+func (x *UpsertUserSettingsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpsertTenantSettingsRequest) ProtoMessage() {}
+func (*UpsertUserSettingsRequest) ProtoMessage() {}
 
-func (x *UpsertTenantSettingsRequest) ProtoReflect() protoreflect.Message {
+func (x *UpsertUserSettingsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -629,53 +629,53 @@ func (x *UpsertTenantSettingsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpsertTenantSettingsRequest.ProtoReflect.Descriptor instead.
-func (*UpsertTenantSettingsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpsertUserSettingsRequest.ProtoReflect.Descriptor instead.
+func (*UpsertUserSettingsRequest) Descriptor() ([]byte, []int) {
 	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *UpsertTenantSettingsRequest) GetTenantId() string {
+func (x *UpsertUserSettingsRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
 
-func (x *UpsertTenantSettingsRequest) GetFiatCurrency() string {
+func (x *UpsertUserSettingsRequest) GetFiatCurrency() string {
 	if x != nil {
 		return x.FiatCurrency
 	}
 	return ""
 }
 
-func (x *UpsertTenantSettingsRequest) GetTimezone() string {
+func (x *UpsertUserSettingsRequest) GetTimezone() string {
 	if x != nil {
 		return x.Timezone
 	}
 	return ""
 }
 
-type UpsertTenantSettingsResponse struct {
+type UpsertUserSettingsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Settings      *TenantSettings        `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	Settings      *UserSettings          `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpsertTenantSettingsResponse) Reset() {
-	*x = UpsertTenantSettingsResponse{}
+func (x *UpsertUserSettingsResponse) Reset() {
+	*x = UpsertUserSettingsResponse{}
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpsertTenantSettingsResponse) String() string {
+func (x *UpsertUserSettingsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpsertTenantSettingsResponse) ProtoMessage() {}
+func (*UpsertUserSettingsResponse) ProtoMessage() {}
 
-func (x *UpsertTenantSettingsResponse) ProtoReflect() protoreflect.Message {
+func (x *UpsertUserSettingsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -687,12 +687,12 @@ func (x *UpsertTenantSettingsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpsertTenantSettingsResponse.ProtoReflect.Descriptor instead.
-func (*UpsertTenantSettingsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpsertUserSettingsResponse.ProtoReflect.Descriptor instead.
+func (*UpsertUserSettingsResponse) Descriptor() ([]byte, []int) {
 	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *UpsertTenantSettingsResponse) GetSettings() *TenantSettings {
+func (x *UpsertUserSettingsResponse) GetSettings() *UserSettings {
 	if x != nil {
 		return x.Settings
 	}
@@ -835,10 +835,10 @@ var File_aggregation_v1_aggregation_proto protoreflect.FileDescriptor
 
 const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"\n" +
-	" aggregation/v1/aggregation.proto\x12\x0eaggregation.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x93\x05\n" +
+	" aggregation/v1/aggregation.proto\x12\x0eaggregation.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8f\x05\n" +
 	"\fAggregatedTx\x12\x13\n" +
-	"\x05tx_id\x18\x01 \x01(\tR\x04txId\x12\x1b\n" +
-	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12\x16\n" +
+	"\x05tx_id\x18\x01 \x01(\tR\x04txId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x16\n" +
 	"\x06source\x18\x04 \x01(\tR\x06source\x12\x1b\n" +
 	"\timport_id\x18\x05 \x01(\tR\bimportId\x125\n" +
 	"\btime_utc\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\atimeUtc\x12\x12\n" +
@@ -859,17 +859,17 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"\b_tx_hashB\x12\n" +
 	"\x10_contract_symbolB\x0e\n" +
 	"\f_position_idB\v\n" +
-	"\t_order_id\"\x89\x01\n" +
-	"\x1fListTransactionsByImportRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
+	"\t_order_id\"\x85\x01\n" +
+	"\x1fListTransactionsByImportRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
 	"\timport_id\x18\x02 \x01(\tR\bimportId\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x04 \x01(\x05R\x06offset\"z\n" +
 	" ListTransactionsByImportResponse\x12@\n" +
 	"\ftransactions\x18\x01 \x03(\v2\x1c.aggregation.v1.AggregatedTxR\ftransactions\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\"\xf6\x01\n" +
-	"\x1eListTransactionsByRangeRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x125\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"\xf2\x01\n" +
+	"\x1eListTransactionsByRangeRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x125\n" +
 	"\bfrom_utc\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\afromUtc\x121\n" +
 	"\x06to_utc\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x05toUtc\x12\x14\n" +
 	"\x05limit\x18\x04 \x01(\x05R\x05limit\x12\x16\n" +
@@ -878,21 +878,21 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"targetFiat\"y\n" +
 	"\x1fListTransactionsByRangeResponse\x12@\n" +
 	"\ftransactions\x18\x01 \x03(\v2\x1c.aggregation.v1.AggregatedTxR\ftransactions\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\"n\n" +
-	"\x0eTenantSettings\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12#\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"h\n" +
+	"\fUserSettings\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12#\n" +
 	"\rfiat_currency\x18\x02 \x01(\tR\ffiatCurrency\x12\x1a\n" +
-	"\btimezone\x18\x03 \x01(\tR\btimezone\"7\n" +
-	"\x18GetTenantSettingsRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"W\n" +
-	"\x19GetTenantSettingsResponse\x12:\n" +
-	"\bsettings\x18\x01 \x01(\v2\x1e.aggregation.v1.TenantSettingsR\bsettings\"{\n" +
-	"\x1bUpsertTenantSettingsRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12#\n" +
+	"\btimezone\x18\x03 \x01(\tR\btimezone\"1\n" +
+	"\x16GetUserSettingsRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"S\n" +
+	"\x17GetUserSettingsResponse\x128\n" +
+	"\bsettings\x18\x01 \x01(\v2\x1c.aggregation.v1.UserSettingsR\bsettings\"u\n" +
+	"\x19UpsertUserSettingsRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12#\n" +
 	"\rfiat_currency\x18\x02 \x01(\tR\ffiatCurrency\x12\x1a\n" +
-	"\btimezone\x18\x03 \x01(\tR\btimezone\"Z\n" +
-	"\x1cUpsertTenantSettingsResponse\x12:\n" +
-	"\bsettings\x18\x01 \x01(\v2\x1e.aggregation.v1.TenantSettingsR\bsettings\"N\n" +
+	"\btimezone\x18\x03 \x01(\tR\btimezone\"V\n" +
+	"\x1aUpsertUserSettingsResponse\x128\n" +
+	"\bsettings\x18\x01 \x01(\v2\x1c.aggregation.v1.UserSettingsR\bsettings\"N\n" +
 	"\x15SupportedFiatCurrency\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\"$\n" +
@@ -900,12 +900,12 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"#ListSupportedFiatCurrenciesResponse\x12E\n" +
 	"\n" +
 	"currencies\x18\x01 \x03(\v2%.aggregation.v1.SupportedFiatCurrencyR\n" +
-	"currencies2\x8d\x06\n" +
+	"currencies2\xfd\x05\n" +
 	"\vAggregation\x12\xa8\x01\n" +
-	"\x18ListTransactionsByImport\x12/.aggregation.v1.ListTransactionsByImportRequest\x1a0.aggregation.v1.ListTransactionsByImportResponse\")\x82\xd3\xe4\x93\x02#\x12!/imports/{import_id}/transactions\x12\xa8\x01\n" +
-	"\x17ListTransactionsByRange\x12..aggregation.v1.ListTransactionsByRangeRequest\x1a/.aggregation.v1.ListTransactionsByRangeResponse\",\x82\xd3\xe4\x93\x02&\x12$/v1/tenants/{tenant_id}/transactions\x12{\n" +
-	"\x11GetTenantSettings\x12(.aggregation.v1.GetTenantSettingsRequest\x1a).aggregation.v1.GetTenantSettingsResponse\"\x11\x82\xd3\xe4\x93\x02\v\x12\t/settings\x12\x87\x01\n" +
-	"\x14UpsertTenantSettings\x12+.aggregation.v1.UpsertTenantSettingsRequest\x1a,.aggregation.v1.UpsertTenantSettingsResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\x1a\t/settings\x12\xa0\x01\n" +
+	"\x18ListTransactionsByImport\x12/.aggregation.v1.ListTransactionsByImportRequest\x1a0.aggregation.v1.ListTransactionsByImportResponse\")\x82\xd3\xe4\x93\x02#\x12!/imports/{import_id}/transactions\x12\xa4\x01\n" +
+	"\x17ListTransactionsByRange\x12..aggregation.v1.ListTransactionsByRangeRequest\x1a/.aggregation.v1.ListTransactionsByRangeResponse\"(\x82\xd3\xe4\x93\x02\"\x12 /v1/users/{user_id}/transactions\x12u\n" +
+	"\x0fGetUserSettings\x12&.aggregation.v1.GetUserSettingsRequest\x1a'.aggregation.v1.GetUserSettingsResponse\"\x11\x82\xd3\xe4\x93\x02\v\x12\t/settings\x12\x81\x01\n" +
+	"\x12UpsertUserSettings\x12).aggregation.v1.UpsertUserSettingsRequest\x1a*.aggregation.v1.UpsertUserSettingsResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\x1a\t/settings\x12\xa0\x01\n" +
 	"\x1bListSupportedFiatCurrencies\x122.aggregation.v1.ListSupportedFiatCurrenciesRequest\x1a3.aggregation.v1.ListSupportedFiatCurrenciesResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/fiat-currenciesBFZDgithub.com/NightRunner/CryptoTax-Go/gen/aggregation/v1;aggregationv1b\x06proto3"
 
 var (
@@ -927,11 +927,11 @@ var file_aggregation_v1_aggregation_proto_goTypes = []any{
 	(*ListTransactionsByImportResponse)(nil),    // 2: aggregation.v1.ListTransactionsByImportResponse
 	(*ListTransactionsByRangeRequest)(nil),      // 3: aggregation.v1.ListTransactionsByRangeRequest
 	(*ListTransactionsByRangeResponse)(nil),     // 4: aggregation.v1.ListTransactionsByRangeResponse
-	(*TenantSettings)(nil),                      // 5: aggregation.v1.TenantSettings
-	(*GetTenantSettingsRequest)(nil),            // 6: aggregation.v1.GetTenantSettingsRequest
-	(*GetTenantSettingsResponse)(nil),           // 7: aggregation.v1.GetTenantSettingsResponse
-	(*UpsertTenantSettingsRequest)(nil),         // 8: aggregation.v1.UpsertTenantSettingsRequest
-	(*UpsertTenantSettingsResponse)(nil),        // 9: aggregation.v1.UpsertTenantSettingsResponse
+	(*UserSettings)(nil),                        // 5: aggregation.v1.UserSettings
+	(*GetUserSettingsRequest)(nil),              // 6: aggregation.v1.GetUserSettingsRequest
+	(*GetUserSettingsResponse)(nil),             // 7: aggregation.v1.GetUserSettingsResponse
+	(*UpsertUserSettingsRequest)(nil),           // 8: aggregation.v1.UpsertUserSettingsRequest
+	(*UpsertUserSettingsResponse)(nil),          // 9: aggregation.v1.UpsertUserSettingsResponse
 	(*SupportedFiatCurrency)(nil),               // 10: aggregation.v1.SupportedFiatCurrency
 	(*ListSupportedFiatCurrenciesRequest)(nil),  // 11: aggregation.v1.ListSupportedFiatCurrenciesRequest
 	(*ListSupportedFiatCurrenciesResponse)(nil), // 12: aggregation.v1.ListSupportedFiatCurrenciesResponse
@@ -947,18 +947,18 @@ var file_aggregation_v1_aggregation_proto_depIdxs = []int32{
 	13, // 5: aggregation.v1.ListTransactionsByRangeRequest.from_utc:type_name -> google.protobuf.Timestamp
 	13, // 6: aggregation.v1.ListTransactionsByRangeRequest.to_utc:type_name -> google.protobuf.Timestamp
 	0,  // 7: aggregation.v1.ListTransactionsByRangeResponse.transactions:type_name -> aggregation.v1.AggregatedTx
-	5,  // 8: aggregation.v1.GetTenantSettingsResponse.settings:type_name -> aggregation.v1.TenantSettings
-	5,  // 9: aggregation.v1.UpsertTenantSettingsResponse.settings:type_name -> aggregation.v1.TenantSettings
+	5,  // 8: aggregation.v1.GetUserSettingsResponse.settings:type_name -> aggregation.v1.UserSettings
+	5,  // 9: aggregation.v1.UpsertUserSettingsResponse.settings:type_name -> aggregation.v1.UserSettings
 	10, // 10: aggregation.v1.ListSupportedFiatCurrenciesResponse.currencies:type_name -> aggregation.v1.SupportedFiatCurrency
 	1,  // 11: aggregation.v1.Aggregation.ListTransactionsByImport:input_type -> aggregation.v1.ListTransactionsByImportRequest
 	3,  // 12: aggregation.v1.Aggregation.ListTransactionsByRange:input_type -> aggregation.v1.ListTransactionsByRangeRequest
-	6,  // 13: aggregation.v1.Aggregation.GetTenantSettings:input_type -> aggregation.v1.GetTenantSettingsRequest
-	8,  // 14: aggregation.v1.Aggregation.UpsertTenantSettings:input_type -> aggregation.v1.UpsertTenantSettingsRequest
+	6,  // 13: aggregation.v1.Aggregation.GetUserSettings:input_type -> aggregation.v1.GetUserSettingsRequest
+	8,  // 14: aggregation.v1.Aggregation.UpsertUserSettings:input_type -> aggregation.v1.UpsertUserSettingsRequest
 	11, // 15: aggregation.v1.Aggregation.ListSupportedFiatCurrencies:input_type -> aggregation.v1.ListSupportedFiatCurrenciesRequest
 	2,  // 16: aggregation.v1.Aggregation.ListTransactionsByImport:output_type -> aggregation.v1.ListTransactionsByImportResponse
 	4,  // 17: aggregation.v1.Aggregation.ListTransactionsByRange:output_type -> aggregation.v1.ListTransactionsByRangeResponse
-	7,  // 18: aggregation.v1.Aggregation.GetTenantSettings:output_type -> aggregation.v1.GetTenantSettingsResponse
-	9,  // 19: aggregation.v1.Aggregation.UpsertTenantSettings:output_type -> aggregation.v1.UpsertTenantSettingsResponse
+	7,  // 18: aggregation.v1.Aggregation.GetUserSettings:output_type -> aggregation.v1.GetUserSettingsResponse
+	9,  // 19: aggregation.v1.Aggregation.UpsertUserSettings:output_type -> aggregation.v1.UpsertUserSettingsResponse
 	12, // 20: aggregation.v1.Aggregation.ListSupportedFiatCurrencies:output_type -> aggregation.v1.ListSupportedFiatCurrenciesResponse
 	16, // [16:21] is the sub-list for method output_type
 	11, // [11:16] is the sub-list for method input_type

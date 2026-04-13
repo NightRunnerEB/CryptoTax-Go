@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
+
 	db "github.com/NightRunner/CryptoTax-Go/services/report-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain/error"
-	"github.com/google/uuid"
 )
 
 type renderUC struct {
@@ -51,10 +52,10 @@ func NewRenderUC(
 }
 
 func (u *renderUC) ProcessRenderRequested(ctx context.Context, event domain.ReportRenderRequestedEvent) error {
-	if event.EventID == uuid.Nil || event.ReportID == uuid.Nil || event.TenantID == uuid.Nil {
+	if event.EventID == uuid.Nil || event.ReportID == uuid.Nil || event.UserID == uuid.Nil {
 		return apperr.InvalidArgument("invalid render request event", nil, apperr.FieldViolation{
 			Field:       "event",
-			Description: "event_id/report_id/tenant_id are required",
+			Description: "event_id/report_id/user_id are required",
 		})
 	}
 	if strings.TrimSpace(event.DatasetObjectKey) == "" {
@@ -74,7 +75,7 @@ func (u *renderUC) ProcessRenderRequested(ctx context.Context, event domain.Repo
 
 	if err := u.renderRepo.UpsertProcessing(ctx, domain.RenderJob{
 		ReportID:         event.ReportID,
-		TenantID:         event.TenantID,
+		UserID:           event.UserID,
 		Status:           domain.RenderJobStatusProcessing,
 		DatasetObjectKey: event.DatasetObjectKey,
 	}); err != nil {
@@ -94,7 +95,7 @@ func (u *renderUC) ProcessRenderRequested(ctx context.Context, event domain.Repo
 		return u.persistFailed(ctx, event.ReportID, err.Error())
 	}
 
-	pdfObjectKey := fmt.Sprintf("reports/%s/%s.pdf", event.TenantID.String(), event.ReportID.String())
+	pdfObjectKey := fmt.Sprintf("reports/%s/%s.pdf", event.UserID.String(), event.ReportID.String())
 	if err := u.storage.UploadPDF(ctx, pdfObjectKey, pdfData); err != nil {
 		return u.persistFailed(ctx, event.ReportID, err.Error())
 	}

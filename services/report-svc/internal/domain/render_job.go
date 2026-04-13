@@ -16,7 +16,7 @@ const (
 
 type RenderJob struct {
 	ReportID         uuid.UUID       `json:"report_id"`
-	TenantID         uuid.UUID       `json:"tenant_id"`
+	UserID           uuid.UUID       `json:"user_id"`
 	Status           RenderJobStatus `json:"status"`
 	StartedAt        time.Time       `json:"started_at"`
 	CompletedAt      *time.Time      `json:"completed_at,omitempty"`

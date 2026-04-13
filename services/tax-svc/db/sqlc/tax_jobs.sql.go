@@ -34,7 +34,7 @@ FROM next_job
 WHERE j.id = next_job.id
 RETURNING
   j.id,
-  j.tenant_id,
+  j.user_id,
   j.tax_year,
   j.policy_snapshot,
   j.status,
@@ -55,7 +55,7 @@ func (q *Queries) ClaimNextQueuedTaxJob(ctx context.Context) (TaxJob, error) {
 	var i TaxJob
 	err := row.Scan(
 		&i.ID,
-		&i.TenantID,
+		&i.UserID,
 		&i.TaxYear,
 		&i.PolicySnapshot,
 		&i.Status,
@@ -76,11 +76,11 @@ func (q *Queries) ClaimNextQueuedTaxJob(ctx context.Context) (TaxJob, error) {
 const countTaxJobs = `-- name: CountTaxJobs :one
 SELECT count(*)
 FROM tax_jobs
-WHERE tenant_id = $1
+WHERE user_id = $1
 `
 
-func (q *Queries) CountTaxJobs(ctx context.Context, tenantID uuid.UUID) (int64, error) {
-	row := q.db.QueryRow(ctx, countTaxJobs, tenantID)
+func (q *Queries) CountTaxJobs(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countTaxJobs, userID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -89,7 +89,7 @@ func (q *Queries) CountTaxJobs(ctx context.Context, tenantID uuid.UUID) (int64, 
 const createTaxJob = `-- name: CreateTaxJob :one
 INSERT INTO tax_jobs (
   id,
-  tenant_id,
+  user_id,
   tax_year,
   policy_snapshot,
   status,
@@ -99,7 +99,7 @@ INSERT INTO tax_jobs (
 VALUES ($1, $2, $3, $4, $5, $6, now())
 RETURNING
   id,
-  tenant_id,
+  user_id,
   tax_year,
   policy_snapshot,
   status,
@@ -117,7 +117,7 @@ RETURNING
 
 type CreateTaxJobParams struct {
 	ID             uuid.UUID `json:"id"`
-	TenantID       uuid.UUID `json:"tenantId"`
+	UserID         uuid.UUID `json:"userId"`
 	TaxYear        int32     `json:"taxYear"`
 	PolicySnapshot []byte    `json:"policySnapshot"`
 	Status         string    `json:"status"`
@@ -127,7 +127,7 @@ type CreateTaxJobParams struct {
 func (q *Queries) CreateTaxJob(ctx context.Context, arg CreateTaxJobParams) (TaxJob, error) {
 	row := q.db.QueryRow(ctx, createTaxJob,
 		arg.ID,
-		arg.TenantID,
+		arg.UserID,
 		arg.TaxYear,
 		arg.PolicySnapshot,
 		arg.Status,
@@ -136,7 +136,7 @@ func (q *Queries) CreateTaxJob(ctx context.Context, arg CreateTaxJobParams) (Tax
 	var i TaxJob
 	err := row.Scan(
 		&i.ID,
-		&i.TenantID,
+		&i.UserID,
 		&i.TaxYear,
 		&i.PolicySnapshot,
 		&i.Status,
@@ -157,7 +157,7 @@ func (q *Queries) CreateTaxJob(ctx context.Context, arg CreateTaxJobParams) (Tax
 const getTaxJob = `-- name: GetTaxJob :one
 SELECT
   id,
-  tenant_id,
+  user_id,
   tax_year,
   policy_snapshot,
   status,
@@ -172,20 +172,20 @@ SELECT
   last_error_code,
   last_error_message
 FROM tax_jobs
-WHERE tenant_id = $1 AND id = $2
+WHERE user_id = $1 AND id = $2
 `
 
 type GetTaxJobParams struct {
-	TenantID uuid.UUID `json:"tenantId"`
-	ID       uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"userId"`
+	ID     uuid.UUID `json:"id"`
 }
 
 func (q *Queries) GetTaxJob(ctx context.Context, arg GetTaxJobParams) (TaxJob, error) {
-	row := q.db.QueryRow(ctx, getTaxJob, arg.TenantID, arg.ID)
+	row := q.db.QueryRow(ctx, getTaxJob, arg.UserID, arg.ID)
 	var i TaxJob
 	err := row.Scan(
 		&i.ID,
-		&i.TenantID,
+		&i.UserID,
 		&i.TaxYear,
 		&i.PolicySnapshot,
 		&i.Status,
@@ -206,7 +206,7 @@ func (q *Queries) GetTaxJob(ctx context.Context, arg GetTaxJobParams) (TaxJob, e
 const listTaxJobs = `-- name: ListTaxJobs :many
 SELECT
   id,
-  tenant_id,
+  user_id,
   tax_year,
   policy_snapshot,
   status,
@@ -221,19 +221,19 @@ SELECT
   last_error_code,
   last_error_message
 FROM tax_jobs
-WHERE tenant_id = $1
+WHERE user_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
 
 type ListTaxJobsParams struct {
-	TenantID uuid.UUID `json:"tenantId"`
-	Limit    int32     `json:"limit"`
-	Offset   int32     `json:"offset"`
+	UserID uuid.UUID `json:"userId"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
 }
 
 func (q *Queries) ListTaxJobs(ctx context.Context, arg ListTaxJobsParams) ([]TaxJob, error) {
-	rows, err := q.db.Query(ctx, listTaxJobs, arg.TenantID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listTaxJobs, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +243,7 @@ func (q *Queries) ListTaxJobs(ctx context.Context, arg ListTaxJobsParams) ([]Tax
 		var i TaxJob
 		if err := rows.Scan(
 			&i.ID,
-			&i.TenantID,
+			&i.UserID,
 			&i.TaxYear,
 			&i.PolicySnapshot,
 			&i.Status,

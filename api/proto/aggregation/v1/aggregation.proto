@@ -9,7 +9,7 @@ import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 // Aggregation provides read-model APIs for aggregated transactions
-// and tenant-level aggregation settings.
+// and user-level aggregation settings.
 service Aggregation {
   // ListTransactionsByImport returns paginated aggregated transactions
   // for a specific authenticated user import.
@@ -21,25 +21,25 @@ service Aggregation {
   }
 
   // ListTransactionsByRange returns paginated aggregated transactions
-  // for a specific tenant and UTC time range [from_utc, to_utc).
+  // for a specific user and UTC time range [from_utc, to_utc).
   rpc ListTransactionsByRange(ListTransactionsByRangeRequest)
   returns (ListTransactionsByRangeResponse) {
     option (google.api.http) = {
-      get: "/v1/tenants/{tenant_id}/transactions"
+      get: "/v1/users/{user_id}/transactions"
     };
   }
 
-  // GetTenantSettings returns aggregation settings for the authenticated user.
-  rpc GetTenantSettings(GetTenantSettingsRequest)
-  returns (GetTenantSettingsResponse) {
+  // GetUserSettings returns aggregation settings for the authenticated user.
+  rpc GetUserSettings(GetUserSettingsRequest)
+  returns (GetUserSettingsResponse) {
     option (google.api.http) = {
       get: "/settings"
     };
   }
 
-  // UpsertTenantSettings creates or updates aggregation settings for the authenticated user.
-  rpc UpsertTenantSettings(UpsertTenantSettingsRequest)
-  returns (UpsertTenantSettingsResponse) {
+  // UpsertUserSettings creates or updates aggregation settings for the authenticated user.
+  rpc UpsertUserSettings(UpsertUserSettingsRequest)
+  returns (UpsertUserSettingsResponse) {
     option (google.api.http) = {
       put: "/settings"
       body: "*"
@@ -57,7 +57,7 @@ service Aggregation {
 
 message AggregatedTx {
   string                    tx_id           = 1;
-  string                    tenant_id       = 2;
+  string                    user_id       = 2;
   string                    source          = 4;
   string                    import_id       = 5;
   google.protobuf.Timestamp time_utc        = 6;
@@ -75,7 +75,7 @@ message AggregatedTx {
 }
 
 message ListTransactionsByImportRequest {
-  string tenant_id = 1;
+  string user_id = 1;
   string import_id = 2;
   int32  limit     = 3;
   int32  offset    = 4;
@@ -87,7 +87,7 @@ message ListTransactionsByImportResponse {
 }
 
 message ListTransactionsByRangeRequest {
-  string                    tenant_id = 1;
+  string                    user_id = 1;
   google.protobuf.Timestamp from_utc  = 2;
   google.protobuf.Timestamp to_utc    = 3;
   int32                     limit     = 4;
@@ -103,28 +103,28 @@ message ListTransactionsByRangeResponse {
   int64                 total        = 2;
 }
 
-message TenantSettings {
-  string tenant_id     = 1;
+message UserSettings {
+  string user_id     = 1;
   string fiat_currency = 2;
   string timezone      = 3;
 }
 
-message GetTenantSettingsRequest {
-  string tenant_id = 1;
+message GetUserSettingsRequest {
+  string user_id = 1;
 }
 
-message GetTenantSettingsResponse {
-  TenantSettings settings = 1;
+message GetUserSettingsResponse {
+  UserSettings settings = 1;
 }
 
-message UpsertTenantSettingsRequest {
-  string tenant_id     = 1;
+message UpsertUserSettingsRequest {
+  string user_id     = 1;
   string fiat_currency = 2;
   string timezone      = 3;
 }
 
-message UpsertTenantSettingsResponse {
-  TenantSettings settings = 1;
+message UpsertUserSettingsResponse {
+  UserSettings settings = 1;
 }
 
 message SupportedFiatCurrency {

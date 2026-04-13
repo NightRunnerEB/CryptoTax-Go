@@ -114,14 +114,14 @@ func Run(cfg *config.Config) {
 
 	txRepo := repository.NewAggregatedTransactionRepo(store)
 	importStateRepo := repository.NewImportStateRepo(store)
-	tenantSettingsRepo := repository.NewTenantSettingsRepo(store)
+	userSettingsRepo := repository.NewUserSettingsRepo(store)
 	lockManager := lock.NewRedisLockManager(redisClient)
 
-	settingsUC := usecase.NewTenantSettingsUC(tenantSettingsRepo)
+	settingsUC := usecase.NewUserSettingsUC(userSettingsRepo)
 	aggregationUC := usecase.NewAggregationUC(
 		txRepo,
 		importStateRepo,
-		tenantSettingsRepo,
+		userSettingsRepo,
 		ledgerClient,
 		priceClient,
 		lockManager,
@@ -183,7 +183,7 @@ func runGrpcServer(
 	statsHandler stats.Handler,
 	telemetryProviders *telemetry.Providers,
 	aggregationUC domain.AggregationUseCase,
-	settingsUC domain.TenantSettingsUseCase,
+	settingsUC domain.UserSettingsUseCase,
 ) {
 	log := logger.FromContext(ctx)
 	server := grpcserver.NewAggregationServer(aggregationUC, settingsUC)
@@ -298,7 +298,7 @@ func runGateway(
 
 func incomingHeaderMatcher(key string) (string, bool) {
 	switch strings.ToLower(key) {
-	case "authorization", "x-tenant-id", "x-user-id", "x-roles", "x-request-id":
+	case "authorization", "x-user-id", "x-role", "x-request-id":
 		return key, true
 	default:
 		return runtime.DefaultHeaderMatcher(key)

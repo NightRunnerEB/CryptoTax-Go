@@ -32,14 +32,14 @@ func startTestServer(
 	t *testing.T,
 	resolver domain.CoinIdResolver,
 	huc domain.HistoricalPriceUseCase,
-	tenantSymbolUC domain.TenantSymbolUseCase,
+	userSymbolUC domain.UserSymbolUseCase,
 ) (v1.PriceClient, func()) {
 	t.Helper()
 
 	lis := bufconn.Listen(bufSize)
 	baseLog := zap.NewNop()
 
-	server := grpcserver.NewPriceServer(resolver, huc, tenantSymbolUC)
+	server := grpcserver.NewPriceServer(resolver, huc, userSymbolUC)
 
 	grpcSrv := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -87,21 +87,21 @@ func TestSmoke_SupportedFiatUSD(t *testing.T) {
 	resolver := mocks.NewMockCoinIdResolver(ctrl)
 	resolver.EXPECT().Resolve("BTC").Return("bitcoin", nil).AnyTimes()
 
-	tenantSymbolUC := mocks.NewMockTenantSymbolUseCase(ctrl)
+	userSymbolUC := mocks.NewMockUserSymbolUseCase(ctrl)
 
 	huc := mocks.NewMockHistoricalPriceUseCase(ctrl)
 	huc.EXPECT().GetHistoricalPrices(gomock.Any(), "USD", gomock.Any()).
 		Return([]domain.Fiat{decimal.NewFromInt(100)}, nil).
 		Times(1)
 
-	client, cleanup := startTestServer(t, resolver, huc, tenantSymbolUC)
+	client, cleanup := startTestServer(t, resolver, huc, userSymbolUC)
 	defer cleanup()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	resp, err := client.ValuateTransactionsBatch(ctx, &v1.ValuateTransactionsRequest{
-		TenantId:     "550e8400-e29b-41d4-a716-446655440000",
+		UserId:       "550e8400-e29b-41d4-a716-446655440000",
 		Source:       "MEXC",
 		FiatCurrency: "USD",
 		Transactions: []*v1.TxToValuate{
@@ -133,21 +133,21 @@ func TestSmoke_UnsupportedFiatABC(t *testing.T) {
 	resolver := mocks.NewMockCoinIdResolver(ctrl)
 	resolver.EXPECT().Resolve("BTC").Return("bitcoin", nil).AnyTimes()
 
-	tenantSymbolUC := mocks.NewMockTenantSymbolUseCase(ctrl)
+	userSymbolUC := mocks.NewMockUserSymbolUseCase(ctrl)
 
 	huc := mocks.NewMockHistoricalPriceUseCase(ctrl)
 	huc.EXPECT().GetHistoricalPrices(gomock.Any(), "ABC", gomock.Any()).
 		Return(nil, apperr.UnsupportedFiat("unsupported fiat currency", "ABC")).
 		Times(1)
 
-	client, cleanup := startTestServer(t, resolver, huc, tenantSymbolUC)
+	client, cleanup := startTestServer(t, resolver, huc, userSymbolUC)
 	defer cleanup()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	_, err := client.ValuateTransactionsBatch(ctx, &v1.ValuateTransactionsRequest{
-		TenantId:     "550e8400-e29b-41d4-a716-446655440000",
+		UserId:       "550e8400-e29b-41d4-a716-446655440000",
 		Source:       "MEXC",
 		FiatCurrency: "ABC",
 		Transactions: []*v1.TxToValuate{

@@ -12,7 +12,7 @@ import (
 // CostBasisFiat is computed via RealizationLots (cost-basis allocations).
 type RealizationEvent struct {
 	ID         uuid.UUID
-	TenantID   uuid.UUID
+	UserID     uuid.UUID
 	OccurredAt time.Time
 
 	Asset string

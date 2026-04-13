@@ -12,37 +12,37 @@ import (
 func TestDecodeImportCompletedEvent(t *testing.T) {
 	t.Parallel()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 	eventID := uuid.New()
 
 	t.Run("envelope format", func(t *testing.T) {
 		t.Parallel()
-		body := []byte(`{"ImportCompleted":{"event_id":"` + eventID.String() + `","tenant_id":"` + tenantID.String() + `","import_id":"` + importID.String() + `"}}`)
+		body := []byte(`{"ImportCompleted":{"event_id":"` + eventID.String() + `","user_id":"` + userID.String() + `","import_id":"` + importID.String() + `"}}`)
 		event, err := decodeImportCompletedEvent(body)
 		if err != nil {
 			t.Fatalf("decodeImportCompletedEvent returned error: %v", err)
 		}
-		if event.TenantID != tenantID || event.ImportID != importID || event.EventId != eventID {
+		if event.UserID != userID || event.ImportID != importID || event.EventId != eventID {
 			t.Fatalf("unexpected event: %+v", event)
 		}
 	})
 
 	t.Run("flat format", func(t *testing.T) {
 		t.Parallel()
-		body := []byte(`{"event_id":"` + eventID.String() + `","tenant_id":"` + tenantID.String() + `","import_id":"` + importID.String() + `"}`)
+		body := []byte(`{"event_id":"` + eventID.String() + `","user_id":"` + userID.String() + `","import_id":"` + importID.String() + `"}`)
 		event, err := decodeImportCompletedEvent(body)
 		if err != nil {
 			t.Fatalf("decodeImportCompletedEvent returned error: %v", err)
 		}
-		if event.TenantID != tenantID || event.ImportID != importID || event.EventId != eventID {
+		if event.UserID != userID || event.ImportID != importID || event.EventId != eventID {
 			t.Fatalf("unexpected event: %+v", event)
 		}
 	})
 
 	t.Run("unsupported import event type", func(t *testing.T) {
 		t.Parallel()
-		body := []byte(`{"ImportCreated":{"event_id":"` + eventID.String() + `","tenant_id":"` + tenantID.String() + `","import_id":"` + importID.String() + `"}}`)
+		body := []byte(`{"ImportCreated":{"event_id":"` + eventID.String() + `","user_id":"` + userID.String() + `","import_id":"` + importID.String() + `"}}`)
 		_, err := decodeImportCompletedEvent(body)
 		if err == nil {
 			t.Fatal("expected error, got nil")
@@ -60,7 +60,7 @@ func TestShouldRequeue(t *testing.T) {
 	}{
 		{
 			name: "invalid argument does not requeue",
-			err:  apperr.InvalidArgument("bad payload", nil, apperr.FieldViolation{Field: "tenant_id", Description: "required"}),
+			err:  apperr.InvalidArgument("bad payload", nil, apperr.FieldViolation{Field: "user_id", Description: "required"}),
 			want: false,
 		},
 		{

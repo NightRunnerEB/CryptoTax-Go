@@ -17,8 +17,8 @@ type FiatLegError struct {
 }
 
 type MoneyLeg struct {
-	Symbol       string  `json:"symbol"`
-	CryptoAmount string  `json:"crypto_amount"`
+	Symbol       string `json:"symbol"`
+	CryptoAmount string `json:"crypto_amount"`
 	FiatAmount   string `json:"fiat_amount,omitempty"`
 }
 
@@ -46,7 +46,7 @@ const (
 
 type AggregatedTransaction struct {
 	ID             uuid.UUID `json:"id"`
-	TenantID       uuid.UUID `json:"tenant_id"`
+	UserID         uuid.UUID `json:"user_id"`
 	Source         string    `json:"source"`
 	ImportID       uuid.UUID `json:"import_id"`
 	TimeUTC        time.Time `json:"time_utc"`

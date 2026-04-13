@@ -11,7 +11,7 @@ import (
 
 type TaxJob struct {
 	ID               uuid.UUID          `json:"id"`
-	TenantID         uuid.UUID          `json:"tenantId"`
+	UserID           uuid.UUID          `json:"userId"`
 	TaxYear          int32              `json:"taxYear"`
 	PolicySnapshot   []byte             `json:"policySnapshot"`
 	Status           string             `json:"status"`
@@ -28,7 +28,7 @@ type TaxJob struct {
 }
 
 type TaxProfile struct {
-	TenantID           uuid.UUID          `json:"tenantId"`
+	UserID             uuid.UUID          `json:"userId"`
 	Inn                string             `json:"inn"`
 	LastName           string             `json:"lastName"`
 	FirstName          string             `json:"firstName"`

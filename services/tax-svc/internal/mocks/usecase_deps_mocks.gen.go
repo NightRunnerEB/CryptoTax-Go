@@ -44,32 +44,32 @@ func (m *MockTaxProfileRepo) EXPECT() *MockTaxProfileRepoMockRecorder {
 }
 
 // Delete mocks base method.
-func (m *MockTaxProfileRepo) Delete(ctx context.Context, tenantID uuid.UUID) error {
+func (m *MockTaxProfileRepo) Delete(ctx context.Context, userID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, tenantID)
+	ret := m.ctrl.Call(m, "Delete", ctx, userID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockTaxProfileRepoMockRecorder) Delete(ctx, tenantID any) *gomock.Call {
+func (mr *MockTaxProfileRepoMockRecorder) Delete(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTaxProfileRepo)(nil).Delete), ctx, tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTaxProfileRepo)(nil).Delete), ctx, userID)
 }
 
 // Get mocks base method.
-func (m *MockTaxProfileRepo) Get(ctx context.Context, tenantID uuid.UUID) (domain.TaxProfile, error) {
+func (m *MockTaxProfileRepo) Get(ctx context.Context, userID uuid.UUID) (domain.TaxProfile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, tenantID)
+	ret := m.ctrl.Call(m, "Get", ctx, userID)
 	ret0, _ := ret[0].(domain.TaxProfile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockTaxProfileRepoMockRecorder) Get(ctx, tenantID any) *gomock.Call {
+func (mr *MockTaxProfileRepoMockRecorder) Get(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockTaxProfileRepo)(nil).Get), ctx, tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockTaxProfileRepo)(nil).Get), ctx, userID)
 }
 
 // Upsert mocks base method.
@@ -141,24 +141,24 @@ func (mr *MockTaxJobRepoMockRecorder) Create(ctx, job any) *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockTaxJobRepo) Get(ctx context.Context, tenantID, jobID uuid.UUID) (domain.TaxJob, error) {
+func (m *MockTaxJobRepo) Get(ctx context.Context, userID, jobID uuid.UUID) (domain.TaxJob, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, tenantID, jobID)
+	ret := m.ctrl.Call(m, "Get", ctx, userID, jobID)
 	ret0, _ := ret[0].(domain.TaxJob)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockTaxJobRepoMockRecorder) Get(ctx, tenantID, jobID any) *gomock.Call {
+func (mr *MockTaxJobRepoMockRecorder) Get(ctx, userID, jobID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockTaxJobRepo)(nil).Get), ctx, tenantID, jobID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockTaxJobRepo)(nil).Get), ctx, userID, jobID)
 }
 
 // List mocks base method.
-func (m *MockTaxJobRepo) List(ctx context.Context, tenantID uuid.UUID, limit, offset int32) ([]domain.TaxJob, int64, error) {
+func (m *MockTaxJobRepo) List(ctx context.Context, userID uuid.UUID, limit, offset int32) ([]domain.TaxJob, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx, tenantID, limit, offset)
+	ret := m.ctrl.Call(m, "List", ctx, userID, limit, offset)
 	ret0, _ := ret[0].([]domain.TaxJob)
 	ret1, _ := ret[1].(int64)
 	ret2, _ := ret[2].(error)
@@ -166,9 +166,9 @@ func (m *MockTaxJobRepo) List(ctx context.Context, tenantID uuid.UUID, limit, of
 }
 
 // List indicates an expected call of List.
-func (mr *MockTaxJobRepoMockRecorder) List(ctx, tenantID, limit, offset any) *gomock.Call {
+func (mr *MockTaxJobRepoMockRecorder) List(ctx, userID, limit, offset any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockTaxJobRepo)(nil).List), ctx, tenantID, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockTaxJobRepo)(nil).List), ctx, userID, limit, offset)
 }
 
 // MarkCanceled mocks base method.
@@ -305,18 +305,18 @@ func (m *MockAggregatedTxProvider) EXPECT() *MockAggregatedTxProviderMockRecorde
 }
 
 // ListTransactionsByRange mocks base method.
-func (m *MockAggregatedTxProvider) ListTransactionsByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time, targetFiat string) ([]domain.AggregatedTransaction, error) {
+func (m *MockAggregatedTxProvider) ListTransactionsByRange(ctx context.Context, userID uuid.UUID, fromUTC, toUTC time.Time, targetFiat string) ([]domain.AggregatedTransaction, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTransactionsByRange", ctx, tenantID, fromUTC, toUTC, targetFiat)
+	ret := m.ctrl.Call(m, "ListTransactionsByRange", ctx, userID, fromUTC, toUTC, targetFiat)
 	ret0, _ := ret[0].([]domain.AggregatedTransaction)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListTransactionsByRange indicates an expected call of ListTransactionsByRange.
-func (mr *MockAggregatedTxProviderMockRecorder) ListTransactionsByRange(ctx, tenantID, fromUTC, toUTC, targetFiat any) *gomock.Call {
+func (mr *MockAggregatedTxProviderMockRecorder) ListTransactionsByRange(ctx, userID, fromUTC, toUTC, targetFiat any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTransactionsByRange", reflect.TypeOf((*MockAggregatedTxProvider)(nil).ListTransactionsByRange), ctx, tenantID, fromUTC, toUTC, targetFiat)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTransactionsByRange", reflect.TypeOf((*MockAggregatedTxProvider)(nil).ListTransactionsByRange), ctx, userID, fromUTC, toUTC, targetFiat)
 }
 
 // MockReportClient is a mock of ReportClient interface.

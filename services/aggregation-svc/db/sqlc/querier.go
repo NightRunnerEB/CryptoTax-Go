@@ -14,7 +14,7 @@ type Querier interface {
 	CountAggregatedTransactionsByImport(ctx context.Context, arg CountAggregatedTransactionsByImportParams) (int64, error)
 	CountAggregatedTransactionsByRange(ctx context.Context, arg CountAggregatedTransactionsByRangeParams) (int64, error)
 	GetAggregationImportState(ctx context.Context, arg GetAggregationImportStateParams) (AggregationImportState, error)
-	GetTenantSettings(ctx context.Context, tenantID uuid.UUID) (TenantSetting, error)
+	GetUserSettings(ctx context.Context, userID uuid.UUID) (UserSetting, error)
 	ListAggregatedTransactionsByImport(ctx context.Context, arg ListAggregatedTransactionsByImportParams) ([]AggregatedTransaction, error)
 	ListAggregatedTransactionsByRange(ctx context.Context, arg ListAggregatedTransactionsByRangeParams) ([]AggregatedTransaction, error)
 	MarkAggregationImportStateCompleted(ctx context.Context, arg MarkAggregationImportStateCompletedParams) error
@@ -22,7 +22,7 @@ type Querier interface {
 	UpdateAggregatedTransactionByFingerprint(ctx context.Context, arg UpdateAggregatedTransactionByFingerprintParams) (int64, error)
 	UpsertAggregatedTransaction(ctx context.Context, arg UpsertAggregatedTransactionParams) error
 	UpsertAggregationImportStateProcessing(ctx context.Context, arg UpsertAggregationImportStateProcessingParams) error
-	UpsertTenantSettings(ctx context.Context, arg UpsertTenantSettingsParams) (TenantSetting, error)
+	UpsertUserSettings(ctx context.Context, arg UpsertUserSettingsParams) (UserSetting, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -3,10 +3,11 @@ package rabbit
 import (
 	"context"
 
+	rabbitmq "github.com/wagslane/go-rabbitmq"
+
 	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/config"
 	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain/error"
-	rabbitmq "github.com/wagslane/go-rabbitmq"
 )
 
 type Publisher struct {

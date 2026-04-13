@@ -28,7 +28,7 @@ type Engine interface {
 	Jurisdiction() domain.Jurisdiction
 	Build(
 		ctx context.Context,
-		tenantID uuid.UUID,
+		userID uuid.UUID,
 		policy domain.TaxPolicy,
 		transactions []domain.AggregatedTransaction,
 	) (BuildResult, error)

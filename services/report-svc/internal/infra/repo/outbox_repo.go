@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
+
 	db "github.com/NightRunner/CryptoTax-Go/services/report-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain/error"
-	"github.com/google/uuid"
 )
 
 type outboxRepo struct {

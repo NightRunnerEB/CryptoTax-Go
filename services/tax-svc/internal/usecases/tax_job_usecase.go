@@ -29,10 +29,10 @@ func NewTaxJobUC(
 	}
 }
 
-func (uc *TaxJobUC) Enqueue(ctx context.Context, tenantID uuid.UUID, taxYear int, taxPolicy domain.TaxPolicy) (domain.TaxJob, error) {
-	if tenantID == uuid.Nil {
-		return domain.TaxJob{}, apperr.InvalidArgument("invalid tenant id", nil, apperr.FieldViolation{
-			Field:       "tenant_id",
+func (uc *TaxJobUC) Enqueue(ctx context.Context, userID uuid.UUID, taxYear int, taxPolicy domain.TaxPolicy) (domain.TaxJob, error) {
+	if userID == uuid.Nil {
+		return domain.TaxJob{}, apperr.InvalidArgument("invalid user id", nil, apperr.FieldViolation{
+			Field:       "user_id",
 			Description: "required",
 		})
 	}
@@ -44,7 +44,7 @@ func (uc *TaxJobUC) Enqueue(ctx context.Context, tenantID uuid.UUID, taxYear int
 	}
 
 	// TaxProfile must exist before enqueuing a calculation job.
-	if _, err := uc.profileRepo.Get(ctx, tenantID); err != nil {
+	if _, err := uc.profileRepo.Get(ctx, userID); err != nil {
 		return domain.TaxJob{}, err
 	}
 
@@ -66,7 +66,7 @@ func (uc *TaxJobUC) Enqueue(ctx context.Context, tenantID uuid.UUID, taxYear int
 
 	job := domain.TaxJob{
 		ID:             uuid.New(),
-		TenantID:       tenantID,
+		UserID:         userID,
 		PolicySnapshot: taxPolicy,
 		TaxYear:        taxYear,
 		Status:         domain.JobQueued,
@@ -81,14 +81,14 @@ func (uc *TaxJobUC) Enqueue(ctx context.Context, tenantID uuid.UUID, taxYear int
 	return created, nil
 }
 
-func (uc *TaxJobUC) GetStatus(ctx context.Context, tenantID, jobID uuid.UUID) (domain.TaxJob, error) {
-	if tenantID == uuid.Nil || jobID == uuid.Nil {
+func (uc *TaxJobUC) GetStatus(ctx context.Context, userID, jobID uuid.UUID) (domain.TaxJob, error) {
+	if userID == uuid.Nil || jobID == uuid.Nil {
 		return domain.TaxJob{}, apperr.InvalidArgument("invalid ids", nil, apperr.FieldViolation{
-			Field:       "tenant_id/report_id",
+			Field:       "user_id/report_id",
 			Description: "required",
 		})
 	}
-	job, err := uc.jobRepo.Get(ctx, tenantID, jobID)
+	job, err := uc.jobRepo.Get(ctx, userID, jobID)
 	if err != nil {
 		return domain.TaxJob{}, err
 	}
@@ -97,10 +97,10 @@ func (uc *TaxJobUC) GetStatus(ctx context.Context, tenantID, jobID uuid.UUID) (d
 	return job, nil
 }
 
-func (uc *TaxJobUC) List(ctx context.Context, tenantID uuid.UUID, limit, offset int32) ([]domain.TaxJob, int64, error) {
-	if tenantID == uuid.Nil {
-		return nil, 0, apperr.InvalidArgument("invalid tenant id", nil, apperr.FieldViolation{
-			Field:       "tenant_id",
+func (uc *TaxJobUC) List(ctx context.Context, userID uuid.UUID, limit, offset int32) ([]domain.TaxJob, int64, error) {
+	if userID == uuid.Nil {
+		return nil, 0, apperr.InvalidArgument("invalid user id", nil, apperr.FieldViolation{
+			Field:       "user_id",
 			Description: "required",
 		})
 	}
@@ -113,7 +113,7 @@ func (uc *TaxJobUC) List(ctx context.Context, tenantID uuid.UUID, limit, offset 
 	if offset < 0 {
 		offset = 0
 	}
-	jobs, total, err := uc.jobRepo.List(ctx, tenantID, limit, offset)
+	jobs, total, err := uc.jobRepo.List(ctx, userID, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 type AggregatedTxProvider interface {
-	ListTransactionsByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time, targetFiat string) ([]AggregatedTransaction, error)
+	ListTransactionsByRange(ctx context.Context, userID uuid.UUID, fromUTC, toUTC time.Time, targetFiat string) ([]AggregatedTransaction, error)
 }
 
 type ObjectStorage interface {
@@ -18,7 +18,7 @@ type ObjectStorage interface {
 
 type ReportRenderRequest struct {
 	ReportID         uuid.UUID
-	TenantID         uuid.UUID
+	UserID           uuid.UUID
 	Jurisdiction     string
 	TaxYear          int32
 	DatasetObjectKey string

@@ -29,7 +29,7 @@ type Client struct {
 	client  aggregationv1.AggregationClient
 }
 
-const headerTenantID = "x-tenant-id"
+const headerUserID = "x-user-id"
 
 const aggregationDataNotReadyReason = "DATA_NOT_READY"
 
@@ -58,13 +58,13 @@ func (c *Client) Close() error {
 
 func (c *Client) ListTransactionsByRange(
 	ctx context.Context,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	fromUTC, toUTC time.Time,
 	targetFiat string,
 ) ([]domain.AggregatedTransaction, error) {
-	if tenantID == uuid.Nil {
-		return nil, apperr.InvalidArgument("invalid tenant id", nil, apperr.FieldViolation{
-			Field:       "tenant_id",
+	if userID == uuid.Nil {
+		return nil, apperr.InvalidArgument("invalid user id", nil, apperr.FieldViolation{
+			Field:       "user_id",
 			Description: "required",
 		})
 	}
@@ -87,18 +87,18 @@ func (c *Client) ListTransactionsByRange(
 		ctx, cancel = context.WithTimeout(ctx, c.timeout)
 		defer cancel()
 	}
-	ctx = metadata.AppendToOutgoingContext(ctx, headerTenantID, tenantID.String())
+	ctx = metadata.AppendToOutgoingContext(ctx, headerUserID, userID.String())
 	resp, err := c.client.ListTransactionsByRange(ctx, &aggregationv1.ListTransactionsByRangeRequest{
-		TenantId: tenantID.String(),
-		FromUtc:  timestamppb.New(fromUTC),
-		ToUtc:    timestamppb.New(toUTC),
-		Limit:    1_000_000, // unlimited for now, can add pagination later if needed
-		Offset:   0,
+		UserId:     userID.String(),
+		FromUtc:    timestamppb.New(fromUTC),
+		ToUtc:      timestamppb.New(toUTC),
+		Limit:      1_000_000, // unlimited for now, can add pagination later if needed
+		Offset:     0,
 		TargetFiat: targetFiat,
 	})
 	if err != nil {
 		meta := map[string]string{
-			"tenant_id": tenantID.String(),
+			"user_id":     userID.String(),
 			"target_fiat": targetFiat,
 		}
 		if st, ok := status.FromError(err); ok {
@@ -147,7 +147,7 @@ func (c *Client) ListTransactionsByRange(
 
 		item := domain.AggregatedTransaction{
 			ID:             txID,
-			TenantID:       tenantID,
+			UserID:         userID,
 			Source:         tx.GetSource(),
 			ImportID:       importID,
 			TimeUTC:        tx.GetTimeUtc().AsTime().UTC(),

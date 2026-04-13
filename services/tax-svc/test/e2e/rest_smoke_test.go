@@ -58,7 +58,7 @@ func setupRESTGateway(t *testing.T, profileUC domain.TaxProfileUseCase, jobUC do
 	mux := runtime.NewServeMux(
 		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
 			switch strings.ToLower(key) {
-			case "x-tenant-id", "x-user-id", "x-role", "x-request-id", "authorization":
+			case "x-user-id", "x-role", "x-request-id", "authorization":
 				return key, true
 			default:
 				return runtime.DefaultHeaderMatcher(key)
@@ -89,12 +89,12 @@ func TestRESTSmoke_StartReport_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobID := uuid.New()
 
 	profileUC := mocks.NewMockTaxProfileUseCase(ctrl)
 	jobUC := mocks.NewMockTaxJobUseCase(ctrl)
-	jobUC.EXPECT().Enqueue(gomock.Any(), tenantID, 2025, domain.TaxPolicy{
+	jobUC.EXPECT().Enqueue(gomock.Any(), userID, 2025, domain.TaxPolicy{
 		TreatCryptoCryptoAsDisposal: true,
 		CostBasisMethod:             domain.FIFO,
 		Jurisdiction:                domain.JurisdictionRU,
@@ -115,7 +115,7 @@ func TestRESTSmoke_StartReport_Success(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/tax/reports:start", bytes.NewReader(raw))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-Id", tenantID.String())
+	req.Header.Set("X-User-Id", userID.String())
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -139,7 +139,7 @@ func TestRESTSmoke_StartReport_Success(t *testing.T) {
 	}
 }
 
-func TestRESTSmoke_StartReport_MissingTenantHeader(t *testing.T) {
+func TestRESTSmoke_StartReport_MissingUserHeader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -172,7 +172,7 @@ func TestRESTSmoke_StartReport_MissingTenantHeader(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read response body failed: %v", err)
 	}
-	if !strings.Contains(string(payload), "missing tenant header") {
-		t.Fatalf("expected missing tenant header in body, got: %s", string(payload))
+	if !strings.Contains(string(payload), "missing user header") {
+		t.Fatalf("expected missing user header in body, got: %s", string(payload))
 	}
 }

@@ -34,13 +34,13 @@ func TestImportStateRepo_Get_NotFound(t *testing.T) {
 func TestImportStateRepo_Get_MapsCompletedAt(t *testing.T) {
 	t.Parallel()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 	completedAt := time.Date(2026, 3, 1, 11, 0, 0, 0, time.UTC)
 	repo := NewImportStateRepo(&fakeStore{
 		getImportStateFn: func(context.Context, db.GetAggregationImportStateParams) (db.AggregationImportState, error) {
 			return db.AggregationImportState{
-				TenantID:    tenantID,
+				UserID:      userID,
 				ImportID:    importID,
 				EventID:     uuid.New(),
 				Status:      string(domain.ImportStatusCompleted),
@@ -50,7 +50,7 @@ func TestImportStateRepo_Get_MapsCompletedAt(t *testing.T) {
 		},
 	})
 
-	state, err := repo.Get(context.Background(), tenantID, importID)
+	state, err := repo.Get(context.Background(), userID, importID)
 	if err != nil {
 		t.Fatalf("Get returned error: %v", err)
 	}
@@ -62,12 +62,12 @@ func TestImportStateRepo_Get_MapsCompletedAt(t *testing.T) {
 func TestImportStateRepo_MarkFailed_EmptyMessage(t *testing.T) {
 	t.Parallel()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 
 	repo := NewImportStateRepo(&fakeStore{
 		markFailedFn: func(_ context.Context, arg db.MarkAggregationImportStateFailedParams) error {
-			if arg.TenantID != tenantID || arg.ImportID != importID {
+			if arg.UserID != userID || arg.ImportID != importID {
 				t.Fatalf("unexpected ids: %+v", arg)
 			}
 			if arg.Error == nil || *arg.Error != "unknown error" {
@@ -77,7 +77,7 @@ func TestImportStateRepo_MarkFailed_EmptyMessage(t *testing.T) {
 		},
 	})
 
-	if err := repo.MarkFailed(context.Background(), tenantID, importID, ""); err != nil {
+	if err := repo.MarkFailed(context.Background(), userID, importID, ""); err != nil {
 		t.Fatalf("MarkFailed returned error: %v", err)
 	}
 }

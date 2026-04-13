@@ -16,21 +16,21 @@ import (
 
 func TestEngineBuild_SpotSell_ConsumesFIFOAndKeepsRemainder(t *testing.T) {
 	engine := New()
-	tenantID := uuid.New()
+	userID := uuid.New()
 	now := time.Now().UTC()
 
-	buyTx := txWithLegs(uuid.New(), tenantID, now, domain.Spot,
+	buyTx := txWithLegs(uuid.New(), userID, now, domain.Spot,
 		leg("BTC", "1", "1000000"),
 		leg("RUB", "1000000", "1000000"),
 		nil,
 	)
-	sellTx := txWithLegs(uuid.New(), tenantID, now.Add(time.Minute), domain.Spot,
+	sellTx := txWithLegs(uuid.New(), userID, now.Add(time.Minute), domain.Spot,
 		leg("RUB", "600000", "600000"),
 		leg("BTC", "0.4", "600000"),
 		nil,
 	)
 
-	result, err := engine.Build(context.Background(), tenantID, domain.TaxPolicy{
+	result, err := engine.Build(context.Background(), userID, domain.TaxPolicy{
 		Jurisdiction:                domain.JurisdictionRU,
 		CostBasisMethod:             domain.FIFO,
 		TreatCryptoCryptoAsDisposal: true,
@@ -72,14 +72,14 @@ func TestEngineBuild_SpotSell_ConsumesFIFOAndKeepsRemainder(t *testing.T) {
 
 func TestEngineBuild_SwapPolicyFalse_ReturnsNotImplemented(t *testing.T) {
 	engine := New()
-	tenantID := uuid.New()
-	tx := txWithLegs(uuid.New(), tenantID, time.Now().UTC(), domain.Swap,
+	userID := uuid.New()
+	tx := txWithLegs(uuid.New(), userID, time.Now().UTC(), domain.Swap,
 		leg("BTC", "1", "2500000"),
 		leg("ETH", "10", "2500000"),
 		nil,
 	)
 
-	_, err := engine.Build(context.Background(), tenantID, domain.TaxPolicy{
+	_, err := engine.Build(context.Background(), userID, domain.TaxPolicy{
 		Jurisdiction:                domain.JurisdictionRU,
 		CostBasisMethod:             domain.FIFO,
 		TreatCryptoCryptoAsDisposal: false,
@@ -92,21 +92,21 @@ func TestEngineBuild_SwapPolicyFalse_ReturnsNotImplemented(t *testing.T) {
 
 func TestEngineBuild_SwapPolicyTrue_CreatesRealizationAndLot(t *testing.T) {
 	engine := New()
-	tenantID := uuid.New()
+	userID := uuid.New()
 	now := time.Now().UTC()
 
-	buyETH := txWithLegs(uuid.New(), tenantID, now, domain.Spot,
+	buyETH := txWithLegs(uuid.New(), userID, now, domain.Spot,
 		leg("ETH", "2", "400000"),
 		leg("RUB", "400000", "400000"),
 		nil,
 	)
-	swap := txWithLegs(uuid.New(), tenantID, now.Add(time.Minute), domain.Swap,
+	swap := txWithLegs(uuid.New(), userID, now.Add(time.Minute), domain.Swap,
 		leg("BTC", "1", "500000"),
 		leg("ETH", "2", "500000"),
 		nil,
 	)
 
-	result, err := engine.Build(context.Background(), tenantID, domain.TaxPolicy{
+	result, err := engine.Build(context.Background(), userID, domain.TaxPolicy{
 		Jurisdiction:                domain.JurisdictionRU,
 		CostBasisMethod:             domain.FIFO,
 		TreatCryptoCryptoAsDisposal: true,
@@ -137,14 +137,14 @@ func TestEngineBuild_SwapPolicyTrue_CreatesRealizationAndLot(t *testing.T) {
 
 func TestEngineBuild_Airdrop_CreatesIncomeAndLot(t *testing.T) {
 	engine := New()
-	tenantID := uuid.New()
-	tx := txWithLegs(uuid.New(), tenantID, time.Now().UTC(), domain.Airdrop,
+	userID := uuid.New()
+	tx := txWithLegs(uuid.New(), userID, time.Now().UTC(), domain.Airdrop,
 		leg("BTC", "0.1", "300000"),
 		nil,
 		nil,
 	)
 
-	result, err := engine.Build(context.Background(), tenantID, domain.TaxPolicy{
+	result, err := engine.Build(context.Background(), userID, domain.TaxPolicy{
 		Jurisdiction:                domain.JurisdictionRU,
 		CostBasisMethod:             domain.FIFO,
 		TreatCryptoCryptoAsDisposal: true,
@@ -172,21 +172,21 @@ func TestEngineBuild_Airdrop_CreatesIncomeAndLot(t *testing.T) {
 
 func TestEngineBuild_ExpenseCrypto_CreatesExpenseAllocation(t *testing.T) {
 	engine := New()
-	tenantID := uuid.New()
+	userID := uuid.New()
 	now := time.Now().UTC()
 
-	buyTx := txWithLegs(uuid.New(), tenantID, now, domain.Spot,
+	buyTx := txWithLegs(uuid.New(), userID, now, domain.Spot,
 		leg("BTC", "1", "1000000"),
 		leg("RUB", "1000000", "1000000"),
 		nil,
 	)
-	expenseTx := txWithLegs(uuid.New(), tenantID, now.Add(time.Minute), domain.Expense,
+	expenseTx := txWithLegs(uuid.New(), userID, now.Add(time.Minute), domain.Expense,
 		nil,
 		leg("BTC", "0.25", "50000"),
 		nil,
 	)
 
-	result, err := engine.Build(context.Background(), tenantID, domain.TaxPolicy{
+	result, err := engine.Build(context.Background(), userID, domain.TaxPolicy{
 		Jurisdiction:                domain.JurisdictionRU,
 		CostBasisMethod:             domain.FIFO,
 		TreatCryptoCryptoAsDisposal: true,
@@ -217,14 +217,14 @@ func TestEngineBuild_ExpenseCrypto_CreatesExpenseAllocation(t *testing.T) {
 
 func TestEngineBuild_NegativeInventory_ReturnsDomainError(t *testing.T) {
 	engine := New()
-	tenantID := uuid.New()
-	sellTx := txWithLegs(uuid.New(), tenantID, time.Now().UTC(), domain.Spot,
+	userID := uuid.New()
+	sellTx := txWithLegs(uuid.New(), userID, time.Now().UTC(), domain.Spot,
 		leg("RUB", "100000", "100000"),
 		leg("BTC", "0.1", "100000"),
 		nil,
 	)
 
-	_, err := engine.Build(context.Background(), tenantID, domain.TaxPolicy{
+	_, err := engine.Build(context.Background(), userID, domain.TaxPolicy{
 		Jurisdiction:                domain.JurisdictionRU,
 		CostBasisMethod:             domain.FIFO,
 		TreatCryptoCryptoAsDisposal: true,
@@ -237,7 +237,7 @@ func TestEngineBuild_NegativeInventory_ReturnsDomainError(t *testing.T) {
 
 func TestEngineBuild_SameTimestamp_UsesTxIDTieBreaker(t *testing.T) {
 	engine := New()
-	tenantID := uuid.New()
+	userID := uuid.New()
 	at := time.Date(2026, time.January, 10, 12, 0, 0, 0, time.UTC)
 
 	firstID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
@@ -245,23 +245,23 @@ func TestEngineBuild_SameTimestamp_UsesTxIDTieBreaker(t *testing.T) {
 	sellID := uuid.MustParse("00000000-0000-0000-0000-000000000003")
 
 	// Deliberately pass out of order: second first, then first.
-	buySecond := txWithLegs(secondID, tenantID, at, domain.Spot,
+	buySecond := txWithLegs(secondID, userID, at, domain.Spot,
 		leg("BTC", "1", "300"),
 		leg("RUB", "300", "300"),
 		nil,
 	)
-	buyFirst := txWithLegs(firstID, tenantID, at, domain.Spot,
+	buyFirst := txWithLegs(firstID, userID, at, domain.Spot,
 		leg("BTC", "1", "100"),
 		leg("RUB", "100", "100"),
 		nil,
 	)
-	sell := txWithLegs(sellID, tenantID, at.Add(time.Minute), domain.Spot,
+	sell := txWithLegs(sellID, userID, at.Add(time.Minute), domain.Spot,
 		leg("RUB", "600", "600"),
 		leg("BTC", "1.5", "600"),
 		nil,
 	)
 
-	result, err := engine.Build(context.Background(), tenantID, domain.TaxPolicy{
+	result, err := engine.Build(context.Background(), userID, domain.TaxPolicy{
 		Jurisdiction:                domain.JurisdictionRU,
 		CostBasisMethod:             domain.FIFO,
 		TreatCryptoCryptoAsDisposal: true,
@@ -278,10 +278,10 @@ func TestEngineBuild_SameTimestamp_UsesTxIDTieBreaker(t *testing.T) {
 	}
 }
 
-func txWithLegs(id, tenantID uuid.UUID, when time.Time, kind domain.Kind, in, out, fee *domain.MoneyLeg) domain.AggregatedTransaction {
+func txWithLegs(id, userID uuid.UUID, when time.Time, kind domain.Kind, in, out, fee *domain.MoneyLeg) domain.AggregatedTransaction {
 	return domain.AggregatedTransaction{
 		ID:       id,
-		TenantID: tenantID,
+		UserID:   userID,
 		Source:   "MEXC",
 		ImportID: uuid.New(),
 		TimeUTC:  when,

@@ -65,7 +65,7 @@ Runtime behavior:
 
 - `RequestAuthentication` validates JWT on `istio-ingressgateway`
 - validated claims are copied to:
-  - `x-tenant-id` from `sub`
+  - `x-user-id` from `sub`
   - `x-role` from `role`
 - ingress `AuthorizationPolicy` requires a valid JWT for protected routes
 - backend `AuthorizationPolicy` requires these propagated headers on ingress-to-service traffic

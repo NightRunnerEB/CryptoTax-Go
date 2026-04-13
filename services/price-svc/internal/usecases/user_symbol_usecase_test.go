@@ -27,28 +27,28 @@ func TestNewHistoricalPriceUC_NotNil(t *testing.T) {
 	}
 }
 
-func TestNewTenantSymbolUC_NotNil(t *testing.T) {
+func TestNewUserSymbolUC_NotNil(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	uc := NewTenantSymbolUC(mocks.NewMockTenantSymbolRepo(ctrl), 5*time.Second)
+	uc := NewUserSymbolUC(mocks.NewMockUserSymbolRepo(ctrl), 5*time.Second)
 	if uc == nil {
 		t.Fatal("expected non-nil usecase")
 	}
 }
 
-func TestTenantSymbolUC_StubMethods(t *testing.T) {
+func TestUserSymbolUC_StubMethods(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	uc := NewTenantSymbolUC(mocks.NewMockTenantSymbolRepo(ctrl), 5*time.Second)
+	uc := NewUserSymbolUC(mocks.NewMockUserSymbolRepo(ctrl), 5*time.Second)
 	ctx := context.Background()
 
-	err := uc.Upsert(ctx, domain.TenantSymbol{
-		TenantID: uuid.New(),
-		Source:   "MEXC",
-		Symbol:   "BTC",
-		CoinID:   "bitcoin",
+	err := uc.Upsert(ctx, domain.UserSymbol{
+		UserID: uuid.New(),
+		Source: "MEXC",
+		Symbol: "BTC",
+		CoinID: "bitcoin",
 	})
 	if err != nil {
 		t.Fatalf("Upsert() unexpected error: %v", err)

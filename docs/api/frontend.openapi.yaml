@@ -243,7 +243,7 @@ paths:
       summary: List supported fiat currencies
       description: Returns fiat currencies supported by aggregation/valuation pipeline.
       parameters:
-        - $ref: '#/components/parameters/XTenantId'
+        - $ref: '#/components/parameters/XUserId'
         - $ref: '#/components/parameters/XUserId'
         - $ref: '#/components/parameters/XRoles'
       responses:
@@ -282,37 +282,37 @@ paths:
   /settings:
     get:
       tags: [Aggregation]
-      operationId: getTenantSettings
+      operationId: getUserSettings
       summary: Get aggregation settings for the authenticated user
       parameters:
       responses:
         '200':
-          description: Tenant settings
+          description: User settings
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetTenantSettingsResponse'
+                $ref: '#/components/schemas/GetUserSettingsResponse'
         '400':
           $ref: '#/components/responses/GrpcInvalidArgument'
         '500':
           $ref: '#/components/responses/GrpcInternal'
     put:
       tags: [Aggregation]
-      operationId: upsertTenantSettings
+      operationId: upsertUserSettings
       summary: Create or update aggregation settings for the authenticated user
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpsertTenantSettingsBody'
+              $ref: '#/components/schemas/UpsertUserSettingsBody'
       responses:
         '200':
-          description: Upserted tenant settings
+          description: Upserted user settings
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UpsertTenantSettingsResponse'
+                $ref: '#/components/schemas/UpsertUserSettingsResponse'
         '400':
           $ref: '#/components/responses/GrpcInvalidArgument'
         '500':
@@ -556,7 +556,7 @@ components:
               - $ref: '#/components/schemas/SimpleErrorResponse'
               - $ref: '#/components/schemas/LedgerErrorResponse'
     LedgerForbidden:
-      description: Missing/invalid tenant header or permission denied.
+      description: Missing/invalid user header or permission denied.
       content:
         application/json:
           schema:
@@ -889,7 +889,7 @@ components:
         txId:
           type: string
           format: uuid
-        tenantId:
+        userId:
           type: string
           format: uuid
         source:
@@ -924,7 +924,7 @@ components:
           type: string
       required:
         - txId
-        - tenantId
+        - userId
         - source
         - importId
         - timeUtc
@@ -944,10 +944,10 @@ components:
           format: int64
       required: [transactions, total]
 
-    TenantSettings:
+    UserSettings:
       type: object
       properties:
-        tenantId:
+        userId:
           type: string
           format: uuid
         fiatCurrency:
@@ -956,8 +956,8 @@ components:
         timezone:
           type: string
           example: Europe/Moscow
-      required: [tenantId, fiatCurrency, timezone]
-    UpsertTenantSettingsBody:
+      required: [userId, fiatCurrency, timezone]
+    UpsertUserSettingsBody:
       type: object
       properties:
         fiatCurrency:
@@ -967,17 +967,17 @@ components:
           type: string
           description: IANA timezone.
       required: [fiatCurrency, timezone]
-    GetTenantSettingsResponse:
+    GetUserSettingsResponse:
       type: object
       properties:
         settings:
-          $ref: '#/components/schemas/TenantSettings'
+          $ref: '#/components/schemas/UserSettings'
       required: [settings]
-    UpsertTenantSettingsResponse:
+    UpsertUserSettingsResponse:
       type: object
       properties:
         settings:
-          $ref: '#/components/schemas/TenantSettings'
+          $ref: '#/components/schemas/UserSettings'
       required: [settings]
 
     TaxPolicy:
@@ -995,7 +995,7 @@ components:
     TaxProfile:
       type: object
       properties:
-        tenantId:
+        userId:
           type: string
           format: uuid
         inn:
@@ -1021,7 +1021,7 @@ components:
           type: string
           example: INDIVIDUAL
       required:
-        - tenantId
+        - userId
         - inn
         - lastName
         - firstName
@@ -1113,7 +1113,7 @@ components:
         reportId:
           type: string
           format: uuid
-        tenantId:
+        userId:
           type: string
           format: uuid
         taxYear:
@@ -1147,7 +1147,7 @@ components:
           $ref: '#/components/schemas/TaxSummary'
       required:
         - reportId
-        - tenantId
+        - userId
         - taxYear
         - policySnapshot
         - status

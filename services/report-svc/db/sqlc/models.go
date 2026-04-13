@@ -29,7 +29,7 @@ type OutboxEvent struct {
 
 type RenderJob struct {
 	ReportID         uuid.UUID          `json:"reportId"`
-	TenantID         uuid.UUID          `json:"tenantId"`
+	UserID           uuid.UUID          `json:"userId"`
 	Status           string             `json:"status"`
 	StartedAt        pgtype.Timestamptz `json:"startedAt"`
 	CompletedAt      pgtype.Timestamptz `json:"completedAt"`

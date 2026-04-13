@@ -9,29 +9,29 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain"
 )
 
-func TestTenantSettingsRepoIntegration_UpsertAndGet(t *testing.T) {
+func TestUserSettingsRepoIntegration_UpsertAndGet(t *testing.T) {
 	store := setupIntegrationStore(t)
-	repo := NewTenantSettingsRepo(store)
+	repo := NewUserSettingsRepo(store)
 
 	ctx := context.Background()
-	tenantID := uuid.New()
+	userID := uuid.New()
 
-	upserted, err := repo.Upsert(ctx, domain.TenantSettings{
-		TenantID:     tenantID,
+	upserted, err := repo.Upsert(ctx, domain.UserSettings{
+		UserID:       userID,
 		FiatCurrency: "USD",
 		Timezone:     "UTC",
 	})
 	if err != nil {
 		t.Fatalf("Upsert returned error: %v", err)
 	}
-	if upserted.TenantID != tenantID {
-		t.Fatalf("unexpected tenant id after upsert: %s", upserted.TenantID)
+	if upserted.UserID != userID {
+		t.Fatalf("unexpected user id after upsert: %s", upserted.UserID)
 	}
 	if upserted.FiatCurrency != "USD" || upserted.Timezone != "UTC" {
 		t.Fatalf("unexpected settings after upsert: %+v", upserted)
 	}
 
-	got, err := repo.Get(ctx, tenantID)
+	got, err := repo.Get(ctx, userID)
 	if err != nil {
 		t.Fatalf("Get returned error: %v", err)
 	}

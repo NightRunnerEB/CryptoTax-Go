@@ -20,7 +20,7 @@ type BrokerEnvelope struct {
 type ReportRenderRequestedEvent struct {
 	EventID          uuid.UUID `json:"event_id"`
 	ReportID         uuid.UUID `json:"report_id"`
-	TenantID         uuid.UUID `json:"tenant_id"`
+	UserID           uuid.UUID `json:"user_id"`
 	Jurisdiction     string    `json:"jurisdiction"`
 	TaxYear          int32     `json:"tax_year"`
 	DatasetObjectKey string    `json:"dataset_object_key"`

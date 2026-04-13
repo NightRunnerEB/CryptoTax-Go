@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 
-	apperr "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain/error"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	apperr "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain/error"
 )
 
 func ToGRPCStatus(err error, domain string) error {

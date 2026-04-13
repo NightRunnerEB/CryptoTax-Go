@@ -10,7 +10,7 @@ import (
 // ExpenseEvent = расходы.
 type ExpenseEvent struct {
 	ID         uuid.UUID
-	TenantID   uuid.UUID
+	UserID     uuid.UUID
 	OccurredAt time.Time
 
 	AmountFiat decimal.Decimal // valuation snapshot in jurisdiction fiat

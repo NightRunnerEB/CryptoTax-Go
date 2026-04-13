@@ -1,0 +1,582 @@
+------------------------------------------------------------------------
+
+Общая цель
+
+На вход tax-svc получает отсортированный по time_utc ASC список
+AggregatedTransaction, уже обогащённый fiat-оценками leg’ов.
+
+На выходе tax-svc должен получить:
+
+-   Lots
+-   RealizationEvents
+-   RealizationLots
+-   IncomeEvents
+-   ExpenseEvents
+-   ExpenseLots
+-   MovementEvents
+-   TaxSummary
+-   Audit zip
+
+------------------------------------------------------------------------
+
+Главные принципы
+
+1. Расчёт идёт строго по времени
+
+Все транзакции обрабатываются в порядке time_utc ASC.
+
+Это критично для: - FIFO/LIFO/AVG - корректного закрытия лотов -
+воспроизводимости
+
+------------------------------------------------------------------------
+
+2. Lot — это партия приобретённого актива
+
+Lot создаётся только тогда, когда пользователь получил актив, и этот
+актив дальше должен участвовать в inventory / cost basis.
+
+------------------------------------------------------------------------
+
+3. RealizationEvent — это выбытие актива
+
+Realization создаётся, когда актив уходит из inventory и это считается
+реализацией по policy.
+
+------------------------------------------------------------------------
+
+4. ExpenseEvent — это расход
+
+Expense создаётся для: - комиссий - funding fee - network fee - иных
+расходов
+
+Если расход оплачен в активе, то он должен списывать lot allocations
+через ExpenseLot.
+
+------------------------------------------------------------------------
+
+5. IncomeEvent — это доход без продажи
+
+Income создаётся для: - airdrop - staking reward - gift in - derivative
+pnl positive
+
+Если income приходит в активе, то после IncomeEvent обязательно
+создаётся Lot.
+
+------------------------------------------------------------------------
+
+6. MovementEvent — это перемещение
+
+Movement не влияет на налоговую базу и по умолчанию не создаёт lot.
+
+------------------------------------------------------------------------
+
+Этап 1. Подготовка
+
+Перед проходом по транзакциям:
+
+1.  Загружаем TaxProfile
+2.  Берём TaxPolicy
+3.  Инициализируем пустые коллекции:
+    -   lots
+    -   realizations
+    -   realization_lots
+    -   income_events
+    -   expense_events
+    -   expense_lots
+    -   movement_events
+4.  Инициализируем inventory-индекс по активам, например:
+
+    map[asset][]Lot
+
+Для FIFO: - lots в очереди по acquired_at
+
+Для LIFO: - lots в стеке по acquired_at DESC
+
+Для AVG: - считаем среднюю стоимость по активу без классических
+allocations, либо всё равно ведём lot-like структуру, но считаем
+aggregated average.
+
+------------------------------------------------------------------------
+
+Этап 2. Валидация транзакции
+
+Перед обработкой каждой транзакции нужно определить, хватает ли данных.
+
+Проверки
+
+Для событий, влияющих на налоговую базу, должны быть доступны нужные
+fiat-оценки:
+
+-   если создаётся RealizationEvent, должен быть доступен proceeds в
+    fiat
+-   если создаётся IncomeEvent, должен быть доступен amount_fiat
+-   если создаётся ExpenseEvent, должен быть доступен amount_fiat
+-   если создаётся Lot, должен быть понятен cost_fiat
+
+Если данные отсутствуют: - либо job завершать ошибкой - либо добавлять
+warning и пропускать транзакцию
+
+Для MVP лучше завершать ошибкой, если транзакция влияет на результат.
+
+------------------------------------------------------------------------
+
+Этап 3. Mapping TxKind -> доменные события
+
+------------------------------------------------------------------------
+
+1. Spot
+
+Это классическая биржевая спотовая сделка.
+
+Пример
+
+-   out_money = USDT
+-   in_money = BTC
+
+или наоборот.
+
+Алгоритм
+
+1.  Если policy считает это реализацией:
+    -   создаём RealizationEvent по out_money
+    -   asset = out_money.symbol
+    -   qty = out_money.crypto_amount
+    -   proceeds_fiat = in_money.fiat_amount
+    -   kind = SELL_FIAT или SWAP_OUT, в зависимости от природы пары
+2.  Закрываем lot’ы для out_money.symbol:
+    -   FIFO/LIFO/AVG
+    -   создаём RealizationLot allocations
+    -   считаем CostBasisFiat
+3.  Создаём Lot по in_money
+    -   asset = in_money.symbol
+    -   qty_total = in_money.crypto_amount
+    -   qty_remaining = same
+    -   cost_fiat = in_money.fiat_amount
+    -   acquired_at = tx.time_utc
+4.  Если есть fee_money
+    -   создаём ExpenseEvent
+    -   если fee в активе → дополнительно создаём ExpenseLot
+    -   если fee в fiat/stable → только monetary expense
+
+Частный случай
+
+Если out_money — это fiat/stable, а in_money — crypto: - реализация с
+налоговой точки зрения может не требоваться для fiat leg - но для
+inventory lot на in_money всё равно создаётся
+
+Реальное правило задаётся policy.
+
+------------------------------------------------------------------------
+
+2. Swap
+
+Это crypto-to-crypto обмен.
+
+Алгоритм
+
+Если TaxPolicy.TreatCryptoCryptoAsDisposal = true:
+
+1.  Создаём RealizationEvent по out_money
+    -   asset = out_money.symbol
+    -   qty = out_money.crypto_amount
+    -   proceeds_fiat = in_money.fiat_amount
+    -   kind = SWAP_OUT
+2.  Закрываем lot’ы out_money.symbol
+    -   создаём RealizationLot
+    -   считаем CostBasisFiat
+3.  Создаём Lot на in_money
+    -   cost_fiat = in_money.fiat_amount
+    -   acquisition_type = SWAP_IN
+4.  Обрабатываем fee_money через ExpenseEvent
+
+Если policy говорит, что crypto-to-crypto не считается реализацией: - не
+создаём RealizationEvent - создаём только Lot по in_money нельзя, потому
+что тогда потеряется происхождение - для MVP лучше поддерживать только
+режим true
+
+------------------------------------------------------------------------
+
+3. DepositCrypto
+
+По умолчанию это просто ввод актива.
+
+Алгоритм
+
+1.  Создаём MovementEvent
+    -   direction = IN
+    -   asset = in_money.symbol
+    -   qty = in_money.crypto_amount
+2.  Lot по умолчанию НЕ создаём.
+
+Частный случай
+
+Если это на самом деле внешний актив без истории и пользователь явно
+классифицировал его как income/opening balance: - тогда это должен быть
+не DepositCrypto, а другой тип/ручная классификация
+
+Для MVP: - deposit = movement only
+
+------------------------------------------------------------------------
+
+4. WithdrawalCrypto
+
+По умолчанию это просто вывод актива.
+
+Алгоритм
+
+1.  Создаём MovementEvent
+
+    -   direction = OUT
+    -   asset = out_money.symbol
+    -   qty = out_money.crypto_amount
+
+2.  Lot не трогаем
+
+3.  Если есть network fee:
+
+    -   создаём ExpenseEvent
+    -   если fee в активе → создаём ExpenseLot
+
+Частный случай
+
+Если пользователь руками пометил вывод как подарок / расход / утерю: -
+тогда это уже не WithdrawalCrypto, а соответствующий TxKind или override
+
+------------------------------------------------------------------------
+
+5. DepositFiat
+
+Не влияет на налог по crypto inventory.
+
+Алгоритм
+
+-   MovementEvent(IN)
+
+------------------------------------------------------------------------
+
+6. WithdrawalFiat
+
+Не влияет на налог по crypto inventory.
+
+Алгоритм
+
+-   MovementEvent(OUT)
+
+------------------------------------------------------------------------
+
+7. TransferInternal
+
+Перевод между своими счетами / кошельками.
+
+Алгоритм
+
+-   MovementEvent(INTERNAL)
+
+Lots не создаём и не закрываем.
+
+------------------------------------------------------------------------
+
+8. Airdrop
+
+Это доход без продажи.
+
+Алгоритм
+
+1.  Создаём IncomeEvent
+    -   amount_fiat = in_money.fiat_amount
+    -   asset = in_money.symbol
+    -   qty = in_money.crypto_amount
+    -   kind = AIRDROP
+2.  Создаём Lot
+    -   asset = in_money.symbol
+    -   qty_total = in_money.crypto_amount
+    -   cost_fiat = in_money.fiat_amount
+    -   acquisition_type = INCOME
+
+Логика
+
+Доход признаётся сейчас, а cost basis для будущей продажи фиксируется
+через lot.
+
+------------------------------------------------------------------------
+
+9. StakingReward
+
+Та же логика, что и airdrop.
+
+Алгоритм
+
+1.  IncomeEvent(kind = STAKING_REWARD)
+2.  Lot(acquisition_type = INCOME)
+
+------------------------------------------------------------------------
+
+10. Expense
+
+Это ручной или fee-only расход.
+
+Алгоритм
+
+1.  Создаём ExpenseEvent
+    -   amount_fiat берём из fee/out leg valuation
+    -   kind = MANUAL
+2.  Если расход в активе:
+    -   создаём ExpenseLot
+    -   списываем соответствующие lots
+
+Частный случай
+
+Если expense выглядит как трата crypto “на что-то”, но без явной модели
+counter-value: - для MVP это просто расход, не realization
+
+------------------------------------------------------------------------
+
+11. GiftIn
+
+Получение подарка.
+
+Алгоритм
+
+1.  IncomeEvent(kind = GIFT_IN)
+2.  Lot(acquisition_type = INCOME)
+
+------------------------------------------------------------------------
+
+12. GiftOut
+
+Передача актива другому лицу.
+
+Алгоритм
+
+1.  Создаём RealizationEvent
+    -   asset = out_money.symbol
+    -   qty = out_money.crypto_amount
+    -   proceeds_fiat = 0
+    -   kind = GIFT_OUT
+2.  Закрываем lots через RealizationLot
+3.  CostBasisFiat считается как обычно
+
+Это создаст отрицательный результат, если policy так трактует.
+
+------------------------------------------------------------------------
+
+13. DerivativePnL
+
+Это уже реализованный результат по деривативам.
+
+Если PnL положительный
+
+1.  Создаём IncomeEvent
+    -   kind = DERIVATIVE_PNL
+    -   amount_fiat = in_money.fiat_amount или иная доступная оценка
+2.  Если PnL начислен активом:
+    -   создаём Lot на этот актив
+
+Если PnL отрицательный
+
+1.  Создаём ExpenseEvent
+    -   kind = DERIVATIVE_LOSS
+    -   amount_fiat = abs(value)
+2.  Если отрицательный pnl реально списал актив:
+    -   создаём ExpenseLot
+
+------------------------------------------------------------------------
+
+14. FundingFee
+
+Это расход.
+
+Алгоритм
+
+1.  Создаём ExpenseEvent
+    -   kind = FUNDING_FEE
+2.  Если funding списан в активе:
+    -   создаём ExpenseLot
+
+------------------------------------------------------------------------
+
+15. Stolen
+
+Утрата актива через кражу.
+
+Алгоритм
+
+1.  RealizationEvent
+    -   asset = out_money.symbol
+    -   qty = out_money.crypto_amount
+    -   proceeds_fiat = 0
+    -   kind = STOLEN
+2.  Закрываем lots через RealizationLot
+
+------------------------------------------------------------------------
+
+16. Lost
+
+Потеря актива.
+
+Алгоритм
+
+1.  RealizationEvent
+    -   proceeds_fiat = 0
+    -   kind = LOST
+2.  Закрываем lots
+
+------------------------------------------------------------------------
+
+17. Burn
+
+Сжигание актива.
+
+Алгоритм
+
+1.  RealizationEvent
+    -   proceeds_fiat = 0
+    -   kind = BURN
+2.  Закрываем lots
+
+------------------------------------------------------------------------
+
+Этап 4. Аллокация lots
+
+------------------------------------------------------------------------
+
+Для RealizationEvent
+
+После создания realization нужно списать lots по активу event.asset.
+
+FIFO
+
+Берём самые ранние lots с qty_remaining > 0 и списываем до полного
+покрытия event.qty.
+
+Для каждого списания создаём:
+
+-   RealizationLot
+    -   realization_id
+    -   lot_id
+    -   qty
+    -   cost_fiat_allocated
+
+И уменьшаем lot.qty_remaining.
+
+LIFO
+
+То же самое, но с конца.
+
+AVG
+
+Либо считаем weighted average по активу, либо создаём synthetic
+allocation. Для MVP лучше FIFO.
+
+------------------------------------------------------------------------
+
+Для ExpenseEvent с asset+qty
+
+Если комиссия/расход выражены в крипте: - аналогично закрываем lots по
+expense.asset - создаём ExpenseLot
+
+------------------------------------------------------------------------
+
+Этап 5. Подсчёт итогов
+
+После обработки всех транзакций:
+
+1. TotalIncomeFiat
+
+sum(realization.proceeds_fiat) + sum(income.amount_fiat)
+
+2. TotalExpenseFiat
+
+sum(realization.cost_basis_fiat) + sum(expense.amount_fiat)
+
+3. TaxBaseFiat
+
+total_income_fiat - total_expense_fiat
+
+Если отрицательная: - либо 0 для итогового налога - либо сохраняем
+отрицательное значение отдельно как loss, если policy это поддерживает
+
+4. TaxDueFiat
+
+Считается по policy: - jurisdiction - residency - taxpayer type -
+прогрессия или flat rate
+
+Прогрессия применяется к итоговой годовой базе, а не к каждой операции.
+
+------------------------------------------------------------------------
+
+Этап 6. Формирование Result
+
+Итоговый Result должен содержать:
+
+-   TaxSummary
+-   список всех events
+-   список all lots
+-   all allocations (RealizationLot, ExpenseLot)
+-   warnings / validation issues
+-   policy snapshot
+
+Это потом идёт: - в audit zip - summary snapshot в TaxJob
+
+------------------------------------------------------------------------
+
+Важные частные случаи
+
+------------------------------------------------------------------------
+
+1. IncomeEvent обязательно должен создавать Lot
+
+Если income приходит в asset+qty и не создаёт lot, то при будущей
+продаже cost basis будет потерян.
+
+------------------------------------------------------------------------
+
+2. MovementEvent по умолчанию не создаёт Lot
+
+Иначе переводы будут выглядеть как новые покупки.
+
+------------------------------------------------------------------------
+
+3. Fee в активе — это не просто число
+
+Если fee оплачена crypto asset: - недостаточно создать ExpenseEvent -
+нужно ещё создать ExpenseLot и списать inventory
+
+------------------------------------------------------------------------
+
+4. WithdrawalCrypto нельзя автоматически считать продажей
+
+По самой транзакции чаще всего невозможно понять, это: - перевод себе -
+подарок - оплата - утрата
+
+Для MVP: - withdrawal = movement - и только при явной ручной
+переклассификации становится другим событием
+
+------------------------------------------------------------------------
+
+5. DerivativePnL бывает положительным и отрицательным
+
+Нельзя всё класть в IncomeEvent. Нужно ветвление по знаку.
+
+------------------------------------------------------------------------
+
+6. GiftOut / Lost / Burn / Stolen
+
+Это realizations с proceeds_fiat = 0. Они закрывают lots и влияют на tax
+base в зависимости от policy.
+
+------------------------------------------------------------------------
+
+7. Поля AmountFiat / CostFiat / ProceedsFiat
+
+В доменной модели это fiat abstraction. Какая конкретно валюта
+используется, определяется Jurisdiction и policy.
+
+------------------------------------------------------------------------
+
+8. Итоговый налог по операциям не считается
+
+На уровне domain событий не нужно хранить “налог по событию”. Считается
+только общий TaxDue по годовой базе.
+
+------------------------------------------------------------------------

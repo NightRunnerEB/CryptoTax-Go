@@ -11,7 +11,7 @@ import (
 // If Asset/Qty present -> you MUST create a Lot with CostFiat = AmountFiat.
 type IncomeEvent struct {
 	ID         uuid.UUID
-	TenantID   uuid.UUID
+	UserID     uuid.UUID
 	OccurredAt time.Time
 
 	AmountFiat decimal.Decimal

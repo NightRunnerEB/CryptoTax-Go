@@ -6,15 +6,15 @@ option go_package = "github.com/NightRunner/CryptoTax-Go/gen/price/v1;pricev1";
 
 import "google/protobuf/timestamp.proto";
 
-// Price provides transaction valuation APIs and tenant symbol mapping APIs.
+// Price provides transaction valuation APIs and user symbol mapping APIs.
 service Price {
   // Valuates batch of transactions and returns calculated prices.
   rpc ValuateTransactionsBatch(ValuateTransactionsRequest)
   returns (ValuateTransactionsResponse);
 
-  // Creates or updates tenant symbol.
-  rpc UpsertTenantSymbol(UpsertTenantSymbolRequest)
-  returns (UpsertTenantSymbolResponse);
+  // Creates or updates user symbol.
+  rpc UpsertUserSymbol(UpsertUserSymbolRequest)
+  returns (UpsertUserSymbolResponse);
 }
 
 message MoneyLeg {
@@ -61,7 +61,7 @@ message ValuatedTx {
 }
 
 message ValuateTransactionsRequest {
-  string               tenant_id     = 1;
+  string               user_id     = 1;
   string               source        = 2;
   string               fiat_currency = 3;
   repeated TxToValuate transactions  = 4;
@@ -71,11 +71,11 @@ message ValuateTransactionsResponse {
   repeated ValuatedTx transactions = 1;
 }
 
-message UpsertTenantSymbolRequest {
-  string tenant_id = 1;
+message UpsertUserSymbolRequest {
+  string user_id = 1;
   string source    = 2;
   string symbol    = 3;
   string coin_id   = 4;
 }
 
-message UpsertTenantSymbolResponse {}
+message UpsertUserSymbolResponse {}

@@ -14,7 +14,7 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/mocks"
 )
 
-func TestTaxJobUC_Enqueue_InvalidTenantID(t *testing.T) {
+func TestTaxJobUC_Enqueue_InvalidUserID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -36,15 +36,15 @@ func TestTaxJobUC_Enqueue_ProfileMissing(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobRepo := mocks.NewMockTaxJobRepo(ctrl)
 	profileRepo := mocks.NewMockTaxProfileRepo(ctrl)
 	storage := mocks.NewMockObjectStorage(ctrl)
 
-	profileRepo.EXPECT().Get(gomock.Any(), tenantID).Return(domain.TaxProfile{}, apperr.NotFound("tax profile not found", apperr.Resource{Type: "tax_profile", Name: tenantID.String()}, nil)).Times(1)
+	profileRepo.EXPECT().Get(gomock.Any(), userID).Return(domain.TaxProfile{}, apperr.NotFound("tax profile not found", apperr.Resource{Type: "tax_profile", Name: userID.String()}, nil)).Times(1)
 
 	uc := NewTaxJobUC(jobRepo, profileRepo, storage)
-	_, err := uc.Enqueue(context.Background(), tenantID, 2026, domain.TaxPolicy{Jurisdiction: domain.JurisdictionRU, CostBasisMethod: domain.FIFO})
+	_, err := uc.Enqueue(context.Background(), userID, 2026, domain.TaxPolicy{Jurisdiction: domain.JurisdictionRU, CostBasisMethod: domain.FIFO})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -55,16 +55,16 @@ func TestTaxJobUC_Enqueue_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobRepo := mocks.NewMockTaxJobRepo(ctrl)
 	profileRepo := mocks.NewMockTaxProfileRepo(ctrl)
 	storage := mocks.NewMockObjectStorage(ctrl)
 
-	profileRepo.EXPECT().Get(gomock.Any(), tenantID).Return(domain.TaxProfile{TenantID: tenantID}, nil).Times(1)
+	profileRepo.EXPECT().Get(gomock.Any(), userID).Return(domain.TaxProfile{UserID: userID}, nil).Times(1)
 
 	jobRepo.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, got domain.TaxJob) (domain.TaxJob, error) {
-		if got.TenantID != tenantID {
-			t.Fatalf("tenant mismatch: got %s want %s", got.TenantID, tenantID)
+		if got.UserID != userID {
+			t.Fatalf("user mismatch: got %s want %s", got.UserID, userID)
 		}
 		if got.Status != domain.JobQueued {
 			t.Fatalf("status mismatch: got %s want %s", got.Status, domain.JobQueued)
@@ -82,7 +82,7 @@ func TestTaxJobUC_Enqueue_Success(t *testing.T) {
 	}).Times(1)
 
 	uc := NewTaxJobUC(jobRepo, profileRepo, storage)
-	job, err := uc.Enqueue(context.Background(), tenantID, 2026, domain.TaxPolicy{
+	job, err := uc.Enqueue(context.Background(), userID, 2026, domain.TaxPolicy{
 		Jurisdiction:    "ru",
 		CostBasisMethod: "",
 	})
@@ -98,10 +98,10 @@ func TestTaxJobUC_GetStatus_AttachesPresignedURLs(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobID := uuid.New()
-	auditKey := "audits/tenant/job.json"
-	reportKey := "reports/tenant/job.xml"
+	auditKey := "audits/user/job.json"
+	reportKey := "reports/user/job.xml"
 	auditURL := "https://minio.local/audit"
 	reportURL := "https://minio.local/report"
 
@@ -109,9 +109,9 @@ func TestTaxJobUC_GetStatus_AttachesPresignedURLs(t *testing.T) {
 	profileRepo := mocks.NewMockTaxProfileRepo(ctrl)
 	storage := mocks.NewMockObjectStorage(ctrl)
 
-	jobRepo.EXPECT().Get(gomock.Any(), tenantID, jobID).Return(domain.TaxJob{
+	jobRepo.EXPECT().Get(gomock.Any(), userID, jobID).Return(domain.TaxJob{
 		ID:              jobID,
-		TenantID:        tenantID,
+		UserID:          userID,
 		Status:          domain.JobSuccess,
 		PolicySnapshot:  domain.TaxPolicy{Jurisdiction: domain.JurisdictionRU, CostBasisMethod: domain.FIFO},
 		AuditObjectKey:  &auditKey,
@@ -122,7 +122,7 @@ func TestTaxJobUC_GetStatus_AttachesPresignedURLs(t *testing.T) {
 	storage.EXPECT().PresignGet(gomock.Any(), reportKey).Return(reportURL, nil).Times(1)
 
 	uc := NewTaxJobUC(jobRepo, profileRepo, storage)
-	job, err := uc.GetStatus(context.Background(), tenantID, jobID)
+	job, err := uc.GetStatus(context.Background(), userID, jobID)
 	if err != nil {
 		t.Fatalf("GetStatus() unexpected error: %v", err)
 	}
@@ -138,19 +138,19 @@ func TestTaxJobUC_List_AttachesPresignedURLs(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobID := uuid.New()
-	auditKey := "audits/tenant/job.json"
+	auditKey := "audits/user/job.json"
 	auditURL := "https://minio.local/audit"
 
 	jobRepo := mocks.NewMockTaxJobRepo(ctrl)
 	profileRepo := mocks.NewMockTaxProfileRepo(ctrl)
 	storage := mocks.NewMockObjectStorage(ctrl)
 
-	jobRepo.EXPECT().List(gomock.Any(), tenantID, int32(10), int32(0)).Return([]domain.TaxJob{
+	jobRepo.EXPECT().List(gomock.Any(), userID, int32(10), int32(0)).Return([]domain.TaxJob{
 		{
 			ID:             jobID,
-			TenantID:       tenantID,
+			UserID:         userID,
 			Status:         domain.JobSuccess,
 			PolicySnapshot: domain.TaxPolicy{Jurisdiction: domain.JurisdictionRU, CostBasisMethod: domain.FIFO},
 			AuditObjectKey: &auditKey,
@@ -160,7 +160,7 @@ func TestTaxJobUC_List_AttachesPresignedURLs(t *testing.T) {
 	storage.EXPECT().PresignGet(gomock.Any(), auditKey).Return(auditURL, nil).Times(1)
 
 	uc := NewTaxJobUC(jobRepo, profileRepo, storage)
-	jobs, total, err := uc.List(context.Background(), tenantID, 10, 0)
+	jobs, total, err := uc.List(context.Background(), userID, 10, 0)
 	if err != nil {
 		t.Fatalf("List() unexpected error: %v", err)
 	}
@@ -196,15 +196,15 @@ func TestTaxJobUC_Enqueue_InvalidTaxPolicy(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobRepo := mocks.NewMockTaxJobRepo(ctrl)
 	profileRepo := mocks.NewMockTaxProfileRepo(ctrl)
 	storage := mocks.NewMockObjectStorage(ctrl)
 
-	profileRepo.EXPECT().Get(gomock.Any(), tenantID).Return(domain.TaxProfile{TenantID: tenantID}, nil).Times(1)
+	profileRepo.EXPECT().Get(gomock.Any(), userID).Return(domain.TaxProfile{UserID: userID}, nil).Times(1)
 
 	uc := NewTaxJobUC(jobRepo, profileRepo, storage)
-	_, err := uc.Enqueue(context.Background(), tenantID, time.Now().Year(), domain.TaxPolicy{Jurisdiction: "XX", CostBasisMethod: "BAD"})
+	_, err := uc.Enqueue(context.Background(), userID, time.Now().Year(), domain.TaxPolicy{Jurisdiction: "XX", CostBasisMethod: "BAD"})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

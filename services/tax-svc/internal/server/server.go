@@ -33,12 +33,12 @@ func (s *TaxServer) GetTaxProfile(ctx context.Context, req *taxv1.GetTaxProfileR
 		})
 	}
 
-	tenantID, err := tenantIDFromHeader(ctx)
+	userID, err := userIDFromHeader(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	profile, err := s.taxProfileUC.Get(ctx, tenantID)
+	profile, err := s.taxProfileUC.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (s *TaxServer) UpsertTaxProfile(ctx context.Context, req *taxv1.UpsertTaxPr
 		})
 	}
 
-	tenantID, err := tenantIDFromHeader(ctx)
+	userID, err := userIDFromHeader(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (s *TaxServer) UpsertTaxProfile(ctx context.Context, req *taxv1.UpsertTaxPr
 	profileReq := req.GetProfile()
 
 	profile := domain.TaxProfile{
-		TenantID:           tenantID,
+		UserID:             userID,
 		INN:                profileReq.GetInn(),
 		LastName:           profileReq.GetLastName(),
 		FirstName:          profileReq.GetFirstName(),
@@ -86,7 +86,7 @@ func (s *TaxServer) UpsertTaxProfile(ctx context.Context, req *taxv1.UpsertTaxPr
 		return nil, err
 	}
 
-	updated, err := s.taxProfileUC.Get(ctx, tenantID)
+	updated, err := s.taxProfileUC.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (s *TaxServer) StartReport(ctx context.Context, req *taxv1.StartReportReque
 		})
 	}
 
-	tenantID, err := tenantIDFromHeader(ctx)
+	userID, err := userIDFromHeader(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (s *TaxServer) StartReport(ctx context.Context, req *taxv1.StartReportReque
 
 	job, err := s.taxJobUC.Enqueue(
 		ctx,
-		tenantID,
+		userID,
 		int(params.GetTaxYear()),
 		taxPolicy,
 	)
@@ -166,7 +166,7 @@ func (s *TaxServer) GetReportStatus(ctx context.Context, req *taxv1.GetReportSta
 		})
 	}
 
-	tenantID, err := tenantIDFromHeader(ctx)
+	userID, err := userIDFromHeader(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (s *TaxServer) GetReportStatus(ctx context.Context, req *taxv1.GetReportSta
 		})
 	}
 
-	job, err := s.taxJobUC.GetStatus(ctx, tenantID, jobID)
+	job, err := s.taxJobUC.GetStatus(ctx, userID, jobID)
 	if err != nil {
 		return nil, err
 	}
@@ -197,12 +197,12 @@ func (s *TaxServer) ListReports(ctx context.Context, req *taxv1.ListReportsReque
 		})
 	}
 
-	tenantID, err := tenantIDFromHeader(ctx)
+	userID, err := userIDFromHeader(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	jobs, total, err := s.taxJobUC.List(ctx, tenantID, req.GetLimit(), req.GetOffset())
+	jobs, total, err := s.taxJobUC.List(ctx, userID, req.GetLimit(), req.GetOffset())
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +238,7 @@ func toWallets(in []string) []domain.Wallet {
 }
 
 func toProtoTaxProfile(profile domain.TaxProfile) *taxv1.TaxProfile {
-	if profile.TenantID == uuid.Nil {
+	if profile.UserID == uuid.Nil {
 		return nil
 	}
 
@@ -248,7 +248,7 @@ func toProtoTaxProfile(profile domain.TaxProfile) *taxv1.TaxProfile {
 	}
 
 	return &taxv1.TaxProfile{
-		TenantId:           profile.TenantID.String(),
+		UserId:             profile.UserID.String(),
 		Inn:                profile.INN,
 		LastName:           profile.LastName,
 		FirstName:          profile.FirstName,
@@ -264,7 +264,7 @@ func toProtoTaxProfile(profile domain.TaxProfile) *taxv1.TaxProfile {
 func toProtoTaxJob(job domain.TaxJob) *taxv1.TaxJob {
 	out := &taxv1.TaxJob{
 		ReportId:         job.ID.String(),
-		TenantId:         job.TenantID.String(),
+		UserId:           job.UserID.String(),
 		TaxYear:          int32(job.TaxYear),
 		PolicySnapshot:   toProtoPolicy(job.PolicySnapshot),
 		Status:           string(job.Status),

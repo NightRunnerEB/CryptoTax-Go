@@ -11,7 +11,7 @@ import (
 
 type AggregatedTransaction struct {
 	ID             uuid.UUID          `json:"id"`
-	TenantID       uuid.UUID          `json:"tenantId"`
+	UserID         uuid.UUID          `json:"userId"`
 	Source         string             `json:"source"`
 	ImportID       uuid.UUID          `json:"importId"`
 	TimeUtc        pgtype.Timestamptz `json:"timeUtc"`
@@ -31,7 +31,7 @@ type AggregatedTransaction struct {
 }
 
 type AggregationImportState struct {
-	TenantID    uuid.UUID          `json:"tenantId"`
+	UserID      uuid.UUID          `json:"userId"`
 	ImportID    uuid.UUID          `json:"importId"`
 	EventID     uuid.UUID          `json:"eventId"`
 	Status      string             `json:"status"`
@@ -40,8 +40,8 @@ type AggregationImportState struct {
 	Error       *string            `json:"error"`
 }
 
-type TenantSetting struct {
-	TenantID     uuid.UUID          `json:"tenantId"`
+type UserSetting struct {
+	UserID       uuid.UUID          `json:"userId"`
 	FiatCurrency string             `json:"fiatCurrency"`
 	Timezone     string             `json:"timezone"`
 	UpdatedAt    pgtype.Timestamptz `json:"updatedAt"`

@@ -1,10 +1,10 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
-  getTenantSettings,
+  getUserSettings,
   listSupportedFiatCurrencies,
   listTransactionsByImport,
-  upsertTenantSettings,
+  upsertUserSettings,
   type AggregatedTransaction,
   type MoneyLeg,
   type SupportedFiatCurrency,
@@ -125,8 +125,8 @@ export function TransactionsPage() {
   const [offset, setOffset] = useState(0)
 
   const [supportedFiat, setSupportedFiat] = useState<SupportedFiatCurrency[]>([])
-  const [activeTenantFiat, setActiveTenantFiat] = useState<string | null>(null)
-  const [activeTenantTimezone, setActiveTenantTimezone] = useState<string | null>(null)
+  const [activeUserFiat, setActiveUserFiat] = useState<string | null>(null)
+  const [activeUserTimezone, setActiveUserTimezone] = useState<string | null>(null)
   const [isFiatLoading, setIsFiatLoading] = useState(false)
   const [isFiatUpdating, setIsFiatUpdating] = useState(false)
   const [fiatError, setFiatError] = useState<string | null>(null)
@@ -151,20 +151,20 @@ export function TransactionsPage() {
     setFiatError(null)
 
     try {
-      const [currencies, tenantSettings] = await Promise.all([
+      const [currencies, userSettings] = await Promise.all([
         listSupportedFiatCurrencies(),
-        getTenantSettings(),
+        getUserSettings(),
       ])
 
       setSupportedFiat(currencies)
-      setActiveTenantFiat(tenantSettings.fiatCurrency)
-      setActiveTenantTimezone(tenantSettings.timezone)
-      setFiatFilter(tenantSettings.fiatCurrency)
+      setActiveUserFiat(userSettings.fiatCurrency)
+      setActiveUserTimezone(userSettings.timezone)
+      setFiatFilter(userSettings.fiatCurrency)
     } catch (loadError) {
       setFiatError(toErrorMessage(loadError, 'Failed to load fiat currency context.'))
       setSupportedFiat([])
-      setActiveTenantFiat(null)
-      setActiveTenantTimezone(null)
+      setActiveUserFiat(null)
+      setActiveUserTimezone(null)
       setFiatFilter('')
     } finally {
       setIsFiatLoading(false)
@@ -259,42 +259,42 @@ export function TransactionsPage() {
     if (fiatFilter) {
       return fiatFilter
     }
-    return activeTenantFiat
-  }, [fiatFilter, activeTenantFiat])
+    return activeUserFiat
+  }, [fiatFilter, activeUserFiat])
 
   const handleFiatChange = useCallback(
     async (nextFiatCode: string): Promise<void> => {
       setFiatFilter(nextFiatCode)
       setError(null)
 
-      if (!session || !activeTenantTimezone || nextFiatCode.trim() === '' || nextFiatCode === activeTenantFiat) {
+      if (!session || !activeUserTimezone || nextFiatCode.trim() === '' || nextFiatCode === activeUserFiat) {
         return
       }
 
       setIsFiatUpdating(true)
       try {
-        const updatedSettings = await upsertTenantSettings({
+        const updatedSettings = await upsertUserSettings({
           fiatCurrency: nextFiatCode,
-          timezone: activeTenantTimezone,
+          timezone: activeUserTimezone,
         })
 
-        setActiveTenantFiat(updatedSettings.fiatCurrency)
-        setActiveTenantTimezone(updatedSettings.timezone)
+        setActiveUserFiat(updatedSettings.fiatCurrency)
+        setActiveUserTimezone(updatedSettings.timezone)
         setFiatFilter(updatedSettings.fiatCurrency)
-        notifications.success('Tenant currency updated', `Default fiat currency: ${updatedSettings.fiatCurrency}`)
+        notifications.success('User currency updated', `Default fiat currency: ${updatedSettings.fiatCurrency}`)
 
         if (hasSearched && importId.trim() !== '') {
           await fetchTransactions(0)
         }
       } catch (updateError) {
-        setError(toErrorMessage(updateError, 'Failed to update tenant currency.'))
-        setFiatFilter(activeTenantFiat ?? '')
-        notifications.error('Failed to update tenant currency', toErrorMessage(updateError))
+        setError(toErrorMessage(updateError, 'Failed to update user currency.'))
+        setFiatFilter(activeUserFiat ?? '')
+        notifications.error('Failed to update user currency', toErrorMessage(updateError))
       } finally {
         setIsFiatUpdating(false)
       }
     },
-    [session, activeTenantTimezone, activeTenantFiat, notifications, hasSearched, importId, fetchTransactions],
+    [session, activeUserTimezone, activeUserFiat, notifications, hasSearched, importId, fetchTransactions],
   )
 
   const toggleExpanded = (txId: string): void => {
@@ -389,9 +389,9 @@ export function TransactionsPage() {
         <p className="hint-text">
           Server-side pagination is used (`limit`/`offset`). Sorting and source filter are applied on the current page.
         </p>
-        {activeTenantFiat ? (
+        {activeUserFiat ? (
           <p className="hint-text">
-            Tenant valuation currency: {activeTenantFiat}. Changing fiat updates tenant settings via `upsertTenantSettings`.
+            User valuation currency: {activeUserFiat}. Changing fiat updates user settings via `upsertUserSettings`.
           </p>
         ) : null}
       </article>

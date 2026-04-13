@@ -76,12 +76,12 @@ func TestSmoke_StartReport_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobID := uuid.New()
 
 	profileUC := mocks.NewMockTaxProfileUseCase(ctrl)
 	jobUC := mocks.NewMockTaxJobUseCase(ctrl)
-	jobUC.EXPECT().Enqueue(gomock.Any(), tenantID, 2025, domain.TaxPolicy{
+	jobUC.EXPECT().Enqueue(gomock.Any(), userID, 2025, domain.TaxPolicy{
 		TreatCryptoCryptoAsDisposal: true,
 		CostBasisMethod:             domain.FIFO,
 		Jurisdiction:                domain.JurisdictionRU,
@@ -92,10 +92,10 @@ func TestSmoke_StartReport_Success(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	ctx = metadata.AppendToOutgoingContext(ctx, "x-tenant-id", tenantID.String())
+	ctx = metadata.AppendToOutgoingContext(ctx, "x-user-id", userID.String())
 
 	resp, err := client.StartReport(ctx, &taxv1.StartReportRequest{
-		TenantId: tenantID.String(),
+		UserId: userID.String(),
 		Params: &taxv1.StartReportParams{
 			TaxYear: 2025,
 			TaxPolicy: &taxv1.TaxPolicy{
@@ -116,7 +116,7 @@ func TestSmoke_StartReport_Success(t *testing.T) {
 	}
 }
 
-func TestSmoke_StartReport_MissingTenantHeader(t *testing.T) {
+func TestSmoke_StartReport_MissingUserHeader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 

@@ -31,7 +31,7 @@ func (r *TaxJobRepo) Create(ctx context.Context, job domain.TaxJob) (domain.TaxJ
 
 	row, err := r.store.CreateTaxJob(ctx, db.CreateTaxJobParams{
 		ID:             job.ID,
-		TenantID:       job.TenantID,
+		UserID:         job.UserID,
 		TaxYear:        int32(job.TaxYear),
 		PolicySnapshot: policySnapshot,
 		Status:         string(job.Status),
@@ -39,18 +39,18 @@ func (r *TaxJobRepo) Create(ctx context.Context, job domain.TaxJob) (domain.TaxJ
 	})
 	if err != nil {
 		return domain.TaxJob{}, apperr.Internal("create tax job failed", err, map[string]string{
-			"tenant_id": job.TenantID.String(),
-			"job_id":    job.ID.String(),
+			"user_id": job.UserID.String(),
+			"job_id":  job.ID.String(),
 		})
 	}
 
 	return mapTaxJobRow(row)
 }
 
-func (r *TaxJobRepo) Get(ctx context.Context, tenantID, jobID uuid.UUID) (domain.TaxJob, error) {
+func (r *TaxJobRepo) Get(ctx context.Context, userID, jobID uuid.UUID) (domain.TaxJob, error) {
 	row, err := r.store.GetTaxJob(ctx, db.GetTaxJobParams{
-		TenantID: tenantID,
-		ID:       jobID,
+		UserID: userID,
+		ID:     jobID,
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -60,29 +60,29 @@ func (r *TaxJobRepo) Get(ctx context.Context, tenantID, jobID uuid.UUID) (domain
 			}, err)
 		}
 		return domain.TaxJob{}, apperr.Internal("get tax job failed", err, map[string]string{
-			"tenant_id": tenantID.String(),
-			"job_id":    jobID.String(),
+			"user_id": userID.String(),
+			"job_id":  jobID.String(),
 		})
 	}
 	return mapTaxJobRow(row)
 }
 
-func (r *TaxJobRepo) List(ctx context.Context, tenantID uuid.UUID, limit, offset int32) ([]domain.TaxJob, int64, error) {
-	total, err := r.store.CountTaxJobs(ctx, tenantID)
+func (r *TaxJobRepo) List(ctx context.Context, userID uuid.UUID, limit, offset int32) ([]domain.TaxJob, int64, error) {
+	total, err := r.store.CountTaxJobs(ctx, userID)
 	if err != nil {
 		return nil, 0, apperr.Internal("count tax jobs failed", err, map[string]string{
-			"tenant_id": tenantID.String(),
+			"user_id": userID.String(),
 		})
 	}
 
 	rows, err := r.store.ListTaxJobs(ctx, db.ListTaxJobsParams{
-		TenantID: tenantID,
-		Limit:    limit,
-		Offset:   offset,
+		UserID: userID,
+		Limit:  limit,
+		Offset: offset,
 	})
 	if err != nil {
 		return nil, 0, apperr.Internal("list tax jobs failed", err, map[string]string{
-			"tenant_id": tenantID.String(),
+			"user_id": userID.String(),
 		})
 	}
 
@@ -227,7 +227,7 @@ func mapTaxJobRow(row db.TaxJob) (domain.TaxJob, error) {
 
 	return domain.TaxJob{
 		ID:               row.ID,
-		TenantID:         row.TenantID,
+		UserID:           row.UserID,
 		PolicySnapshot:   policy,
 		TaxYear:          int(row.TaxYear),
 		Status:           domain.TaxJobStatus(row.Status),

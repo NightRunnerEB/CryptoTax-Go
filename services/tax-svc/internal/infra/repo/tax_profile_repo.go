@@ -28,7 +28,7 @@ func (r *TaxProfileRepo) Upsert(ctx context.Context, p domain.TaxProfile) error 
 	}
 
 	_, err = r.store.UpsertTaxProfile(ctx, db.UpsertTaxProfileParams{
-		TenantID:           p.TenantID,
+		UserID:             p.UserID,
 		Inn:                p.INN,
 		LastName:           p.LastName,
 		FirstName:          p.FirstName,
@@ -41,24 +41,24 @@ func (r *TaxProfileRepo) Upsert(ctx context.Context, p domain.TaxProfile) error 
 	})
 	if err != nil {
 		return apperr.Internal("upsert tax profile failed", err, map[string]string{
-			"tenant_id": p.TenantID.String(),
+			"user_id": p.UserID.String(),
 		})
 	}
 
 	return nil
 }
 
-func (r *TaxProfileRepo) Get(ctx context.Context, tenantID uuid.UUID) (domain.TaxProfile, error) {
-	row, err := r.store.GetTaxProfile(ctx, tenantID)
+func (r *TaxProfileRepo) Get(ctx context.Context, userID uuid.UUID) (domain.TaxProfile, error) {
+	row, err := r.store.GetTaxProfile(ctx, userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.TaxProfile{}, apperr.NotFound("tax profile not found", apperr.Resource{
 				Type: "tax_profile",
-				Name: tenantID.String(),
+				Name: userID.String(),
 			}, err)
 		}
 		return domain.TaxProfile{}, apperr.Internal("get tax profile failed", err, map[string]string{
-			"tenant_id": tenantID.String(),
+			"user_id": userID.String(),
 		})
 	}
 
@@ -69,17 +69,17 @@ func (r *TaxProfileRepo) Get(ctx context.Context, tenantID uuid.UUID) (domain.Ta
 	return profile, nil
 }
 
-func (r *TaxProfileRepo) Delete(ctx context.Context, tenantID uuid.UUID) error {
-	affected, err := r.store.DeleteTaxProfile(ctx, tenantID)
+func (r *TaxProfileRepo) Delete(ctx context.Context, userID uuid.UUID) error {
+	affected, err := r.store.DeleteTaxProfile(ctx, userID)
 	if err != nil {
 		return apperr.Internal("delete tax profile failed", err, map[string]string{
-			"tenant_id": tenantID.String(),
+			"user_id": userID.String(),
 		})
 	}
 	if affected == 0 {
 		return apperr.NotFound("tax profile not found", apperr.Resource{
 			Type: "tax_profile",
-			Name: tenantID.String(),
+			Name: userID.String(),
 		}, nil)
 	}
 	return nil
@@ -92,7 +92,7 @@ func mapTaxProfileRow(row db.TaxProfile) (domain.TaxProfile, error) {
 	}
 
 	return domain.TaxProfile{
-		TenantID:           row.TenantID,
+		UserID:             row.UserID,
 		INN:                row.Inn,
 		LastName:           row.LastName,
 		FirstName:          row.FirstName,

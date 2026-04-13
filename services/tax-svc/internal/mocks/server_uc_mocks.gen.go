@@ -43,32 +43,32 @@ func (m *MockTaxProfileUseCase) EXPECT() *MockTaxProfileUseCaseMockRecorder {
 }
 
 // Delete mocks base method.
-func (m *MockTaxProfileUseCase) Delete(ctx context.Context, tenantID uuid.UUID) error {
+func (m *MockTaxProfileUseCase) Delete(ctx context.Context, userID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, tenantID)
+	ret := m.ctrl.Call(m, "Delete", ctx, userID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockTaxProfileUseCaseMockRecorder) Delete(ctx, tenantID any) *gomock.Call {
+func (mr *MockTaxProfileUseCaseMockRecorder) Delete(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTaxProfileUseCase)(nil).Delete), ctx, tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTaxProfileUseCase)(nil).Delete), ctx, userID)
 }
 
 // Get mocks base method.
-func (m *MockTaxProfileUseCase) Get(ctx context.Context, tenantID uuid.UUID) (domain.TaxProfile, error) {
+func (m *MockTaxProfileUseCase) Get(ctx context.Context, userID uuid.UUID) (domain.TaxProfile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, tenantID)
+	ret := m.ctrl.Call(m, "Get", ctx, userID)
 	ret0, _ := ret[0].(domain.TaxProfile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockTaxProfileUseCaseMockRecorder) Get(ctx, tenantID any) *gomock.Call {
+func (mr *MockTaxProfileUseCaseMockRecorder) Get(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockTaxProfileUseCase)(nil).Get), ctx, tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockTaxProfileUseCase)(nil).Get), ctx, userID)
 }
 
 // Upsert mocks base method.
@@ -110,39 +110,39 @@ func (m *MockTaxJobUseCase) EXPECT() *MockTaxJobUseCaseMockRecorder {
 }
 
 // Enqueue mocks base method.
-func (m *MockTaxJobUseCase) Enqueue(ctx context.Context, tenantID uuid.UUID, taxYear int, taxPolicy domain.TaxPolicy) (domain.TaxJob, error) {
+func (m *MockTaxJobUseCase) Enqueue(ctx context.Context, userID uuid.UUID, taxYear int, taxPolicy domain.TaxPolicy) (domain.TaxJob, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Enqueue", ctx, tenantID, taxYear, taxPolicy)
+	ret := m.ctrl.Call(m, "Enqueue", ctx, userID, taxYear, taxPolicy)
 	ret0, _ := ret[0].(domain.TaxJob)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Enqueue indicates an expected call of Enqueue.
-func (mr *MockTaxJobUseCaseMockRecorder) Enqueue(ctx, tenantID, taxYear, taxPolicy any) *gomock.Call {
+func (mr *MockTaxJobUseCaseMockRecorder) Enqueue(ctx, userID, taxYear, taxPolicy any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enqueue", reflect.TypeOf((*MockTaxJobUseCase)(nil).Enqueue), ctx, tenantID, taxYear, taxPolicy)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enqueue", reflect.TypeOf((*MockTaxJobUseCase)(nil).Enqueue), ctx, userID, taxYear, taxPolicy)
 }
 
 // GetStatus mocks base method.
-func (m *MockTaxJobUseCase) GetStatus(ctx context.Context, tenantID, jobID uuid.UUID) (domain.TaxJob, error) {
+func (m *MockTaxJobUseCase) GetStatus(ctx context.Context, userID, jobID uuid.UUID) (domain.TaxJob, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetStatus", ctx, tenantID, jobID)
+	ret := m.ctrl.Call(m, "GetStatus", ctx, userID, jobID)
 	ret0, _ := ret[0].(domain.TaxJob)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetStatus indicates an expected call of GetStatus.
-func (mr *MockTaxJobUseCaseMockRecorder) GetStatus(ctx, tenantID, jobID any) *gomock.Call {
+func (mr *MockTaxJobUseCaseMockRecorder) GetStatus(ctx, userID, jobID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStatus", reflect.TypeOf((*MockTaxJobUseCase)(nil).GetStatus), ctx, tenantID, jobID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStatus", reflect.TypeOf((*MockTaxJobUseCase)(nil).GetStatus), ctx, userID, jobID)
 }
 
 // List mocks base method.
-func (m *MockTaxJobUseCase) List(ctx context.Context, tenantID uuid.UUID, limit, offset int32) ([]domain.TaxJob, int64, error) {
+func (m *MockTaxJobUseCase) List(ctx context.Context, userID uuid.UUID, limit, offset int32) ([]domain.TaxJob, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx, tenantID, limit, offset)
+	ret := m.ctrl.Call(m, "List", ctx, userID, limit, offset)
 	ret0, _ := ret[0].([]domain.TaxJob)
 	ret1, _ := ret[1].(int64)
 	ret2, _ := ret[2].(error)
@@ -150,7 +150,7 @@ func (m *MockTaxJobUseCase) List(ctx context.Context, tenantID uuid.UUID, limit,
 }
 
 // List indicates an expected call of List.
-func (mr *MockTaxJobUseCaseMockRecorder) List(ctx, tenantID, limit, offset any) *gomock.Call {
+func (mr *MockTaxJobUseCaseMockRecorder) List(ctx, userID, limit, offset any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockTaxJobUseCase)(nil).List), ctx, tenantID, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockTaxJobUseCase)(nil).List), ctx, userID, limit, offset)
 }

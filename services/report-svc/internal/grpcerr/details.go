@@ -1,10 +1,11 @@
 package grpcerr
 
 import (
-	apperr "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain/error"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/protoadapt"
 	"google.golang.org/protobuf/reflect/protoreflect"
+
+	apperr "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain/error"
 )
 
 func toDetails(ae *apperr.Error, domain string) []protoadapt.MessageV1 {

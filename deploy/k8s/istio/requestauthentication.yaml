@@ -14,7 +14,7 @@ spec:
       jwksUri: http://auth-svc.cryptotax.svc.cluster.local:8085/.well-known/jwks.json
       forwardOriginalToken: true
       outputClaimToHeaders:
-        - header: x-tenant-id
+        - header: x-user-id
           claim: sub
         - header: x-role
           claim: role

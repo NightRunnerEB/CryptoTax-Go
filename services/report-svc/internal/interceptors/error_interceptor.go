@@ -3,8 +3,9 @@ package interceptors
 import (
 	"context"
 
-	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/grpcerr"
 	"google.golang.org/grpc"
+
+	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/grpcerr"
 )
 
 func ErrorInterceptor(domain string) grpc.UnaryServerInterceptor {

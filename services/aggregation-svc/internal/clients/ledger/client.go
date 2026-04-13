@@ -29,12 +29,12 @@ func NewClient(cfg config.Ledger) *Client {
 	}
 }
 
-func (c *Client) ListTransactionsByImport(ctx context.Context, tenantID, importID uuid.UUID) ([]domain.LedgerTransaction, error) {
+func (c *Client) ListTransactionsByImport(ctx context.Context, userID, importID uuid.UUID) ([]domain.LedgerTransaction, error) {
 	if c == nil || c.http == nil {
 		return nil, apperr.Internal("ledger client is not initialized", nil, nil)
 	}
 
-	path := fmt.Sprintf("/v1/tenants/%s/imports/%s/transactions", tenantID, importID)
+	path := fmt.Sprintf("/v1/users/%s/imports/%s/transactions", userID, importID)
 	var out []domain.LedgerTransaction
 
 	resp, err := c.http.R().

@@ -12,7 +12,7 @@ service Report {
 
 message RequestRenderRequest {
   string report_id = 1;
-  string tenant_id = 2;
+  string user_id = 2;
   string jurisdiction = 3;
   int32 tax_year = 4;
   string dataset_object_key = 5;

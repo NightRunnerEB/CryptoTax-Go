@@ -43,7 +43,7 @@ func (t TaxPayerType) Validate() error {
 type Wallet string
 
 type TaxProfile struct {
-	TenantID           uuid.UUID    `json:"tenant_id"`
+	UserID             uuid.UUID    `json:"user_id"`
 	INN                string       `json:"inn"`
 	LastName           string       `json:"last_name"`
 	FirstName          string       `json:"first_name"`
@@ -57,12 +57,12 @@ type TaxProfile struct {
 
 type TaxProfileUseCase interface {
 	Upsert(ctx context.Context, p TaxProfile) error
-	Get(ctx context.Context, tenantID uuid.UUID) (TaxProfile, error)
-	Delete(ctx context.Context, tenantID uuid.UUID) error
+	Get(ctx context.Context, userID uuid.UUID) (TaxProfile, error)
+	Delete(ctx context.Context, userID uuid.UUID) error
 }
 
 type TaxProfileRepo interface {
 	Upsert(ctx context.Context, p TaxProfile) error
-	Get(ctx context.Context, tenantID uuid.UUID) (TaxProfile, error)
-	Delete(ctx context.Context, tenantID uuid.UUID) error
+	Get(ctx context.Context, userID uuid.UUID) (TaxProfile, error)
+	Delete(ctx context.Context, userID uuid.UUID) error
 }

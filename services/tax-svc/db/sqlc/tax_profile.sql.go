@@ -13,11 +13,11 @@ import (
 
 const deleteTaxProfile = `-- name: DeleteTaxProfile :execrows
 DELETE FROM tax_profile
-WHERE tenant_id = $1
+WHERE user_id = $1
 `
 
-func (q *Queries) DeleteTaxProfile(ctx context.Context, tenantID uuid.UUID) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteTaxProfile, tenantID)
+func (q *Queries) DeleteTaxProfile(ctx context.Context, userID uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteTaxProfile, userID)
 	if err != nil {
 		return 0, err
 	}
@@ -26,7 +26,7 @@ func (q *Queries) DeleteTaxProfile(ctx context.Context, tenantID uuid.UUID) (int
 
 const getTaxProfile = `-- name: GetTaxProfile :one
 SELECT
-  tenant_id,
+  user_id,
   inn,
   last_name,
   first_name,
@@ -39,14 +39,14 @@ SELECT
   created_at,
   updated_at
 FROM tax_profile
-WHERE tenant_id = $1
+WHERE user_id = $1
 `
 
-func (q *Queries) GetTaxProfile(ctx context.Context, tenantID uuid.UUID) (TaxProfile, error) {
-	row := q.db.QueryRow(ctx, getTaxProfile, tenantID)
+func (q *Queries) GetTaxProfile(ctx context.Context, userID uuid.UUID) (TaxProfile, error) {
+	row := q.db.QueryRow(ctx, getTaxProfile, userID)
 	var i TaxProfile
 	err := row.Scan(
-		&i.TenantID,
+		&i.UserID,
 		&i.Inn,
 		&i.LastName,
 		&i.FirstName,
@@ -64,7 +64,7 @@ func (q *Queries) GetTaxProfile(ctx context.Context, tenantID uuid.UUID) (TaxPro
 
 const upsertTaxProfile = `-- name: UpsertTaxProfile :one
 INSERT INTO tax_profile (
-  tenant_id,
+  user_id,
   inn,
   last_name,
   first_name,
@@ -76,7 +76,7 @@ INSERT INTO tax_profile (
   taxpayer_type
 )
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-ON CONFLICT (tenant_id)
+ON CONFLICT (user_id)
 DO UPDATE SET
   inn = EXCLUDED.inn,
   last_name = EXCLUDED.last_name,
@@ -89,7 +89,7 @@ DO UPDATE SET
   taxpayer_type = EXCLUDED.taxpayer_type,
   updated_at = now()
 RETURNING
-  tenant_id,
+  user_id,
   inn,
   last_name,
   first_name,
@@ -104,7 +104,7 @@ RETURNING
 `
 
 type UpsertTaxProfileParams struct {
-	TenantID           uuid.UUID `json:"tenantId"`
+	UserID             uuid.UUID `json:"userId"`
 	Inn                string    `json:"inn"`
 	LastName           string    `json:"lastName"`
 	FirstName          string    `json:"firstName"`
@@ -118,7 +118,7 @@ type UpsertTaxProfileParams struct {
 
 func (q *Queries) UpsertTaxProfile(ctx context.Context, arg UpsertTaxProfileParams) (TaxProfile, error) {
 	row := q.db.QueryRow(ctx, upsertTaxProfile,
-		arg.TenantID,
+		arg.UserID,
 		arg.Inn,
 		arg.LastName,
 		arg.FirstName,
@@ -131,7 +131,7 @@ func (q *Queries) UpsertTaxProfile(ctx context.Context, arg UpsertTaxProfilePara
 	)
 	var i TaxProfile
 	err := row.Scan(
-		&i.TenantID,
+		&i.UserID,
 		&i.Inn,
 		&i.LastName,
 		&i.FirstName,

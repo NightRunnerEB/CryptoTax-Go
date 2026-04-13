@@ -1,12 +1,12 @@
 -- name: GetAggregationImportState :one
-SELECT tenant_id, import_id, event_id, status, started_at, completed_at, error
+SELECT user_id, import_id, event_id, status, started_at, completed_at, error
 FROM aggregation_import_state
-WHERE tenant_id = $1 AND import_id = $2;
+WHERE user_id = $1 AND import_id = $2;
 
 -- name: UpsertAggregationImportStateProcessing :exec
-INSERT INTO aggregation_import_state (tenant_id, import_id, event_id, status)
+INSERT INTO aggregation_import_state (user_id, import_id, event_id, status)
 VALUES ($1, $2, $3, $4)
-ON CONFLICT (tenant_id, import_id)
+ON CONFLICT (user_id, import_id)
 DO UPDATE SET
   event_id = EXCLUDED.event_id,
   status = EXCLUDED.status,
@@ -17,9 +17,9 @@ DO UPDATE SET
 -- name: MarkAggregationImportStateCompleted :exec
 UPDATE aggregation_import_state
 SET status = 'completed', completed_at = now(), error = NULL
-WHERE tenant_id = $1 AND import_id = $2;
+WHERE user_id = $1 AND import_id = $2;
 
 -- name: MarkAggregationImportStateFailed :exec
 UPDATE aggregation_import_state
 SET status = 'failed', completed_at = now(), error = $3
-WHERE tenant_id = $1 AND import_id = $2;
+WHERE user_id = $1 AND import_id = $2;

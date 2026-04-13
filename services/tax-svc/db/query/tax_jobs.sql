@@ -1,7 +1,7 @@
 -- name: CreateTaxJob :one
 INSERT INTO tax_jobs (
   id,
-  tenant_id,
+  user_id,
   tax_year,
   policy_snapshot,
   status,
@@ -11,7 +11,7 @@ INSERT INTO tax_jobs (
 VALUES ($1, $2, $3, $4, $5, $6, now())
 RETURNING
   id,
-  tenant_id,
+  user_id,
   tax_year,
   policy_snapshot,
   status,
@@ -29,7 +29,7 @@ RETURNING
 -- name: GetTaxJob :one
 SELECT
   id,
-  tenant_id,
+  user_id,
   tax_year,
   policy_snapshot,
   status,
@@ -44,17 +44,17 @@ SELECT
   last_error_code,
   last_error_message
 FROM tax_jobs
-WHERE tenant_id = $1 AND id = $2;
+WHERE user_id = $1 AND id = $2;
 
 -- name: CountTaxJobs :one
 SELECT count(*)
 FROM tax_jobs
-WHERE tenant_id = $1;
+WHERE user_id = $1;
 
 -- name: ListTaxJobs :many
 SELECT
   id,
-  tenant_id,
+  user_id,
   tax_year,
   policy_snapshot,
   status,
@@ -69,7 +69,7 @@ SELECT
   last_error_code,
   last_error_message
 FROM tax_jobs
-WHERE tenant_id = $1
+WHERE user_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
@@ -95,7 +95,7 @@ FROM next_job
 WHERE j.id = next_job.id
 RETURNING
   j.id,
-  j.tenant_id,
+  j.user_id,
   j.tax_year,
   j.policy_snapshot,
   j.status,

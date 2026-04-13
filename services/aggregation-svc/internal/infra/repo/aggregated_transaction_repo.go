@@ -54,7 +54,7 @@ func (r *aggregatedTransactionRepo) UpsertBatch(ctx context.Context, txs []domai
 
 		params := db.UpsertAggregatedTransactionParams{
 			ID:             tx.ID,
-			TenantID:       tx.TenantID,
+			UserID:         tx.UserID,
 			Source:         tx.Source,
 			ImportID:       tx.ImportID,
 			TimeUtc:        toTimestamptz(tx.TimeUTC),
@@ -75,7 +75,7 @@ func (r *aggregatedTransactionRepo) UpsertBatch(ctx context.Context, txs []domai
 		err = r.store.UpsertAggregatedTransaction(ctx, params)
 		if err != nil {
 			return apperr.Internal("upsert aggregated transaction failed", err, map[string]string{
-				"tenant_id": tx.TenantID.String(),
+				"user_id":   tx.UserID.String(),
 				"import_id": tx.ImportID.String(),
 			})
 		}
@@ -93,9 +93,9 @@ func validateBatchForUpsert(txs []domain.AggregatedTransaction) error {
 				Description: "required",
 			})
 		}
-		if tx.TenantID == uuid.Nil {
-			return apperr.InvalidArgument("invalid tenant id", nil, apperr.FieldViolation{
-				Field:       "tenant_id",
+		if tx.UserID == uuid.Nil {
+			return apperr.InvalidArgument("invalid user id", nil, apperr.FieldViolation{
+				Field:       "user_id",
 				Description: "required",
 			})
 		}
@@ -123,27 +123,27 @@ func validateBatchForUpsert(txs []domain.AggregatedTransaction) error {
 	return nil
 }
 
-func (r *aggregatedTransactionRepo) ListByImport(ctx context.Context, tenantID, importID uuid.UUID, limit, offset int32) (domain.AggregatedTxPage, error) {
+func (r *aggregatedTransactionRepo) ListByImport(ctx context.Context, userID, importID uuid.UUID, limit, offset int32) (domain.AggregatedTxPage, error) {
 	count, err := r.store.CountAggregatedTransactionsByImport(ctx, db.CountAggregatedTransactionsByImportParams{
-		TenantID: tenantID,
+		UserID:   userID,
 		ImportID: importID,
 	})
 	if err != nil {
 		return domain.AggregatedTxPage{}, apperr.Internal("count aggregated transactions failed", err, map[string]string{
-			"tenant_id": tenantID.String(),
+			"user_id":   userID.String(),
 			"import_id": importID.String(),
 		})
 	}
 
 	rows, err := r.store.ListAggregatedTransactionsByImport(ctx, db.ListAggregatedTransactionsByImportParams{
-		TenantID: tenantID,
+		UserID:   userID,
 		ImportID: importID,
 		Limit:    limit,
 		Offset:   offset,
 	})
 	if err != nil {
 		return domain.AggregatedTxPage{}, apperr.Internal("list aggregated transactions failed", err, map[string]string{
-			"tenant_id": tenantID.String(),
+			"user_id":   userID.String(),
 			"import_id": importID.String(),
 			"limit":     strconv.FormatInt(int64(limit), 10),
 			"offset":    strconv.FormatInt(int64(offset), 10),
@@ -167,7 +167,7 @@ func (r *aggregatedTransactionRepo) ListByImport(ctx context.Context, tenantID, 
 
 		out = append(out, domain.AggregatedTransaction{
 			ID:             row.ID,
-			TenantID:       row.TenantID,
+			UserID:         row.UserID,
 			Source:         row.Source,
 			ImportID:       row.ImportID,
 			TimeUTC:        fromTimestamptz(row.TimeUtc),
@@ -189,20 +189,20 @@ func (r *aggregatedTransactionRepo) ListByImport(ctx context.Context, tenantID, 
 	return domain.AggregatedTxPage{Transactions: out, Total: count}, nil
 }
 
-func (r *aggregatedTransactionRepo) ListByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32) (domain.AggregatedTxPage, error) {
+func (r *aggregatedTransactionRepo) ListByRange(ctx context.Context, userID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32) (domain.AggregatedTxPage, error) {
 	count, err := r.store.CountAggregatedTransactionsByRange(ctx, db.CountAggregatedTransactionsByRangeParams{
-		TenantID:  tenantID,
+		UserID:    userID,
 		TimeUtc:   toTimestamptz(fromUTC),
 		TimeUtc_2: toTimestamptz(toUTC),
 	})
 	if err != nil {
 		return domain.AggregatedTxPage{}, apperr.Internal("count aggregated transactions by range failed", err, map[string]string{
-			"tenant_id": tenantID.String(),
+			"user_id": userID.String(),
 		})
 	}
 
 	rows, err := r.store.ListAggregatedTransactionsByRange(ctx, db.ListAggregatedTransactionsByRangeParams{
-		TenantID:  tenantID,
+		UserID:    userID,
 		TimeUtc:   toTimestamptz(fromUTC),
 		TimeUtc_2: toTimestamptz(toUTC),
 		Limit:     limit,
@@ -210,7 +210,7 @@ func (r *aggregatedTransactionRepo) ListByRange(ctx context.Context, tenantID uu
 	})
 	if err != nil {
 		return domain.AggregatedTxPage{}, apperr.Internal("list aggregated transactions by range failed", err, map[string]string{
-			"tenant_id": tenantID.String(),
+			"user_id": userID.String(),
 		})
 	}
 
@@ -231,7 +231,7 @@ func (r *aggregatedTransactionRepo) ListByRange(ctx context.Context, tenantID uu
 
 		out = append(out, domain.AggregatedTransaction{
 			ID:             row.ID,
-			TenantID:       row.TenantID,
+			UserID:         row.UserID,
 			Source:         row.Source,
 			ImportID:       row.ImportID,
 			TimeUTC:        fromTimestamptz(row.TimeUtc),

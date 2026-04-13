@@ -10,31 +10,31 @@ import (
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 )
 
-func TestTenantSymbolRepoIntegration_UpsertListDelete(t *testing.T) {
+func TestUserSymbolRepoIntegration_UpsertListDelete(t *testing.T) {
 	store := setupIntegrationStore(t)
-	repo := NewTenantSymbolRepo(store)
+	repo := NewUserSymbolRepo(store)
 
 	ctx := context.Background()
-	tenantID := uuid.New()
+	userID := uuid.New()
 
-	if err := repo.Upsert(ctx, domain.TenantSymbol{
-		TenantID: tenantID,
-		Source:   "MEXC",
-		Symbol:   "BTC",
-		CoinID:   "bitcoin",
+	if err := repo.Upsert(ctx, domain.UserSymbol{
+		UserID: userID,
+		Source: "MEXC",
+		Symbol: "BTC",
+		CoinID: "bitcoin",
 	}); err != nil {
 		t.Fatalf("Upsert failed: %v", err)
 	}
-	if err := repo.Upsert(ctx, domain.TenantSymbol{
-		TenantID: tenantID,
-		Source:   "MEXC",
-		Symbol:   "ETH",
-		CoinID:   "ethereum",
+	if err := repo.Upsert(ctx, domain.UserSymbol{
+		UserID: userID,
+		Source: "MEXC",
+		Symbol: "ETH",
+		CoinID: "ethereum",
 	}); err != nil {
 		t.Fatalf("second Upsert failed: %v", err)
 	}
 
-	list, err := repo.GetList(ctx, tenantID, "MEXC", []string{"BTC", "ETH"})
+	list, err := repo.GetList(ctx, userID, "MEXC", []string{"BTC", "ETH"})
 	if err != nil {
 		t.Fatalf("GetList failed: %v", err)
 	}
@@ -42,7 +42,7 @@ func TestTenantSymbolRepoIntegration_UpsertListDelete(t *testing.T) {
 		t.Fatalf("expected 2 rows, got %d", len(list))
 	}
 
-	bySource, err := repo.GetListBySource(ctx, tenantID, "MEXC")
+	bySource, err := repo.GetListBySource(ctx, userID, "MEXC")
 	if err != nil {
 		t.Fatalf("GetListBySource failed: %v", err)
 	}
@@ -50,11 +50,11 @@ func TestTenantSymbolRepoIntegration_UpsertListDelete(t *testing.T) {
 		t.Fatalf("expected 2 rows by source, got %d", len(bySource))
 	}
 
-	if err := repo.Delete(ctx, tenantID, "MEXC", "BTC"); err != nil {
+	if err := repo.Delete(ctx, userID, "MEXC", "BTC"); err != nil {
 		t.Fatalf("Delete failed: %v", err)
 	}
 
-	err = repo.Delete(ctx, tenantID, "MEXC", "BTC")
+	err = repo.Delete(ctx, userID, "MEXC", "BTC")
 	if err == nil {
 		t.Fatal("expected not found on second delete, got nil")
 	}

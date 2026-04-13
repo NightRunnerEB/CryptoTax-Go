@@ -7,10 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/config"
-	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+
+	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/config"
+	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain"
 )
 
 type OutboxDispatcher struct {

@@ -52,11 +52,11 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_Success(t *testing.T) {
 	report := mocks.NewMockReportClient(ctrl)
 	storage := mocks.NewMockObjectStorage(ctrl)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobID := uuid.New()
 	job := domain.TaxJob{
 		ID:       jobID,
-		TenantID: tenantID,
+		UserID:   userID,
 		TaxYear:  2025,
 		Status:   domain.JobRunning,
 		Attempts: 1,
@@ -66,7 +66,7 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_Success(t *testing.T) {
 		},
 	}
 	profile := domain.TaxProfile{
-		TenantID:           tenantID,
+		UserID:             userID,
 		INN:                "123456789012",
 		LastName:           "Petrov",
 		FirstName:          "Ivan",
@@ -76,13 +76,13 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_Success(t *testing.T) {
 	}
 
 	jobRepo.EXPECT().ClaimNextQueued(gomock.Any()).Return(&job, nil).Times(1)
-	profileRepo.EXPECT().Get(gomock.Any(), tenantID).Return(profile, nil).Times(1)
+	profileRepo.EXPECT().Get(gomock.Any(), userID).Return(profile, nil).Times(1)
 
 	expectedFrom, expectedTo, err := taxYearBoundsUTC(job.TaxYear, profile.Timezone)
 	if err != nil {
 		t.Fatalf("taxYearBoundsUTC failed: %v", err)
 	}
-	txProvider.EXPECT().ListTransactionsByRange(gomock.Any(), tenantID, expectedFrom, expectedTo, "RUB").Return([]domain.AggregatedTransaction{}, nil).Times(1)
+	txProvider.EXPECT().ListTransactionsByRange(gomock.Any(), userID, expectedFrom, expectedTo, "RUB").Return([]domain.AggregatedTransaction{}, nil).Times(1)
 
 	storage.EXPECT().UploadJSON(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, objectKey string, payload any) error {
 		if objectKey == "" {
@@ -101,7 +101,7 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_Success(t *testing.T) {
 			if gotID != jobID {
 				t.Fatalf("job id mismatch: got %s want %s", gotID, jobID)
 			}
-			if summary.TenantID != tenantID || summary.TaxYear != job.TaxYear {
+			if summary.UserID != userID || summary.TaxYear != job.TaxYear {
 				t.Fatalf("summary mismatch: %+v", summary)
 			}
 			if auditObjectKey == nil || *auditObjectKey == "" {
@@ -136,11 +136,11 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_RetryableErrorRequeue(t *testing.T)
 	report := mocks.NewMockReportClient(ctrl)
 	storage := mocks.NewMockObjectStorage(ctrl)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobID := uuid.New()
 	job := domain.TaxJob{
 		ID:       jobID,
-		TenantID: tenantID,
+		UserID:   userID,
 		TaxYear:  2025,
 		Status:   domain.JobRunning,
 		Attempts: 1,
@@ -150,14 +150,14 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_RetryableErrorRequeue(t *testing.T)
 		},
 	}
 	profile := domain.TaxProfile{
-		TenantID:           tenantID,
+		UserID:             userID,
 		Timezone:           "Europe/Moscow",
 		TaxResidencyStatus: domain.Resident,
 		TaxPayerType:       domain.INDIVIDUAL,
 	}
 
 	jobRepo.EXPECT().ClaimNextQueued(gomock.Any()).Return(&job, nil).Times(1)
-	profileRepo.EXPECT().Get(gomock.Any(), tenantID).Return(profile, nil).Times(1)
+	profileRepo.EXPECT().Get(gomock.Any(), userID).Return(profile, nil).Times(1)
 	txProvider.EXPECT().ListTransactionsByRange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "RUB").
 		Return(nil, apperr.AggregationUnavailable("aggregation unavailable", status.Error(codes.Unavailable, "down"), nil)).Times(1)
 
@@ -191,11 +191,11 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_NonRetryableMarksFailed(t *testing.
 	report := mocks.NewMockReportClient(ctrl)
 	storage := mocks.NewMockObjectStorage(ctrl)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobID := uuid.New()
 	job := domain.TaxJob{
 		ID:       jobID,
-		TenantID: tenantID,
+		UserID:   userID,
 		TaxYear:  2025,
 		Status:   domain.JobRunning,
 		Attempts: 1,
@@ -205,14 +205,14 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_NonRetryableMarksFailed(t *testing.
 		},
 	}
 	profile := domain.TaxProfile{
-		TenantID:           tenantID,
+		UserID:             userID,
 		Timezone:           "Europe/Moscow",
 		TaxResidencyStatus: domain.Resident,
 		TaxPayerType:       domain.INDIVIDUAL,
 	}
 
 	jobRepo.EXPECT().ClaimNextQueued(gomock.Any()).Return(&job, nil).Times(1)
-	profileRepo.EXPECT().Get(gomock.Any(), tenantID).Return(profile, nil).Times(1)
+	profileRepo.EXPECT().Get(gomock.Any(), userID).Return(profile, nil).Times(1)
 	txProvider.EXPECT().ListTransactionsByRange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "RUB").
 		Return(nil, apperr.NeedsPriceResolution("data is not ready", errors.New("not ready"), nil)).Times(1)
 

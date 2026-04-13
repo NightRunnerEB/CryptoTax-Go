@@ -29,14 +29,14 @@ type RealizationLine struct {
 }
 
 type TaxProfile struct {
-	TenantID        string `json:"tenant_id"`
+	UserID          string `json:"user_id"`
 	Jurisdiction    string `json:"jurisdiction"`
 	CostBasisMethod string `json:"cost_basis_method"`
 	Timezone        string `json:"timezone"`
 }
 
 type TaxpayerProfile struct {
-	TenantID           string `json:"tenant_id"`
+	UserID             string `json:"user_id"`
 	INN                string `json:"inn,omitempty"`
 	LastName           string `json:"last_name,omitempty"`
 	FirstName          string `json:"first_name,omitempty"`
@@ -49,13 +49,13 @@ type TaxpayerProfile struct {
 }
 
 type ReportDataset struct {
-	ReportID        string          `json:"report_id"`
-	TenantID        string          `json:"tenant_id"`
-	TaxYear         int32           `json:"tax_year"`
-	Jurisdiction    string          `json:"jurisdiction"`
-	TaxpayerProfile TaxpayerProfile `json:"taxpayer_profile"`
-	TaxProfile      TaxProfile      `json:"tax_profile"`
-	Summary         map[string]any  `json:"summary"`
-	Events          []DatasetEvent  `json:"events"`
+	ReportID         string            `json:"report_id"`
+	UserID           string            `json:"user_id"`
+	TaxYear          int32             `json:"tax_year"`
+	Jurisdiction     string            `json:"jurisdiction"`
+	TaxpayerProfile  TaxpayerProfile   `json:"taxpayer_profile"`
+	TaxProfile       TaxProfile        `json:"tax_profile"`
+	Summary          map[string]any    `json:"summary"`
+	Events           []DatasetEvent    `json:"events"`
 	RealizationLines []RealizationLine `json:"realization_lines"`
 }

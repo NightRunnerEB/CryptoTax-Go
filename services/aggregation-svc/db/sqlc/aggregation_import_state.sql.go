@@ -12,21 +12,21 @@ import (
 )
 
 const getAggregationImportState = `-- name: GetAggregationImportState :one
-SELECT tenant_id, import_id, event_id, status, started_at, completed_at, error
+SELECT user_id, import_id, event_id, status, started_at, completed_at, error
 FROM aggregation_import_state
-WHERE tenant_id = $1 AND import_id = $2
+WHERE user_id = $1 AND import_id = $2
 `
 
 type GetAggregationImportStateParams struct {
-	TenantID uuid.UUID `json:"tenantId"`
+	UserID   uuid.UUID `json:"userId"`
 	ImportID uuid.UUID `json:"importId"`
 }
 
 func (q *Queries) GetAggregationImportState(ctx context.Context, arg GetAggregationImportStateParams) (AggregationImportState, error) {
-	row := q.db.QueryRow(ctx, getAggregationImportState, arg.TenantID, arg.ImportID)
+	row := q.db.QueryRow(ctx, getAggregationImportState, arg.UserID, arg.ImportID)
 	var i AggregationImportState
 	err := row.Scan(
-		&i.TenantID,
+		&i.UserID,
 		&i.ImportID,
 		&i.EventID,
 		&i.Status,
@@ -40,40 +40,40 @@ func (q *Queries) GetAggregationImportState(ctx context.Context, arg GetAggregat
 const markAggregationImportStateCompleted = `-- name: MarkAggregationImportStateCompleted :exec
 UPDATE aggregation_import_state
 SET status = 'completed', completed_at = now(), error = NULL
-WHERE tenant_id = $1 AND import_id = $2
+WHERE user_id = $1 AND import_id = $2
 `
 
 type MarkAggregationImportStateCompletedParams struct {
-	TenantID uuid.UUID `json:"tenantId"`
+	UserID   uuid.UUID `json:"userId"`
 	ImportID uuid.UUID `json:"importId"`
 }
 
 func (q *Queries) MarkAggregationImportStateCompleted(ctx context.Context, arg MarkAggregationImportStateCompletedParams) error {
-	_, err := q.db.Exec(ctx, markAggregationImportStateCompleted, arg.TenantID, arg.ImportID)
+	_, err := q.db.Exec(ctx, markAggregationImportStateCompleted, arg.UserID, arg.ImportID)
 	return err
 }
 
 const markAggregationImportStateFailed = `-- name: MarkAggregationImportStateFailed :exec
 UPDATE aggregation_import_state
 SET status = 'failed', completed_at = now(), error = $3
-WHERE tenant_id = $1 AND import_id = $2
+WHERE user_id = $1 AND import_id = $2
 `
 
 type MarkAggregationImportStateFailedParams struct {
-	TenantID uuid.UUID `json:"tenantId"`
+	UserID   uuid.UUID `json:"userId"`
 	ImportID uuid.UUID `json:"importId"`
 	Error    *string   `json:"error"`
 }
 
 func (q *Queries) MarkAggregationImportStateFailed(ctx context.Context, arg MarkAggregationImportStateFailedParams) error {
-	_, err := q.db.Exec(ctx, markAggregationImportStateFailed, arg.TenantID, arg.ImportID, arg.Error)
+	_, err := q.db.Exec(ctx, markAggregationImportStateFailed, arg.UserID, arg.ImportID, arg.Error)
 	return err
 }
 
 const upsertAggregationImportStateProcessing = `-- name: UpsertAggregationImportStateProcessing :exec
-INSERT INTO aggregation_import_state (tenant_id, import_id, event_id, status)
+INSERT INTO aggregation_import_state (user_id, import_id, event_id, status)
 VALUES ($1, $2, $3, $4)
-ON CONFLICT (tenant_id, import_id)
+ON CONFLICT (user_id, import_id)
 DO UPDATE SET
   event_id = EXCLUDED.event_id,
   status = EXCLUDED.status,
@@ -83,7 +83,7 @@ DO UPDATE SET
 `
 
 type UpsertAggregationImportStateProcessingParams struct {
-	TenantID uuid.UUID `json:"tenantId"`
+	UserID   uuid.UUID `json:"userId"`
 	ImportID uuid.UUID `json:"importId"`
 	EventID  uuid.UUID `json:"eventId"`
 	Status   string    `json:"status"`
@@ -91,7 +91,7 @@ type UpsertAggregationImportStateProcessingParams struct {
 
 func (q *Queries) UpsertAggregationImportStateProcessing(ctx context.Context, arg UpsertAggregationImportStateProcessingParams) error {
 	_, err := q.db.Exec(ctx, upsertAggregationImportStateProcessing,
-		arg.TenantID,
+		arg.UserID,
 		arg.ImportID,
 		arg.EventID,
 		arg.Status,

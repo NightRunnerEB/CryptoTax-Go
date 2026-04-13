@@ -169,7 +169,7 @@ export function RegisterPage() {
       <section className="auth-card auth-card-register">
         <header>
           <h1>Create account</h1>
-          <p>Register a tenant account and initial tax profile for the demo flow.</p>
+          <p>Register a user account and initial tax profile for the demo flow.</p>
         </header>
 
         <form onSubmit={handleSubmit} className="form-grid two-columns">

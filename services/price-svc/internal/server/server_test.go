@@ -37,16 +37,16 @@ func (f *fakeHistoricalUC) GetHistoricalPrices(_ context.Context, _ string, _ []
 	return f.fiats, nil
 }
 
-type fakeTenantSymbolUC struct{}
+type fakeUserSymbolUC struct{}
 
-func (f *fakeTenantSymbolUC) Upsert(context.Context, domain.TenantSymbol) error { return nil }
-func (f *fakeTenantSymbolUC) Delete(context.Context, uuid.UUID, string, string) error {
+func (f *fakeUserSymbolUC) Upsert(context.Context, domain.UserSymbol) error { return nil }
+func (f *fakeUserSymbolUC) Delete(context.Context, uuid.UUID, string, string) error {
 	return nil
 }
-func (f *fakeTenantSymbolUC) GetList(context.Context, uuid.UUID, string, []string) ([]domain.TenantSymbol, error) {
+func (f *fakeUserSymbolUC) GetList(context.Context, uuid.UUID, string, []string) ([]domain.UserSymbol, error) {
 	return nil, nil
 }
-func (f *fakeTenantSymbolUC) GetListBySource(context.Context, uuid.UUID, string) ([]domain.TenantSymbol, error) {
+func (f *fakeUserSymbolUC) GetListBySource(context.Context, uuid.UUID, string) ([]domain.UserSymbol, error) {
 	return nil, nil
 }
 
@@ -54,7 +54,7 @@ func TestValuateTransactionsBatch_MissingTime(t *testing.T) {
 	srv := NewPriceServer(
 		&fakeResolver{resolveFn: func(symbol string) (string, error) { return symbol, nil }},
 		&fakeHistoricalUC{},
-		&fakeTenantSymbolUC{},
+		&fakeUserSymbolUC{},
 	)
 
 	_, err := srv.ValuateTransactionsBatch(context.Background(), &v1.ValuateTransactionsRequest{
@@ -77,7 +77,7 @@ func TestValuateTransactionsBatch_InvalidAmount(t *testing.T) {
 	srv := NewPriceServer(
 		&fakeResolver{resolveFn: func(symbol string) (string, error) { return symbol, nil }},
 		&fakeHistoricalUC{},
-		&fakeTenantSymbolUC{},
+		&fakeUserSymbolUC{},
 	)
 
 	_, err := srv.ValuateTransactionsBatch(context.Background(), &v1.ValuateTransactionsRequest{
@@ -104,7 +104,7 @@ func TestValuateTransactionsBatch_FutureTime(t *testing.T) {
 	srv := NewPriceServer(
 		&fakeResolver{resolveFn: func(symbol string) (string, error) { return symbol, nil }},
 		&fakeHistoricalUC{},
-		&fakeTenantSymbolUC{},
+		&fakeUserSymbolUC{},
 	)
 
 	_, err := srv.ValuateTransactionsBatch(context.Background(), &v1.ValuateTransactionsRequest{
@@ -133,7 +133,7 @@ func TestValuateTransactionsBatch_UnknownSymbolSetsAssetError(t *testing.T) {
 	srv := NewPriceServer(
 		&fakeResolver{resolveFn: func(symbol string) (string, error) { return "", unknownErr }},
 		huc,
-		&fakeTenantSymbolUC{},
+		&fakeUserSymbolUC{},
 	)
 
 	resp, err := srv.ValuateTransactionsBatch(context.Background(), &v1.ValuateTransactionsRequest{
@@ -165,7 +165,7 @@ func TestValuateTransactionsBatch_NoLegsSkipsPricingUC(t *testing.T) {
 	srv := NewPriceServer(
 		&fakeResolver{resolveFn: func(symbol string) (string, error) { return "bitcoin", nil }},
 		huc,
-		&fakeTenantSymbolUC{},
+		&fakeUserSymbolUC{},
 	)
 
 	resp, err := srv.ValuateTransactionsBatch(context.Background(), &v1.ValuateTransactionsRequest{
@@ -197,7 +197,7 @@ func TestValuateTransactionsBatch_HappyPath(t *testing.T) {
 	srv := NewPriceServer(
 		&fakeResolver{resolveFn: func(symbol string) (string, error) { return "bitcoin", nil }},
 		huc,
-		&fakeTenantSymbolUC{},
+		&fakeUserSymbolUC{},
 	)
 
 	resp, err := srv.ValuateTransactionsBatch(context.Background(), &v1.ValuateTransactionsRequest{
@@ -226,7 +226,7 @@ func TestValuateTransactionsBatch_InvariantMismatch(t *testing.T) {
 	srv := NewPriceServer(
 		&fakeResolver{resolveFn: func(symbol string) (string, error) { return "bitcoin", nil }},
 		huc,
-		&fakeTenantSymbolUC{},
+		&fakeUserSymbolUC{},
 	)
 
 	_, err := srv.ValuateTransactionsBatch(context.Background(), &v1.ValuateTransactionsRequest{

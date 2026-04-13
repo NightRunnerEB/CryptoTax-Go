@@ -41,12 +41,12 @@ func mapHistoricalPriceDBToDomain(h sqlc.HistoricalPrice) (domain.HistoricalPric
 	}, nil
 }
 
-func mapTenantSymbolDBToDomain(s sqlc.TenantSymbol) domain.TenantSymbol {
-	return domain.TenantSymbol{
-		TenantID: s.TenantID,
-		Source:   s.Source,
-		Symbol:   s.Symbol,
-		CoinID:   s.CoinID,
+func mapUserSymbolDBToDomain(s sqlc.UserSymbol) domain.UserSymbol {
+	return domain.UserSymbol{
+		UserID: s.UserID,
+		Source: s.Source,
+		Symbol: s.Symbol,
+		CoinID: s.CoinID,
 	}
 }
 

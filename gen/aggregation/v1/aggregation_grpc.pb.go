@@ -21,8 +21,8 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	Aggregation_ListTransactionsByImport_FullMethodName    = "/aggregation.v1.Aggregation/ListTransactionsByImport"
 	Aggregation_ListTransactionsByRange_FullMethodName     = "/aggregation.v1.Aggregation/ListTransactionsByRange"
-	Aggregation_GetTenantSettings_FullMethodName           = "/aggregation.v1.Aggregation/GetTenantSettings"
-	Aggregation_UpsertTenantSettings_FullMethodName        = "/aggregation.v1.Aggregation/UpsertTenantSettings"
+	Aggregation_GetUserSettings_FullMethodName             = "/aggregation.v1.Aggregation/GetUserSettings"
+	Aggregation_UpsertUserSettings_FullMethodName          = "/aggregation.v1.Aggregation/UpsertUserSettings"
 	Aggregation_ListSupportedFiatCurrencies_FullMethodName = "/aggregation.v1.Aggregation/ListSupportedFiatCurrencies"
 )
 
@@ -31,18 +31,18 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // Aggregation provides read-model APIs for aggregated transactions
-// and tenant-level aggregation settings.
+// and user-level aggregation settings.
 type AggregationClient interface {
 	// ListTransactionsByImport returns paginated aggregated transactions
 	// for a specific authenticated user import.
 	ListTransactionsByImport(ctx context.Context, in *ListTransactionsByImportRequest, opts ...grpc.CallOption) (*ListTransactionsByImportResponse, error)
 	// ListTransactionsByRange returns paginated aggregated transactions
-	// for a specific tenant and UTC time range [from_utc, to_utc).
+	// for a specific user and UTC time range [from_utc, to_utc).
 	ListTransactionsByRange(ctx context.Context, in *ListTransactionsByRangeRequest, opts ...grpc.CallOption) (*ListTransactionsByRangeResponse, error)
-	// GetTenantSettings returns aggregation settings for the authenticated user.
-	GetTenantSettings(ctx context.Context, in *GetTenantSettingsRequest, opts ...grpc.CallOption) (*GetTenantSettingsResponse, error)
-	// UpsertTenantSettings creates or updates aggregation settings for the authenticated user.
-	UpsertTenantSettings(ctx context.Context, in *UpsertTenantSettingsRequest, opts ...grpc.CallOption) (*UpsertTenantSettingsResponse, error)
+	// GetUserSettings returns aggregation settings for the authenticated user.
+	GetUserSettings(ctx context.Context, in *GetUserSettingsRequest, opts ...grpc.CallOption) (*GetUserSettingsResponse, error)
+	// UpsertUserSettings creates or updates aggregation settings for the authenticated user.
+	UpsertUserSettings(ctx context.Context, in *UpsertUserSettingsRequest, opts ...grpc.CallOption) (*UpsertUserSettingsResponse, error)
 	// ListSupportedFiatCurrencies returns fiat codes supported by valuation pipeline.
 	ListSupportedFiatCurrencies(ctx context.Context, in *ListSupportedFiatCurrenciesRequest, opts ...grpc.CallOption) (*ListSupportedFiatCurrenciesResponse, error)
 }
@@ -75,20 +75,20 @@ func (c *aggregationClient) ListTransactionsByRange(ctx context.Context, in *Lis
 	return out, nil
 }
 
-func (c *aggregationClient) GetTenantSettings(ctx context.Context, in *GetTenantSettingsRequest, opts ...grpc.CallOption) (*GetTenantSettingsResponse, error) {
+func (c *aggregationClient) GetUserSettings(ctx context.Context, in *GetUserSettingsRequest, opts ...grpc.CallOption) (*GetUserSettingsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetTenantSettingsResponse)
-	err := c.cc.Invoke(ctx, Aggregation_GetTenantSettings_FullMethodName, in, out, cOpts...)
+	out := new(GetUserSettingsResponse)
+	err := c.cc.Invoke(ctx, Aggregation_GetUserSettings_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *aggregationClient) UpsertTenantSettings(ctx context.Context, in *UpsertTenantSettingsRequest, opts ...grpc.CallOption) (*UpsertTenantSettingsResponse, error) {
+func (c *aggregationClient) UpsertUserSettings(ctx context.Context, in *UpsertUserSettingsRequest, opts ...grpc.CallOption) (*UpsertUserSettingsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpsertTenantSettingsResponse)
-	err := c.cc.Invoke(ctx, Aggregation_UpsertTenantSettings_FullMethodName, in, out, cOpts...)
+	out := new(UpsertUserSettingsResponse)
+	err := c.cc.Invoke(ctx, Aggregation_UpsertUserSettings_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -110,18 +110,18 @@ func (c *aggregationClient) ListSupportedFiatCurrencies(ctx context.Context, in 
 // for forward compatibility.
 //
 // Aggregation provides read-model APIs for aggregated transactions
-// and tenant-level aggregation settings.
+// and user-level aggregation settings.
 type AggregationServer interface {
 	// ListTransactionsByImport returns paginated aggregated transactions
 	// for a specific authenticated user import.
 	ListTransactionsByImport(context.Context, *ListTransactionsByImportRequest) (*ListTransactionsByImportResponse, error)
 	// ListTransactionsByRange returns paginated aggregated transactions
-	// for a specific tenant and UTC time range [from_utc, to_utc).
+	// for a specific user and UTC time range [from_utc, to_utc).
 	ListTransactionsByRange(context.Context, *ListTransactionsByRangeRequest) (*ListTransactionsByRangeResponse, error)
-	// GetTenantSettings returns aggregation settings for the authenticated user.
-	GetTenantSettings(context.Context, *GetTenantSettingsRequest) (*GetTenantSettingsResponse, error)
-	// UpsertTenantSettings creates or updates aggregation settings for the authenticated user.
-	UpsertTenantSettings(context.Context, *UpsertTenantSettingsRequest) (*UpsertTenantSettingsResponse, error)
+	// GetUserSettings returns aggregation settings for the authenticated user.
+	GetUserSettings(context.Context, *GetUserSettingsRequest) (*GetUserSettingsResponse, error)
+	// UpsertUserSettings creates or updates aggregation settings for the authenticated user.
+	UpsertUserSettings(context.Context, *UpsertUserSettingsRequest) (*UpsertUserSettingsResponse, error)
 	// ListSupportedFiatCurrencies returns fiat codes supported by valuation pipeline.
 	ListSupportedFiatCurrencies(context.Context, *ListSupportedFiatCurrenciesRequest) (*ListSupportedFiatCurrenciesResponse, error)
 	mustEmbedUnimplementedAggregationServer()
@@ -140,11 +140,11 @@ func (UnimplementedAggregationServer) ListTransactionsByImport(context.Context, 
 func (UnimplementedAggregationServer) ListTransactionsByRange(context.Context, *ListTransactionsByRangeRequest) (*ListTransactionsByRangeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTransactionsByRange not implemented")
 }
-func (UnimplementedAggregationServer) GetTenantSettings(context.Context, *GetTenantSettingsRequest) (*GetTenantSettingsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetTenantSettings not implemented")
+func (UnimplementedAggregationServer) GetUserSettings(context.Context, *GetUserSettingsRequest) (*GetUserSettingsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserSettings not implemented")
 }
-func (UnimplementedAggregationServer) UpsertTenantSettings(context.Context, *UpsertTenantSettingsRequest) (*UpsertTenantSettingsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method UpsertTenantSettings not implemented")
+func (UnimplementedAggregationServer) UpsertUserSettings(context.Context, *UpsertUserSettingsRequest) (*UpsertUserSettingsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpsertUserSettings not implemented")
 }
 func (UnimplementedAggregationServer) ListSupportedFiatCurrencies(context.Context, *ListSupportedFiatCurrenciesRequest) (*ListSupportedFiatCurrenciesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSupportedFiatCurrencies not implemented")
@@ -206,38 +206,38 @@ func _Aggregation_ListTransactionsByRange_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Aggregation_GetTenantSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTenantSettingsRequest)
+func _Aggregation_GetUserSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserSettingsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AggregationServer).GetTenantSettings(ctx, in)
+		return srv.(AggregationServer).GetUserSettings(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Aggregation_GetTenantSettings_FullMethodName,
+		FullMethod: Aggregation_GetUserSettings_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AggregationServer).GetTenantSettings(ctx, req.(*GetTenantSettingsRequest))
+		return srv.(AggregationServer).GetUserSettings(ctx, req.(*GetUserSettingsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Aggregation_UpsertTenantSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpsertTenantSettingsRequest)
+func _Aggregation_UpsertUserSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertUserSettingsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AggregationServer).UpsertTenantSettings(ctx, in)
+		return srv.(AggregationServer).UpsertUserSettings(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Aggregation_UpsertTenantSettings_FullMethodName,
+		FullMethod: Aggregation_UpsertUserSettings_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AggregationServer).UpsertTenantSettings(ctx, req.(*UpsertTenantSettingsRequest))
+		return srv.(AggregationServer).UpsertUserSettings(ctx, req.(*UpsertUserSettingsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -276,12 +276,12 @@ var Aggregation_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Aggregation_ListTransactionsByRange_Handler,
 		},
 		{
-			MethodName: "GetTenantSettings",
-			Handler:    _Aggregation_GetTenantSettings_Handler,
+			MethodName: "GetUserSettings",
+			Handler:    _Aggregation_GetUserSettings_Handler,
 		},
 		{
-			MethodName: "UpsertTenantSettings",
-			Handler:    _Aggregation_UpsertTenantSettings_Handler,
+			MethodName: "UpsertUserSettings",
+			Handler:    _Aggregation_UpsertUserSettings_Handler,
 		},
 		{
 			MethodName: "ListSupportedFiatCurrencies",

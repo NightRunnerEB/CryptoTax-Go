@@ -26,8 +26,8 @@ type HistoricalPrice struct {
 	FetchedAt          pgtype.Timestamptz `json:"fetchedAt"`
 }
 
-type TenantSymbol struct {
-	TenantID  uuid.UUID          `json:"tenantId"`
+type UserSymbol struct {
+	UserID    uuid.UUID          `json:"userId"`
 	Source    string             `json:"source"`
 	Symbol    string             `json:"symbol"`
 	CoinID    string             `json:"coinId"`

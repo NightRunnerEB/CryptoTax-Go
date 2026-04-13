@@ -25,8 +25,8 @@ func (g *SimpleGenerator) Generate(dataset domain.ReportDataset, opts domain.PDF
 	if strings.TrimSpace(dataset.ReportID) == "" {
 		return nil, apperr.RenderingFailed("dataset report_id is required", nil, nil)
 	}
-	if strings.TrimSpace(dataset.TenantID) == "" {
-		return nil, apperr.RenderingFailed("dataset tenant_id is required", nil, nil)
+	if strings.TrimSpace(dataset.UserID) == "" {
+		return nil, apperr.RenderingFailed("dataset user_id is required", nil, nil)
 	}
 
 	previewLimit := opts.MaxPreviewRows
@@ -37,7 +37,7 @@ func (g *SimpleGenerator) Generate(dataset domain.ReportDataset, opts domain.PDF
 	lines := make([]string, 0, 64)
 	lines = append(lines, "Tax Report")
 	lines = append(lines, fmt.Sprintf("Report ID: %s", dataset.ReportID))
-	lines = append(lines, fmt.Sprintf("Tenant: %s", dataset.TenantID))
+	lines = append(lines, fmt.Sprintf("User: %s", dataset.UserID))
 	lines = append(lines, fmt.Sprintf("Year: %d", dataset.TaxYear))
 	lines = append(lines, fmt.Sprintf("Jurisdiction: %s", dataset.Jurisdiction))
 	if strings.TrimSpace(opts.TemplateVersion) != "" {

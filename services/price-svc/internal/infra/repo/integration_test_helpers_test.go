@@ -59,7 +59,7 @@ func setupIntegrationStore(t *testing.T) db.Store {
 
 	migrationsDir := filepath.Join("../../../db/migrations")
 	files := []string{
-		"000001_tenant_symbols.up.sql",
+		"000001_user_symbols.up.sql",
 		"000002_historical_prices.up.sql",
 		"000003_fx_rates.up.sql",
 	}

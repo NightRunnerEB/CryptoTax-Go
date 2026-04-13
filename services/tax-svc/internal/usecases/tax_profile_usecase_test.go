@@ -19,11 +19,11 @@ func TestTaxProfileUC_Upsert_NormalizesAndPersists(t *testing.T) {
 
 	repo := mocks.NewMockTaxProfileRepo(ctrl)
 	uc := NewTaxProfileUC(repo)
-	tenantID := uuid.New()
+	userID := uuid.New()
 
 	repo.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, got domain.TaxProfile) error {
-		if got.TenantID != tenantID {
-			t.Fatalf("tenant_id mismatch: got %s want %s", got.TenantID, tenantID)
+		if got.UserID != userID {
+			t.Fatalf("user_id mismatch: got %s want %s", got.UserID, userID)
 		}
 		if got.FirstName != "Ivan" {
 			t.Fatalf("first_name not normalized: %q", got.FirstName)
@@ -53,7 +53,7 @@ func TestTaxProfileUC_Upsert_NormalizesAndPersists(t *testing.T) {
 	}).Times(1)
 
 	err := uc.Upsert(context.Background(), domain.TaxProfile{
-		TenantID:           tenantID,
+		UserID:             userID,
 		INN:                " 123456789012 ",
 		LastName:           " Petrov ",
 		FirstName:          " Ivan ",
@@ -77,7 +77,7 @@ func TestTaxProfileUC_Upsert_InvalidTimezone(t *testing.T) {
 	uc := NewTaxProfileUC(repo)
 
 	err := uc.Upsert(context.Background(), domain.TaxProfile{
-		TenantID:           uuid.New(),
+		UserID:             uuid.New(),
 		INN:                "123456789012",
 		LastName:           "Petrov",
 		FirstName:          "Ivan",
@@ -95,7 +95,7 @@ func TestTaxProfileUC_Upsert_InvalidTimezone(t *testing.T) {
 	}
 }
 
-func TestTaxProfileUC_Get_InvalidTenantID(t *testing.T) {
+func TestTaxProfileUC_Get_InvalidUserID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -113,7 +113,7 @@ func TestTaxProfileUC_Get_InvalidTenantID(t *testing.T) {
 	}
 }
 
-func TestTaxProfileUC_Delete_InvalidTenantID(t *testing.T) {
+func TestTaxProfileUC_Delete_InvalidUserID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 

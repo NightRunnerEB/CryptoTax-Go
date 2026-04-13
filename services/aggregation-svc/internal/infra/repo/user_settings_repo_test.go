@@ -14,12 +14,12 @@ import (
 	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
 )
 
-func TestTenantSettingsRepo_Get_NotFound(t *testing.T) {
+func TestUserSettingsRepo_Get_NotFound(t *testing.T) {
 	t.Parallel()
 
-	repo := NewTenantSettingsRepo(&fakeStore{
-		getTenantSettingsFn: func(context.Context, uuid.UUID) (db.TenantSetting, error) {
-			return db.TenantSetting{}, pgx.ErrNoRows
+	repo := NewUserSettingsRepo(&fakeStore{
+		getUserSettingsFn: func(context.Context, uuid.UUID) (db.UserSetting, error) {
+			return db.UserSetting{}, pgx.ErrNoRows
 		},
 	})
 
@@ -30,33 +30,33 @@ func TestTenantSettingsRepo_Get_NotFound(t *testing.T) {
 	assertRepoErrorCode(t, err, apperr.ErrNotFound)
 }
 
-func TestTenantSettingsRepo_UpsertAndGet_Success(t *testing.T) {
+func TestUserSettingsRepo_UpsertAndGet_Success(t *testing.T) {
 	t.Parallel()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	updatedAt := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
 
 	store := &fakeStore{
-		upsertTenantSettingsFn: func(_ context.Context, arg db.UpsertTenantSettingsParams) (db.TenantSetting, error) {
-			if arg.TenantID != tenantID {
-				t.Fatalf("unexpected tenant id: %s", arg.TenantID)
+		upsertUserSettingsFn: func(_ context.Context, arg db.UpsertUserSettingsParams) (db.UserSetting, error) {
+			if arg.UserID != userID {
+				t.Fatalf("unexpected user id: %s", arg.UserID)
 			}
 			if arg.FiatCurrency != "USD" || arg.Timezone != "UTC" {
 				t.Fatalf("unexpected settings params: %+v", arg)
 			}
-			return db.TenantSetting{
-				TenantID:     arg.TenantID,
+			return db.UserSetting{
+				UserID:       arg.UserID,
 				FiatCurrency: arg.FiatCurrency,
 				Timezone:     arg.Timezone,
 				UpdatedAt:    pgtype.Timestamptz{Time: updatedAt, Valid: true},
 			}, nil
 		},
-		getTenantSettingsFn: func(_ context.Context, id uuid.UUID) (db.TenantSetting, error) {
-			if id != tenantID {
-				t.Fatalf("unexpected tenant id in get: %s", id)
+		getUserSettingsFn: func(_ context.Context, id uuid.UUID) (db.UserSetting, error) {
+			if id != userID {
+				t.Fatalf("unexpected user id in get: %s", id)
 			}
-			return db.TenantSetting{
-				TenantID:     id,
+			return db.UserSetting{
+				UserID:       id,
 				FiatCurrency: "USD",
 				Timezone:     "UTC",
 				UpdatedAt:    pgtype.Timestamptz{Time: updatedAt, Valid: true},
@@ -64,9 +64,9 @@ func TestTenantSettingsRepo_UpsertAndGet_Success(t *testing.T) {
 		},
 	}
 
-	repo := NewTenantSettingsRepo(store)
-	upserted, err := repo.Upsert(context.Background(), domain.TenantSettings{
-		TenantID:     tenantID,
+	repo := NewUserSettingsRepo(store)
+	upserted, err := repo.Upsert(context.Background(), domain.UserSettings{
+		UserID:       userID,
 		FiatCurrency: "USD",
 		Timezone:     "UTC",
 	})
@@ -77,7 +77,7 @@ func TestTenantSettingsRepo_UpsertAndGet_Success(t *testing.T) {
 		t.Fatalf("unexpected updated_at after upsert: %v", upserted.UpdatedAt)
 	}
 
-	got, err := repo.Get(context.Background(), tenantID)
+	got, err := repo.Get(context.Background(), userID)
 	if err != nil {
 		t.Fatalf("Get returned error: %v", err)
 	}

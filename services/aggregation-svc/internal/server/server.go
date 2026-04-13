@@ -18,10 +18,10 @@ import (
 type AggregationServer struct {
 	aggregationv1.UnimplementedAggregationServer
 	aggregationUC domain.AggregationUseCase
-	settingsUC    domain.TenantSettingsUseCase
+	settingsUC    domain.UserSettingsUseCase
 }
 
-func NewAggregationServer(aggregationUC domain.AggregationUseCase, settingsUC domain.TenantSettingsUseCase) *AggregationServer {
+func NewAggregationServer(aggregationUC domain.AggregationUseCase, settingsUC domain.UserSettingsUseCase) *AggregationServer {
 	return &AggregationServer{
 		aggregationUC: aggregationUC,
 		settingsUC:    settingsUC,
@@ -37,7 +37,7 @@ func (s *AggregationServer) ListTransactionsByImport(ctx context.Context, req *a
 			apperr.FieldViolation{Field: "request", Description: "required"},
 		)
 	}
-	tenantID, err := tenantIDFromHeader(ctx)
+	userID, err := userIDFromHeader(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -53,12 +53,12 @@ func (s *AggregationServer) ListTransactionsByImport(ctx context.Context, req *a
 
 	if s.aggregationUC == nil {
 		return nil, apperr.Internal("aggregation usecase is not configured", nil, map[string]string{
-			"tenant_id": tenantID.String(),
+			"user_id":   userID.String(),
 			"import_id": importID.String(),
 		})
 	}
 
-	page, err := s.aggregationUC.ListTransactionsByImport(ctx, tenantID, importID, req.GetLimit(), req.GetOffset())
+	page, err := s.aggregationUC.ListTransactionsByImport(ctx, userID, importID, req.GetLimit(), req.GetOffset())
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (s *AggregationServer) ListTransactionsByImport(ctx context.Context, req *a
 
 		items = append(items, &aggregationv1.AggregatedTx{
 			TxId:           tx.ID.String(),
-			TenantId:       tx.TenantID.String(),
+			UserId:         tx.UserID.String(),
 			Source:         tx.Source,
 			ImportId:       tx.ImportID.String(),
 			TimeUtc:        timestamppb.New(tx.TimeUTC),
@@ -112,7 +112,7 @@ func (s *AggregationServer) ListTransactionsByImport(ctx context.Context, req *a
 
 	log.Info(
 		"ListTransactionsByImport: success",
-		zap.String("tenant_id", tenantID.String()),
+		zap.String("user_id", userID.String()),
 		zap.String("import_id", importID.String()),
 		zap.Int("count", len(items)),
 		zap.Int64("total", page.Total),
@@ -133,13 +133,13 @@ func (s *AggregationServer) ListTransactionsByRange(ctx context.Context, req *ag
 			apperr.FieldViolation{Field: "request", Description: "required"},
 		)
 	}
-	tenantID, err := parseUUID(req.TenantId)
+	userID, err := parseUUID(req.UserId)
 	if err != nil {
-		log.Warn("ListTransactionsByRange: invalid tenant ID", zap.Error(err))
+		log.Warn("ListTransactionsByRange: invalid user ID", zap.Error(err))
 		return nil, apperr.InvalidArgument(
-			"invalid tenant id",
+			"invalid user id",
 			err,
-			apperr.FieldViolation{Field: "tenant_id", Description: "invalid format"},
+			apperr.FieldViolation{Field: "user_id", Description: "invalid format"},
 		)
 	}
 	if req.GetFromUtc() == nil || req.GetToUtc() == nil {
@@ -161,13 +161,13 @@ func (s *AggregationServer) ListTransactionsByRange(ctx context.Context, req *ag
 
 	if s.aggregationUC == nil {
 		return nil, apperr.Internal("aggregation usecase is not configured", nil, map[string]string{
-			"tenant_id": tenantID.String(),
+			"user_id": userID.String(),
 		})
 	}
 
 	page, err := s.aggregationUC.ListTransactionsByRange(
 		ctx,
-		tenantID,
+		userID,
 		fromUTC,
 		toUTC,
 		req.GetLimit(),
@@ -207,7 +207,7 @@ func (s *AggregationServer) ListTransactionsByRange(ctx context.Context, req *ag
 
 		items = append(items, &aggregationv1.AggregatedTx{
 			TxId:           tx.ID.String(),
-			TenantId:       tx.TenantID.String(),
+			UserId:         tx.UserID.String(),
 			Source:         tx.Source,
 			ImportId:       tx.ImportID.String(),
 			TimeUtc:        timestamppb.New(tx.TimeUTC),
@@ -231,7 +231,7 @@ func (s *AggregationServer) ListTransactionsByRange(ctx context.Context, req *ag
 	}, nil
 }
 
-func (s *AggregationServer) GetTenantSettings(ctx context.Context, req *aggregationv1.GetTenantSettingsRequest) (*aggregationv1.GetTenantSettingsResponse, error) {
+func (s *AggregationServer) GetUserSettings(ctx context.Context, req *aggregationv1.GetUserSettingsRequest) (*aggregationv1.GetUserSettingsResponse, error) {
 	log := logger.FromContext(ctx)
 	if req == nil {
 		return nil, apperr.InvalidArgument(
@@ -240,29 +240,29 @@ func (s *AggregationServer) GetTenantSettings(ctx context.Context, req *aggregat
 			apperr.FieldViolation{Field: "request", Description: "required"},
 		)
 	}
-	tenantID, err := tenantIDFromHeader(ctx)
+	userID, err := userIDFromHeader(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	if s.settingsUC == nil {
-		return nil, apperr.Internal("tenant settings usecase is not configured", nil, map[string]string{
-			"tenant_id": tenantID.String(),
+		return nil, apperr.Internal("user settings usecase is not configured", nil, map[string]string{
+			"user_id": userID.String(),
 		})
 	}
 
-	settings, err := s.settingsUC.Get(ctx, tenantID)
+	settings, err := s.settingsUC.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Info("GetTenantSettings: success", zap.String("tenant_id", tenantID.String()))
-	return &aggregationv1.GetTenantSettingsResponse{
+	log.Info("GetUserSettings: success", zap.String("user_id", userID.String()))
+	return &aggregationv1.GetUserSettingsResponse{
 		Settings: toProtoSettings(settings),
 	}, nil
 }
 
-func (s *AggregationServer) UpsertTenantSettings(ctx context.Context, req *aggregationv1.UpsertTenantSettingsRequest) (*aggregationv1.UpsertTenantSettingsResponse, error) {
+func (s *AggregationServer) UpsertUserSettings(ctx context.Context, req *aggregationv1.UpsertUserSettingsRequest) (*aggregationv1.UpsertUserSettingsResponse, error) {
 	log := logger.FromContext(ctx)
 	if req == nil {
 		return nil, apperr.InvalidArgument(
@@ -271,19 +271,19 @@ func (s *AggregationServer) UpsertTenantSettings(ctx context.Context, req *aggre
 			apperr.FieldViolation{Field: "request", Description: "required"},
 		)
 	}
-	tenantID, err := tenantIDFromHeader(ctx)
+	userID, err := userIDFromHeader(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	if s.settingsUC == nil {
-		return nil, apperr.Internal("tenant settings usecase is not configured", nil, map[string]string{
-			"tenant_id": tenantID.String(),
+		return nil, apperr.Internal("user settings usecase is not configured", nil, map[string]string{
+			"user_id": userID.String(),
 		})
 	}
 
-	settings, err := s.settingsUC.Upsert(ctx, domain.TenantSettings{
-		TenantID:     tenantID,
+	settings, err := s.settingsUC.Upsert(ctx, domain.UserSettings{
+		UserID:       userID,
 		FiatCurrency: req.GetFiatCurrency(),
 		Timezone:     req.GetTimezone(),
 	})
@@ -291,8 +291,8 @@ func (s *AggregationServer) UpsertTenantSettings(ctx context.Context, req *aggre
 		return nil, err
 	}
 
-	log.Info("UpsertTenantSettings: success", zap.String("tenant_id", tenantID.String()))
-	return &aggregationv1.UpsertTenantSettingsResponse{
+	log.Info("UpsertUserSettings: success", zap.String("user_id", userID.String()))
+	return &aggregationv1.UpsertUserSettingsResponse{
 		Settings: toProtoSettings(settings),
 	}, nil
 }
@@ -309,12 +309,12 @@ func (s *AggregationServer) ListSupportedFiatCurrencies(
 			apperr.FieldViolation{Field: "request", Description: "required"},
 		)
 	}
-	if err := requireTenantHeader(ctx); err != nil {
+	if err := requireUserHeader(ctx); err != nil {
 		return nil, err
 	}
 
 	if s.settingsUC == nil {
-		return nil, apperr.Internal("tenant settings usecase is not configured", nil, nil)
+		return nil, apperr.Internal("user settings usecase is not configured", nil, nil)
 	}
 
 	currencies, err := s.settingsUC.ListSupportedFiatCurrencies(ctx)
@@ -344,9 +344,9 @@ func parseUUID(s string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func toProtoSettings(settings domain.TenantSettings) *aggregationv1.TenantSettings {
-	return &aggregationv1.TenantSettings{
-		TenantId:     settings.TenantID.String(),
+func toProtoSettings(settings domain.UserSettings) *aggregationv1.UserSettings {
+	return &aggregationv1.UserSettings{
+		UserId:       settings.UserID.String(),
 		FiatCurrency: settings.FiatCurrency,
 		Timezone:     settings.Timezone,
 	}

@@ -27,13 +27,13 @@ This is a desktop-first product demo, not a production web app.
 ## Known contract gaps (do not hide these)
 - No current-user endpoint (`/auth/me`-style route is absent).
 - `/mexc/csv` returns only status; it does not return `import_id`.
-- Aggregation range/filter endpoint (`/v1/tenants/{tenant_id}/transactions`) exists in internal API, not frontend API.
+- Aggregation range/filter endpoint (`/v1/users/{user_id}/transactions`) exists in internal API, not frontend API.
 
 ## Integration rules
 - Do not invent endpoints or DTO fields.
 - Use typed API clients per service/domain (`auth`, `ledger`, `aggregation`, `tax`).
 - Send `Authorization: Bearer <access_token>` where required.
-- Do not send client-controlled identity headers or `tenant_id` path parameters for user-facing routes; tenant context is resolved on the backend.
+- Do not send client-controlled identity headers or `user_id` path parameters for user-facing routes; user context is resolved on the backend.
 - Handle and render both error formats:
   - grpc-gateway: `{ code, message, details[] }`
   - rust services: `{ code, message }` or `{ error }`

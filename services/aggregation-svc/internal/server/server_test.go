@@ -17,7 +17,7 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/mocks"
 )
 
-func TestListTransactionsByRange_SucceedsWithoutTenantHeader(t *testing.T) {
+func TestListTransactionsByRange_SucceedsWithoutUserHeader(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
@@ -26,34 +26,34 @@ func TestListTransactionsByRange_SucceedsWithoutTenantHeader(t *testing.T) {
 	aggUC := mocks.NewMockAggregationUseCase(ctrl)
 	s := NewAggregationServer(aggUC, nil)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	fromUTC := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	toUTC := time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)
 
 	aggUC.EXPECT().
-		ListTransactionsByRange(gomock.Any(), tenantID, fromUTC, toUTC, int32(100), int32(0), "").
+		ListTransactionsByRange(gomock.Any(), userID, fromUTC, toUTC, int32(100), int32(0), "").
 		Return(domain.AggregatedTxPage{}, nil)
 
 	_, err := s.ListTransactionsByRange(context.Background(), &aggregationv1.ListTransactionsByRangeRequest{
-		TenantId: tenantID.String(),
-		FromUtc:  timestamppb.New(fromUTC),
-		ToUtc:    timestamppb.New(toUTC),
-		Limit:    100,
-		Offset:   0,
+		UserId:  userID.String(),
+		FromUtc: timestamppb.New(fromUTC),
+		ToUtc:   timestamppb.New(toUTC),
+		Limit:   100,
+		Offset:  0,
 	})
 	if err != nil {
 		t.Fatalf("expected success, got %v", err)
 	}
 }
 
-func TestListTransactionsByRange_InvalidTenantID(t *testing.T) {
+func TestListTransactionsByRange_InvalidUserID(t *testing.T) {
 	t.Parallel()
 
 	s := NewAggregationServer(nil, nil)
 	_, err := s.ListTransactionsByRange(context.Background(), &aggregationv1.ListTransactionsByRangeRequest{
-		TenantId: "bad-uuid",
-		FromUtc:  timestamppb.New(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)),
-		ToUtc:    timestamppb.New(time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)),
+		UserId:  "bad-uuid",
+		FromUtc: timestamppb.New(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)),
+		ToUtc:   timestamppb.New(time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)),
 	})
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -61,12 +61,12 @@ func TestListTransactionsByRange_InvalidTenantID(t *testing.T) {
 	assertServerErrorCode(t, err, apperr.ErrInvalidArgument)
 }
 
-func TestUpsertTenantSettings_MissingTenantHeader(t *testing.T) {
+func TestUpsertUserSettings_MissingUserHeader(t *testing.T) {
 	t.Parallel()
 
 	s := NewAggregationServer(nil, nil)
 
-	_, err := s.UpsertTenantSettings(context.Background(), &aggregationv1.UpsertTenantSettingsRequest{
+	_, err := s.UpsertUserSettings(context.Background(), &aggregationv1.UpsertUserSettingsRequest{
 		FiatCurrency: "USD",
 		Timezone:     "UTC",
 	})
@@ -82,10 +82,10 @@ func TestListSupportedFiatCurrencies_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	settingsUC := mocks.NewMockTenantSettingsUseCase(ctrl)
+	settingsUC := mocks.NewMockUserSettingsUseCase(ctrl)
 	s := NewAggregationServer(nil, settingsUC)
 
-	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerTenantID, uuid.NewString()))
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerUserID, uuid.NewString()))
 
 	settingsUC.EXPECT().
 		ListSupportedFiatCurrencies(gomock.Any()).
@@ -115,18 +115,18 @@ func TestListTransactionsByImport_Success(t *testing.T) {
 	aggUC := mocks.NewMockAggregationUseCase(ctrl)
 	s := NewAggregationServer(aggUC, nil)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 	txID := uuid.New()
-	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerTenantID, tenantID.String()))
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerUserID, userID.String()))
 
 	aggUC.EXPECT().
-		ListTransactionsByImport(gomock.Any(), tenantID, importID, int32(10), int32(0)).
+		ListTransactionsByImport(gomock.Any(), userID, importID, int32(10), int32(0)).
 		Return(domain.AggregatedTxPage{
 			Transactions: []domain.AggregatedTransaction{
 				{
 					ID:            txID,
-					TenantID:      tenantID,
+					UserID:        userID,
 					ImportID:      importID,
 					Source:        "MEXC",
 					TimeUTC:       time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),

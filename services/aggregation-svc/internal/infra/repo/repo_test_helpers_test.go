@@ -12,7 +12,7 @@ type fakeStore struct {
 	countByImportFn         func(ctx context.Context, arg db.CountAggregatedTransactionsByImportParams) (int64, error)
 	countByRangeFn          func(ctx context.Context, arg db.CountAggregatedTransactionsByRangeParams) (int64, error)
 	getImportStateFn        func(ctx context.Context, arg db.GetAggregationImportStateParams) (db.AggregationImportState, error)
-	getTenantSettingsFn     func(ctx context.Context, tenantID uuid.UUID) (db.TenantSetting, error)
+	getUserSettingsFn       func(ctx context.Context, userID uuid.UUID) (db.UserSetting, error)
 	listByImportFn          func(ctx context.Context, arg db.ListAggregatedTransactionsByImportParams) ([]db.AggregatedTransaction, error)
 	listByRangeFn           func(ctx context.Context, arg db.ListAggregatedTransactionsByRangeParams) ([]db.AggregatedTransaction, error)
 	markCompletedFn         func(ctx context.Context, arg db.MarkAggregationImportStateCompletedParams) error
@@ -20,7 +20,7 @@ type fakeStore struct {
 	updateByFingerprintFn   func(ctx context.Context, arg db.UpdateAggregatedTransactionByFingerprintParams) (int64, error)
 	upsertAggregatedTxFn    func(ctx context.Context, arg db.UpsertAggregatedTransactionParams) error
 	upsertProcessingStateFn func(ctx context.Context, arg db.UpsertAggregationImportStateProcessingParams) error
-	upsertTenantSettingsFn  func(ctx context.Context, arg db.UpsertTenantSettingsParams) (db.TenantSetting, error)
+	upsertUserSettingsFn    func(ctx context.Context, arg db.UpsertUserSettingsParams) (db.UserSetting, error)
 }
 
 func (f *fakeStore) CountAggregatedTransactionsByImport(ctx context.Context, arg db.CountAggregatedTransactionsByImportParams) (int64, error) {
@@ -44,11 +44,11 @@ func (f *fakeStore) GetAggregationImportState(ctx context.Context, arg db.GetAgg
 	return db.AggregationImportState{}, nil
 }
 
-func (f *fakeStore) GetTenantSettings(ctx context.Context, tenantID uuid.UUID) (db.TenantSetting, error) {
-	if f.getTenantSettingsFn != nil {
-		return f.getTenantSettingsFn(ctx, tenantID)
+func (f *fakeStore) GetUserSettings(ctx context.Context, userID uuid.UUID) (db.UserSetting, error) {
+	if f.getUserSettingsFn != nil {
+		return f.getUserSettingsFn(ctx, userID)
 	}
-	return db.TenantSetting{}, nil
+	return db.UserSetting{}, nil
 }
 
 func (f *fakeStore) ListAggregatedTransactionsByImport(ctx context.Context, arg db.ListAggregatedTransactionsByImportParams) ([]db.AggregatedTransaction, error) {
@@ -100,11 +100,11 @@ func (f *fakeStore) UpsertAggregationImportStateProcessing(ctx context.Context, 
 	return nil
 }
 
-func (f *fakeStore) UpsertTenantSettings(ctx context.Context, arg db.UpsertTenantSettingsParams) (db.TenantSetting, error) {
-	if f.upsertTenantSettingsFn != nil {
-		return f.upsertTenantSettingsFn(ctx, arg)
+func (f *fakeStore) UpsertUserSettings(ctx context.Context, arg db.UpsertUserSettingsParams) (db.UserSetting, error) {
+	if f.upsertUserSettingsFn != nil {
+		return f.upsertUserSettingsFn(ctx, arg)
 	}
-	return db.TenantSetting{}, nil
+	return db.UserSetting{}, nil
 }
 
 func strPtr(v string) *string {

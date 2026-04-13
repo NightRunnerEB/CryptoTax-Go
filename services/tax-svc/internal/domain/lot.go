@@ -11,7 +11,7 @@ import (
 // Используется только для FIFO / cost basis.
 type Lot struct {
 	ID         uuid.UUID
-	TenantID   uuid.UUID
+	UserID     uuid.UUID
 	AcquiredAt time.Time
 
 	Asset        string // BTC/ETH/USDT...

@@ -54,12 +54,12 @@ func (q *Queries) MarkRenderJobFailed(ctx context.Context, arg MarkRenderJobFail
 
 const upsertRenderJobProcessing = `-- name: UpsertRenderJobProcessing :exec
 INSERT INTO render_jobs (
-  report_id, tenant_id, status, dataset_object_key, started_at, updated_at
+  report_id, user_id, status, dataset_object_key, started_at, updated_at
 )
 VALUES ($1, $2, 'processing', $3, now(), now())
 ON CONFLICT (report_id) DO UPDATE
 SET
-  tenant_id = EXCLUDED.tenant_id,
+  user_id = EXCLUDED.user_id,
   status = 'processing',
   completed_at = NULL,
   error = NULL,
@@ -69,11 +69,11 @@ SET
 
 type UpsertRenderJobProcessingParams struct {
 	ReportID         uuid.UUID `json:"reportId"`
-	TenantID         uuid.UUID `json:"tenantId"`
+	UserID           uuid.UUID `json:"userId"`
 	DatasetObjectKey string    `json:"datasetObjectKey"`
 }
 
 func (q *Queries) UpsertRenderJobProcessing(ctx context.Context, arg UpsertRenderJobProcessingParams) error {
-	_, err := q.db.Exec(ctx, upsertRenderJobProcessing, arg.ReportID, arg.TenantID, arg.DatasetObjectKey)
+	_, err := q.db.Exec(ctx, upsertRenderJobProcessing, arg.ReportID, arg.UserID, arg.DatasetObjectKey)
 	return err
 }

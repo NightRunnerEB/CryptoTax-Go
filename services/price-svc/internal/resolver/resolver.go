@@ -7,14 +7,14 @@ import (
 )
 
 type CoinIdResolver struct {
-	tenantSymbolRepo domain.TenantSymbolRepo
-	coinIdCache      *inmemory.CoinIdCache
+	userSymbolRepo domain.UserSymbolRepo
+	coinIdCache    *inmemory.CoinIdCache
 }
 
-func NewCoinIdResolver(tenantSymbolRepo domain.TenantSymbolRepo, coinIdCache *inmemory.CoinIdCache) domain.CoinIdResolver {
+func NewCoinIdResolver(userSymbolRepo domain.UserSymbolRepo, coinIdCache *inmemory.CoinIdCache) domain.CoinIdResolver {
 	return &CoinIdResolver{
-		tenantSymbolRepo: tenantSymbolRepo,
-		coinIdCache:      coinIdCache,
+		userSymbolRepo: userSymbolRepo,
+		coinIdCache:    coinIdCache,
 	}
 }
 
@@ -23,12 +23,12 @@ func (r *CoinIdResolver) Resolve(symbol string) (string, error) {
 		return coinID, nil
 	}
 
-	// tenantUUID, err := domain.ParseTenantID(tenantID)
+	// userUUID, err := domain.ParseUserID(userID)
 	// if err != nil {
 	// 	return "", false
 	// }
 
-	// ts, err := r.tenantSymbolRepo.GetByTenantSourceSymbol(nil, tenantUUID, source, symbol)
+	// ts, err := r.userSymbolRepo.GetByUserSourceSymbol(nil, userUUID, source, symbol)
 	// if err != nil || ts.CoinID == "" {
 	// 	return "", false
 	// }

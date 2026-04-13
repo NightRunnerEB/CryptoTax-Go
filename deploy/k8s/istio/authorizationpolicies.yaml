@@ -34,7 +34,7 @@ spec:
         - operation:
             ports: ["8085"]
       when:
-        - key: request.headers[x-tenant-id]
+        - key: request.headers[x-user-id]
           values: ["*"]
         - key: request.headers[x-role]
           values: ["*"]
@@ -63,7 +63,7 @@ spec:
         - operation:
             ports: ["8086"]
       when:
-        - key: request.headers[x-tenant-id]
+        - key: request.headers[x-user-id]
           values: ["*"]
         - key: request.headers[x-role]
           values: ["*"]
@@ -92,7 +92,7 @@ spec:
         - operation:
             ports: ["8095"]
       when:
-        - key: request.headers[x-tenant-id]
+        - key: request.headers[x-user-id]
           values: ["*"]
         - key: request.headers[x-role]
           values: ["*"]
@@ -121,7 +121,7 @@ spec:
         - operation:
             ports: ["8097"]
       when:
-        - key: request.headers[x-tenant-id]
+        - key: request.headers[x-user-id]
           values: ["*"]
         - key: request.headers[x-role]
           values: ["*"]

@@ -9,6 +9,17 @@ import (
 	"syscall"
 	"time"
 
+	"go.opentelemetry.io/contrib/bridges/otelzap"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel/trace/noop"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/stats"
+
 	"github.com/NightRunner/CryptoTax-Go/pkg/logger"
 	"github.com/NightRunner/CryptoTax-Go/pkg/postgres"
 	"github.com/NightRunner/CryptoTax-Go/pkg/telemetry"
@@ -22,16 +33,6 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/pdf"
 	usecase "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/usecases"
 	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/worker"
-	"go.opentelemetry.io/contrib/bridges/otelzap"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.opentelemetry.io/otel/trace/noop"
-	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/health"
-	healthpb "google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/reflection"
-	"google.golang.org/grpc/stats"
 )
 
 var interruptSignals = []os.Signal{

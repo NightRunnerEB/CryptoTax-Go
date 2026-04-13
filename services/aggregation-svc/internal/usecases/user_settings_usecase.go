@@ -12,29 +12,29 @@ import (
 	apperr "github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/domain/error"
 )
 
-type tenantSettingsUC struct {
-	repo domain.TenantSettingsRepo
+type userSettingsUC struct {
+	repo domain.UserSettingsRepo
 }
 
-func NewTenantSettingsUC(repo domain.TenantSettingsRepo) domain.TenantSettingsUseCase {
-	return &tenantSettingsUC{
+func NewUserSettingsUC(repo domain.UserSettingsRepo) domain.UserSettingsUseCase {
+	return &userSettingsUC{
 		repo: repo,
 	}
 }
 
-func (u *tenantSettingsUC) Get(ctx context.Context, tenantID uuid.UUID) (domain.TenantSettings, error) {
-	if tenantID == uuid.Nil {
-		return domain.TenantSettings{}, apperr.InvalidArgument(
-			"invalid tenant id",
+func (u *userSettingsUC) Get(ctx context.Context, userID uuid.UUID) (domain.UserSettings, error) {
+	if userID == uuid.Nil {
+		return domain.UserSettings{}, apperr.InvalidArgument(
+			"invalid user id",
 			nil,
 			apperr.FieldViolation{
-				Field:       "tenant_id",
+				Field:       "user_id",
 				Description: "required",
 			},
 		)
 	}
 
-	settings, err := u.repo.Get(ctx, tenantID)
+	settings, err := u.repo.Get(ctx, userID)
 	if err == nil {
 		settings.FiatCurrency = normalizeFiatCurrency(settings.FiatCurrency)
 		settings.Timezone = normalizeTimezone(settings.Timezone)
@@ -42,23 +42,23 @@ func (u *tenantSettingsUC) Get(ctx context.Context, tenantID uuid.UUID) (domain.
 	}
 
 	if isNotFound(err) {
-		return domain.TenantSettings{
-			TenantID:     tenantID,
+		return domain.UserSettings{
+			UserID:       userID,
 			FiatCurrency: DefaultFiatCurrency,
 			Timezone:     DefaultTimezone,
 		}, nil
 	}
 
-	return domain.TenantSettings{}, err
+	return domain.UserSettings{}, err
 }
 
-func (u *tenantSettingsUC) Upsert(ctx context.Context, settings domain.TenantSettings) (domain.TenantSettings, error) {
-	if settings.TenantID == uuid.Nil {
-		return domain.TenantSettings{}, apperr.InvalidArgument(
-			"invalid tenant id",
+func (u *userSettingsUC) Upsert(ctx context.Context, settings domain.UserSettings) (domain.UserSettings, error) {
+	if settings.UserID == uuid.Nil {
+		return domain.UserSettings{}, apperr.InvalidArgument(
+			"invalid user id",
 			nil,
 			apperr.FieldViolation{
-				Field:       "tenant_id",
+				Field:       "user_id",
 				Description: "required",
 			},
 		)
@@ -67,14 +67,14 @@ func (u *tenantSettingsUC) Upsert(ctx context.Context, settings domain.TenantSet
 	settings.FiatCurrency = normalizeFiatCurrency(settings.FiatCurrency)
 	settings.Timezone = normalizeTimezone(settings.Timezone)
 
-	if err := validateTenantSettings(settings); err != nil {
-		return domain.TenantSettings{}, err
+	if err := validateUserSettings(settings); err != nil {
+		return domain.UserSettings{}, err
 	}
 
 	return u.repo.Upsert(ctx, settings)
 }
 
-func (u *tenantSettingsUC) ListSupportedFiatCurrencies(ctx context.Context) ([]domain.SupportedFiatCurrency, error) {
+func (u *userSettingsUC) ListSupportedFiatCurrencies(ctx context.Context) ([]domain.SupportedFiatCurrency, error) {
 	_ = ctx
 	return listSupportedFiatCurrencies(), nil
 }
@@ -95,7 +95,7 @@ func normalizeTimezone(value string) string {
 	return value
 }
 
-func validateTenantSettings(settings domain.TenantSettings) error {
+func validateUserSettings(settings domain.UserSettings) error {
 	if settings.FiatCurrency == "" {
 		return apperr.InvalidArgument(
 			"invalid fiat currency",

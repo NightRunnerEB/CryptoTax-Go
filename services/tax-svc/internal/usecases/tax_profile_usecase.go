@@ -31,9 +31,9 @@ func (uc *TaxProfileUC) Upsert(ctx context.Context, p domain.TaxProfile) error {
 }
 
 func validateAndNormalizeTaxProfile(p domain.TaxProfile) (domain.TaxProfile, error) {
-	if p.TenantID == uuid.Nil {
-		return domain.TaxProfile{}, apperr.InvalidArgument("invalid tenant id", nil, apperr.FieldViolation{
-			Field:       "tenant_id",
+	if p.UserID == uuid.Nil {
+		return domain.TaxProfile{}, apperr.InvalidArgument("invalid user id", nil, apperr.FieldViolation{
+			Field:       "user_id",
 			Description: "required",
 		})
 	}
@@ -118,24 +118,24 @@ func validateAndNormalizeTaxProfile(p domain.TaxProfile) (domain.TaxProfile, err
 	return p, nil
 }
 
-func (uc *TaxProfileUC) Get(ctx context.Context, tenantID uuid.UUID) (domain.TaxProfile, error) {
-	if tenantID == uuid.Nil {
-		return domain.TaxProfile{}, apperr.InvalidArgument("invalid tenant id", nil, apperr.FieldViolation{
-			Field:       "tenant_id",
+func (uc *TaxProfileUC) Get(ctx context.Context, userID uuid.UUID) (domain.TaxProfile, error) {
+	if userID == uuid.Nil {
+		return domain.TaxProfile{}, apperr.InvalidArgument("invalid user id", nil, apperr.FieldViolation{
+			Field:       "user_id",
 			Description: "required",
 		})
 	}
-	return uc.repo.Get(ctx, tenantID)
+	return uc.repo.Get(ctx, userID)
 }
 
-func (uc *TaxProfileUC) Delete(ctx context.Context, tenantID uuid.UUID) error {
-	if tenantID == uuid.Nil {
-		return apperr.InvalidArgument("invalid tenant id", nil, apperr.FieldViolation{
-			Field:       "tenant_id",
+func (uc *TaxProfileUC) Delete(ctx context.Context, userID uuid.UUID) error {
+	if userID == uuid.Nil {
+		return apperr.InvalidArgument("invalid user id", nil, apperr.FieldViolation{
+			Field:       "user_id",
 			Description: "required",
 		})
 	}
-	return uc.repo.Delete(ctx, tenantID)
+	return uc.repo.Delete(ctx, userID)
 }
 
 var _ domain.TaxProfileUseCase = (*TaxProfileUC)(nil)

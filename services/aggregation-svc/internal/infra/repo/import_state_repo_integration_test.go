@@ -15,12 +15,12 @@ func TestImportStateRepoIntegration_Lifecycle(t *testing.T) {
 	repo := NewImportStateRepo(store)
 
 	ctx := context.Background()
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 	eventID := uuid.New()
 
 	if err := repo.UpsertProcessing(ctx, domain.AggregationImportState{
-		TenantID: tenantID,
+		UserID:   userID,
 		ImportID: importID,
 		EventId:  eventID,
 		Status:   domain.ImportStatusProcessing,
@@ -28,7 +28,7 @@ func TestImportStateRepoIntegration_Lifecycle(t *testing.T) {
 		t.Fatalf("UpsertProcessing returned error: %v", err)
 	}
 
-	state, err := repo.Get(ctx, tenantID, importID)
+	state, err := repo.Get(ctx, userID, importID)
 	if err != nil {
 		t.Fatalf("Get returned error: %v", err)
 	}
@@ -36,10 +36,10 @@ func TestImportStateRepoIntegration_Lifecycle(t *testing.T) {
 		t.Fatalf("unexpected status after processing upsert: %s", state.Status)
 	}
 
-	if err := repo.MarkFailed(ctx, tenantID, importID, "valuation failed"); err != nil {
+	if err := repo.MarkFailed(ctx, userID, importID, "valuation failed"); err != nil {
 		t.Fatalf("MarkFailed returned error: %v", err)
 	}
-	state, err = repo.Get(ctx, tenantID, importID)
+	state, err = repo.Get(ctx, userID, importID)
 	if err != nil {
 		t.Fatalf("Get after MarkFailed returned error: %v", err)
 	}
@@ -47,10 +47,10 @@ func TestImportStateRepoIntegration_Lifecycle(t *testing.T) {
 		t.Fatalf("unexpected status after failed mark: %s", state.Status)
 	}
 
-	if err := repo.MarkCompleted(ctx, tenantID, importID); err != nil {
+	if err := repo.MarkCompleted(ctx, userID, importID); err != nil {
 		t.Fatalf("MarkCompleted returned error: %v", err)
 	}
-	state, err = repo.Get(ctx, tenantID, importID)
+	state, err = repo.Get(ctx, userID, importID)
 	if err != nil {
 		t.Fatalf("Get after MarkCompleted returned error: %v", err)
 	}

@@ -54,7 +54,7 @@ message TaxPolicy {
 }
 
 message TaxProfile {
-  string tenant_id = 1;
+  string user_id = 1;
   string inn = 2;
   string last_name = 3;
   string first_name = 4;
@@ -91,7 +91,7 @@ message TaxSummary {
 
 message TaxJob {
   string report_id = 1;
-  string tenant_id = 2;
+  string user_id = 2;
   int32 tax_year = 3;
   TaxPolicy policy_snapshot = 4;
   string status = 5;
@@ -107,7 +107,7 @@ message TaxJob {
 }
 
 message GetTaxProfileRequest {
-  string tenant_id = 1;
+  string user_id = 1;
 }
 
 message GetTaxProfileResponse {
@@ -115,7 +115,7 @@ message GetTaxProfileResponse {
 }
 
 message UpsertTaxProfileRequest {
-  string tenant_id = 1;
+  string user_id = 1;
   TaxProfileInput profile = 2;
 }
 
@@ -129,7 +129,7 @@ message StartReportParams {
 }
 
 message StartReportRequest {
-  string tenant_id = 1;
+  string user_id = 1;
   StartReportParams params = 2;
 }
 
@@ -139,7 +139,7 @@ message StartReportResponse {
 }
 
 message GetReportStatusRequest {
-  string tenant_id = 1;
+  string user_id = 1;
   string report_id = 2;
 }
 
@@ -148,7 +148,7 @@ message GetReportStatusResponse {
 }
 
 message ListReportsRequest {
-  string tenant_id = 1;
+  string user_id = 1;
   int32 limit = 2;
   int32 offset = 3;
 }

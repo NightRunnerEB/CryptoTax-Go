@@ -15,7 +15,7 @@ const (
 )
 
 type AggregationImportState struct {
-	TenantID    uuid.UUID    `json:"tenant_id"`
+	UserID      uuid.UUID    `json:"user_id"`
 	ImportID    uuid.UUID    `json:"import_id"`
 	EventId     uuid.UUID    `json:"event_id"`
 	Status      ImportStatus `json:"status"`

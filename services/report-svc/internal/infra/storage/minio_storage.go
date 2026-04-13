@@ -7,11 +7,12 @@ import (
 	"io"
 	"strings"
 
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+
 	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/config"
 	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain/error"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type MinIOStorage struct {
@@ -20,6 +21,14 @@ type MinIOStorage struct {
 }
 
 func NewMinIOStorage(cfg config.MinIOConfig) (*MinIOStorage, error) {
+	bucket := strings.TrimSpace(cfg.Bucket)
+	if bucket == "" {
+		return nil, apperr.InvalidArgument("invalid minio bucket", nil, apperr.FieldViolation{
+			Field:       "minio.bucket",
+			Description: "required",
+		})
+	}
+
 	client, err := minio.New(cfg.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
 		Secure: cfg.UseSSL,
@@ -30,9 +39,23 @@ func NewMinIOStorage(cfg config.MinIOConfig) (*MinIOStorage, error) {
 		})
 	}
 
+	exists, err := client.BucketExists(context.Background(), bucket)
+	if err != nil {
+		return nil, apperr.StorageUnavailable("check minio bucket failed", err, map[string]string{
+			"endpoint": cfg.Endpoint,
+			"bucket":   bucket,
+		})
+	}
+	if !exists {
+		return nil, apperr.StorageUnavailable("minio bucket does not exist", nil, map[string]string{
+			"endpoint": cfg.Endpoint,
+			"bucket":   bucket,
+		})
+	}
+
 	return &MinIOStorage{
 		client: client,
-		bucket: cfg.Bucket,
+		bucket: bucket,
 	}, nil
 }
 

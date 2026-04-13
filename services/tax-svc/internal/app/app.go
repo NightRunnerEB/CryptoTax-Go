@@ -270,7 +270,7 @@ func runGateway(ctx context.Context, waitGroup *errgroup.Group, cfg *config.HTTP
 
 func incomingHeaderMatcher(key string) (string, bool) {
 	switch strings.ToLower(key) {
-	case "authorization", "x-tenant-id", "x-user-id", "x-roles", "x-request-id":
+	case "authorization", "x-user-id", "x-role", "x-request-id":
 		return key, true
 	default:
 		return runtime.DefaultHeaderMatcher(key)

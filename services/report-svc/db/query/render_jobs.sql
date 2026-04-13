@@ -1,11 +1,11 @@
 -- name: UpsertRenderJobProcessing :exec
 INSERT INTO render_jobs (
-  report_id, tenant_id, status, dataset_object_key, started_at, updated_at
+  report_id, user_id, status, dataset_object_key, started_at, updated_at
 )
 VALUES ($1, $2, 'processing', $3, now(), now())
 ON CONFLICT (report_id) DO UPDATE
 SET
-  tenant_id = EXCLUDED.tenant_id,
+  user_id = EXCLUDED.user_id,
   status = 'processing',
   completed_at = NULL,
   error = NULL,

@@ -23,12 +23,12 @@ func (e *Engine) Jurisdiction() domain.Jurisdiction {
 
 func (e *Engine) Build(
 	ctx context.Context,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	policy domain.TaxPolicy,
 	transactions []domain.AggregatedTransaction,
 ) (engines.BuildResult, error) {
 	_ = ctx
-	_ = tenantID
+	_ = userID
 	_ = policy
 	_ = transactions
 

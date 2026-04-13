@@ -3,10 +3,11 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
+
 	db "github.com/NightRunner/CryptoTax-Go/services/report-svc/db/sqlc"
 	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain/error"
-	"github.com/google/uuid"
 )
 
 type renderJobRepo struct {
@@ -20,7 +21,7 @@ func NewRenderJobRepo(store db.Store) domain.RenderJobRepo {
 func (r *renderJobRepo) UpsertProcessing(ctx context.Context, job domain.RenderJob) error {
 	if err := r.store.UpsertRenderJobProcessing(ctx, db.UpsertRenderJobProcessingParams{
 		ReportID:         job.ReportID,
-		TenantID:         job.TenantID,
+		UserID:           job.UserID,
 		DatasetObjectKey: job.DatasetObjectKey,
 	}); err != nil {
 		return apperr.Internal("upsert render job processing failed", err, map[string]string{

@@ -12,11 +12,11 @@ import (
 
 type Querier interface {
 	ClaimNextQueuedTaxJob(ctx context.Context) (TaxJob, error)
-	CountTaxJobs(ctx context.Context, tenantID uuid.UUID) (int64, error)
+	CountTaxJobs(ctx context.Context, userID uuid.UUID) (int64, error)
 	CreateTaxJob(ctx context.Context, arg CreateTaxJobParams) (TaxJob, error)
-	DeleteTaxProfile(ctx context.Context, tenantID uuid.UUID) (int64, error)
+	DeleteTaxProfile(ctx context.Context, userID uuid.UUID) (int64, error)
 	GetTaxJob(ctx context.Context, arg GetTaxJobParams) (TaxJob, error)
-	GetTaxProfile(ctx context.Context, tenantID uuid.UUID) (TaxProfile, error)
+	GetTaxProfile(ctx context.Context, userID uuid.UUID) (TaxProfile, error)
 	ListTaxJobs(ctx context.Context, arg ListTaxJobsParams) ([]TaxJob, error)
 	MarkTaxJobCanceled(ctx context.Context, id uuid.UUID) error
 	MarkTaxJobFailed(ctx context.Context, arg MarkTaxJobFailedParams) error

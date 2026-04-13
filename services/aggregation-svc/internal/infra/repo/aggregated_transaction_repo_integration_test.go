@@ -15,7 +15,7 @@ func TestAggregatedTransactionRepoIntegration_UpsertAndList(t *testing.T) {
 	repo := NewAggregatedTransactionRepo(store)
 
 	ctx := context.Background()
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 	t1 := time.Date(2026, 3, 1, 10, 0, 0, 0, time.UTC)
 	t2 := time.Date(2026, 3, 2, 10, 0, 0, 0, time.UTC)
@@ -23,7 +23,7 @@ func TestAggregatedTransactionRepoIntegration_UpsertAndList(t *testing.T) {
 	err := repo.UpsertBatch(ctx, []domain.AggregatedTransaction{
 		{
 			ID:            uuid.New(),
-			TenantID:      tenantID,
+			UserID:        userID,
 			ImportID:      importID,
 			Source:        "MEXC",
 			TimeUTC:       t1,
@@ -34,7 +34,7 @@ func TestAggregatedTransactionRepoIntegration_UpsertAndList(t *testing.T) {
 		},
 		{
 			ID:            uuid.New(),
-			TenantID:      tenantID,
+			UserID:        userID,
 			ImportID:      importID,
 			Source:        "MEXC",
 			TimeUTC:       t2,
@@ -48,7 +48,7 @@ func TestAggregatedTransactionRepoIntegration_UpsertAndList(t *testing.T) {
 		t.Fatalf("UpsertBatch returned error: %v", err)
 	}
 
-	pageByImport, err := repo.ListByImport(ctx, tenantID, importID, 50, 0)
+	pageByImport, err := repo.ListByImport(ctx, userID, importID, 50, 0)
 	if err != nil {
 		t.Fatalf("ListByImport returned error: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestAggregatedTransactionRepoIntegration_UpsertAndList(t *testing.T) {
 		t.Fatalf("unexpected page by import: %+v", pageByImport)
 	}
 
-	pageByRange, err := repo.ListByRange(ctx, tenantID, t1.Add(-time.Hour), t2.Add(time.Hour), 50, 0)
+	pageByRange, err := repo.ListByRange(ctx, userID, t1.Add(-time.Hour), t2.Add(time.Hour), 50, 0)
 	if err != nil {
 		t.Fatalf("ListByRange returned error: %v", err)
 	}

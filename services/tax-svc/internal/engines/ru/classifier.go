@@ -45,7 +45,7 @@ func (e *Engine) Jurisdiction() domain.Jurisdiction {
 
 func (e *Engine) Build(
 	ctx context.Context,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	policy domain.TaxPolicy,
 	transactions []domain.AggregatedTransaction,
 ) (engines.BuildResult, error) {
@@ -85,15 +85,15 @@ func (e *Engine) Build(
 				"kind": string(tx.Kind),
 			})
 		}
-		if tx.TenantID != uuid.Nil && tx.TenantID != tenantID {
-			return engines.BuildResult{}, apperr.InvalidTxShape("tenant mismatch in transaction", nil, map[string]string{
+		if tx.UserID != uuid.Nil && tx.UserID != userID {
+			return engines.BuildResult{}, apperr.InvalidTxShape("user mismatch in transaction", nil, map[string]string{
 				"tx_id":       tx.ID.String(),
-				"tenant_id":   tx.TenantID.String(),
-				"expected_id": tenantID.String(),
+				"user_id":     tx.UserID.String(),
+				"expected_id": userID.String(),
 			})
 		}
 
-		if err := e.applyTransaction(&result, inventory, tenantID, method, policy, tx); err != nil {
+		if err := e.applyTransaction(&result, inventory, userID, method, policy, tx); err != nil {
 			return engines.BuildResult{}, err
 		}
 	}
@@ -104,7 +104,7 @@ func (e *Engine) Build(
 func (e *Engine) applyTransaction(
 	result *engines.BuildResult,
 	inventory map[string][]int,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	method domain.CostBasisMethod,
 	policy domain.TaxPolicy,
 	tx domain.AggregatedTransaction,
@@ -124,45 +124,45 @@ func (e *Engine) applyTransaction(
 
 	switch tx.Kind {
 	case domain.Spot:
-		return e.handleSpot(result, inventory, tenantID, method, policy, tx, inLeg, hasIn, outLeg, hasOut, feeLeg, hasFee)
+		return e.handleSpot(result, inventory, userID, method, policy, tx, inLeg, hasIn, outLeg, hasOut, feeLeg, hasFee)
 	case domain.Swap:
-		return e.handleSwap(result, inventory, tenantID, method, policy, tx, inLeg, hasIn, outLeg, hasOut, feeLeg, hasFee)
+		return e.handleSwap(result, inventory, userID, method, policy, tx, inLeg, hasIn, outLeg, hasOut, feeLeg, hasFee)
 	case domain.DepositCrypto:
-		return addMovement(result, tenantID, tx, events.MovementIn, inLeg, hasIn)
+		return addMovement(result, userID, tx, events.MovementIn, inLeg, hasIn)
 	case domain.WithdrawalCrypto:
-		if err := addMovement(result, tenantID, tx, events.MovementOut, outLeg, hasOut); err != nil {
+		if err := addMovement(result, userID, tx, events.MovementOut, outLeg, hasOut); err != nil {
 			return err
 		}
 		if hasFee {
-			return addExpense(result, inventory, method, tenantID, tx, feeLeg, events.ExpenseNetworkFee)
+			return addExpense(result, inventory, method, userID, tx, feeLeg, events.ExpenseNetworkFee)
 		}
 		return nil
 	case domain.DepositFiat:
-		return addMovement(result, tenantID, tx, events.MovementIn, inLeg, hasIn)
+		return addMovement(result, userID, tx, events.MovementIn, inLeg, hasIn)
 	case domain.WithdrawalFiat:
-		return addMovement(result, tenantID, tx, events.MovementOut, outLeg, hasOut)
+		return addMovement(result, userID, tx, events.MovementOut, outLeg, hasOut)
 	case domain.TransferInternal:
-		return addInternalMovement(result, tenantID, tx, inLeg, hasIn, outLeg, hasOut)
+		return addInternalMovement(result, userID, tx, inLeg, hasIn, outLeg, hasOut)
 	case domain.Airdrop:
-		return addIncomeWithLot(result, inventory, tenantID, tx, inLeg, hasIn, events.IncomeAirdrop)
+		return addIncomeWithLot(result, inventory, userID, tx, inLeg, hasIn, events.IncomeAirdrop)
 	case domain.StakingReward:
-		return addIncomeWithLot(result, inventory, tenantID, tx, inLeg, hasIn, events.IncomeStakingReward)
+		return addIncomeWithLot(result, inventory, userID, tx, inLeg, hasIn, events.IncomeStakingReward)
 	case domain.Expense:
-		return handleManualExpense(result, inventory, method, tenantID, tx, outLeg, hasOut, feeLeg, hasFee)
+		return handleManualExpense(result, inventory, method, userID, tx, outLeg, hasOut, feeLeg, hasFee)
 	case domain.GiftIn:
-		return addIncomeWithLot(result, inventory, tenantID, tx, inLeg, hasIn, events.IncomeGiftIn)
+		return addIncomeWithLot(result, inventory, userID, tx, inLeg, hasIn, events.IncomeGiftIn)
 	case domain.GiftOut:
-		return addRealization(result, inventory, method, tenantID, tx, outLeg, hasOut, decimal.Zero, events.RealizationGift)
+		return addRealization(result, inventory, method, userID, tx, outLeg, hasOut, decimal.Zero, events.RealizationGift)
 	case domain.DerivativePnL:
-		return handleDerivativePnL(result, inventory, method, tenantID, tx, inLeg, hasIn, outLeg, hasOut)
+		return handleDerivativePnL(result, inventory, method, userID, tx, inLeg, hasIn, outLeg, hasOut)
 	case domain.FundingFee:
-		return handleFundingFee(result, inventory, method, tenantID, tx, feeLeg, hasFee, outLeg, hasOut)
+		return handleFundingFee(result, inventory, method, userID, tx, feeLeg, hasFee, outLeg, hasOut)
 	case domain.Stolen:
-		return addRealization(result, inventory, method, tenantID, tx, outLeg, hasOut, decimal.Zero, events.RealizationStolen)
+		return addRealization(result, inventory, method, userID, tx, outLeg, hasOut, decimal.Zero, events.RealizationStolen)
 	case domain.Lost:
-		return addRealization(result, inventory, method, tenantID, tx, outLeg, hasOut, decimal.Zero, events.RealizationLost)
+		return addRealization(result, inventory, method, userID, tx, outLeg, hasOut, decimal.Zero, events.RealizationLost)
 	case domain.Burn:
-		return addRealization(result, inventory, method, tenantID, tx, outLeg, hasOut, decimal.Zero, events.RealizationBurn)
+		return addRealization(result, inventory, method, userID, tx, outLeg, hasOut, decimal.Zero, events.RealizationBurn)
 	default:
 		return apperr.UnsupportedKind("unsupported tx kind", nil, map[string]string{
 			"tx_id": tx.ID.String(),
@@ -174,7 +174,7 @@ func (e *Engine) applyTransaction(
 func (e *Engine) handleSpot(
 	result *engines.BuildResult,
 	inventory map[string][]int,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	method domain.CostBasisMethod,
 	policy domain.TaxPolicy,
 	tx domain.AggregatedTransaction,
@@ -195,12 +195,12 @@ func (e *Engine) handleSpot(
 	switch {
 	case !outFiat && inFiat:
 		proceeds := inLeg.fiat
-		if err := addRealization(result, inventory, method, tenantID, tx, outLeg, true, proceeds, events.RealizationSellFiat); err != nil {
+		if err := addRealization(result, inventory, method, userID, tx, outLeg, true, proceeds, events.RealizationSellFiat); err != nil {
 			return err
 		}
 	case outFiat && !inFiat:
 		cost := inLeg.fiat
-		addLot(result, inventory, tenantID, tx, inLeg.symbol, inLeg.qty, cost)
+		addLot(result, inventory, userID, tx, inLeg.symbol, inLeg.qty, cost)
 	case !outFiat && !inFiat:
 		if !policy.TreatCryptoCryptoAsDisposal {
 			return apperr.NotImplemented("spot crypto-to-crypto without disposal is not supported in MVP", nil, map[string]string{
@@ -208,17 +208,17 @@ func (e *Engine) handleSpot(
 			})
 		}
 		proceeds := inLeg.fiat
-		if err := addRealization(result, inventory, method, tenantID, tx, outLeg, true, proceeds, events.RealizationSwapOut); err != nil {
+		if err := addRealization(result, inventory, method, userID, tx, outLeg, true, proceeds, events.RealizationSwapOut); err != nil {
 			return err
 		}
 		cost := inLeg.fiat
-		addLot(result, inventory, tenantID, tx, inLeg.symbol, inLeg.qty, cost)
+		addLot(result, inventory, userID, tx, inLeg.symbol, inLeg.qty, cost)
 	default:
 		result.Warnings = append(result.Warnings, fmt.Sprintf("spot tx %s is fiat-to-fiat and was skipped", tx.ID.String()))
 	}
 
 	if hasFee {
-		if err := addExpense(result, inventory, method, tenantID, tx, feeLeg, events.ExpenseTradeFee); err != nil {
+		if err := addExpense(result, inventory, method, userID, tx, feeLeg, events.ExpenseTradeFee); err != nil {
 			return err
 		}
 	}
@@ -228,7 +228,7 @@ func (e *Engine) handleSpot(
 func (e *Engine) handleSwap(
 	result *engines.BuildResult,
 	inventory map[string][]int,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	method domain.CostBasisMethod,
 	policy domain.TaxPolicy,
 	tx domain.AggregatedTransaction,
@@ -252,15 +252,15 @@ func (e *Engine) handleSwap(
 	}
 
 	proceeds := inLeg.fiat
-	if err := addRealization(result, inventory, method, tenantID, tx, outLeg, true, proceeds, events.RealizationSwapOut); err != nil {
+	if err := addRealization(result, inventory, method, userID, tx, outLeg, true, proceeds, events.RealizationSwapOut); err != nil {
 		return err
 	}
 
 	cost := inLeg.fiat
-	addLot(result, inventory, tenantID, tx, inLeg.symbol, inLeg.qty, cost)
+	addLot(result, inventory, userID, tx, inLeg.symbol, inLeg.qty, cost)
 
 	if hasFee {
-		if err := addExpense(result, inventory, method, tenantID, tx, feeLeg, events.ExpenseTradeFee); err != nil {
+		if err := addExpense(result, inventory, method, userID, tx, feeLeg, events.ExpenseTradeFee); err != nil {
 			return err
 		}
 	}
@@ -270,7 +270,7 @@ func (e *Engine) handleSwap(
 func addIncomeWithLot(
 	result *engines.BuildResult,
 	inventory map[string][]int,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	tx domain.AggregatedTransaction,
 	inLeg parsedLeg,
 	hasIn bool,
@@ -282,7 +282,7 @@ func addIncomeWithLot(
 	amountFiat := inLeg.fiat
 	event := events.IncomeEvent{
 		ID:         uuid.New(),
-		TenantID:   tenantID,
+		UserID:     userID,
 		OccurredAt: tx.TimeUTC.UTC(),
 		AmountFiat: amountFiat,
 		Asset:      inLeg.symbol,
@@ -292,7 +292,7 @@ func addIncomeWithLot(
 	}
 	result.IncomeEvents = append(result.IncomeEvents, event)
 	if !isFiatLike(inLeg.symbol) {
-		addLot(result, inventory, tenantID, tx, inLeg.symbol, inLeg.qty, amountFiat)
+		addLot(result, inventory, userID, tx, inLeg.symbol, inLeg.qty, amountFiat)
 	}
 	return nil
 }
@@ -301,7 +301,7 @@ func handleManualExpense(
 	result *engines.BuildResult,
 	inventory map[string][]int,
 	method domain.CostBasisMethod,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	tx domain.AggregatedTransaction,
 	outLeg parsedLeg,
 	hasOut bool,
@@ -309,10 +309,10 @@ func handleManualExpense(
 	hasFee bool,
 ) error {
 	if hasOut {
-		return addExpense(result, inventory, method, tenantID, tx, outLeg, events.ExpenseManual)
+		return addExpense(result, inventory, method, userID, tx, outLeg, events.ExpenseManual)
 	}
 	if hasFee {
-		return addExpense(result, inventory, method, tenantID, tx, feeLeg, events.ExpenseManual)
+		return addExpense(result, inventory, method, userID, tx, feeLeg, events.ExpenseManual)
 	}
 	return invalidShape(tx, "expense requires out_money or fee_money")
 }
@@ -321,7 +321,7 @@ func handleDerivativePnL(
 	result *engines.BuildResult,
 	inventory map[string][]int,
 	method domain.CostBasisMethod,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	tx domain.AggregatedTransaction,
 	inLeg parsedLeg,
 	hasIn bool,
@@ -334,7 +334,7 @@ func handleDerivativePnL(
 		amountFiat := inLeg.fiat
 		result.IncomeEvents = append(result.IncomeEvents, events.IncomeEvent{
 			ID:         uuid.New(),
-			TenantID:   tenantID,
+			UserID:     userID,
 			OccurredAt: tx.TimeUTC.UTC(),
 			AmountFiat: amountFiat,
 			Asset:      inLeg.symbol,
@@ -343,13 +343,13 @@ func handleDerivativePnL(
 			Evidence:   evidenceFromTx(tx),
 		})
 		if !isFiatLike(inLeg.symbol) {
-			addLot(result, inventory, tenantID, tx, inLeg.symbol, inLeg.qty, amountFiat)
+			addLot(result, inventory, userID, tx, inLeg.symbol, inLeg.qty, amountFiat)
 		}
 		handled = true
 	}
 
 	if hasOut && outLeg.qty.GreaterThan(decimal.Zero) {
-		if err := addExpense(result, inventory, method, tenantID, tx, outLeg, events.ExpenseDerivativeLoss); err != nil {
+		if err := addExpense(result, inventory, method, userID, tx, outLeg, events.ExpenseDerivativeLoss); err != nil {
 			return err
 		}
 		handled = true
@@ -365,7 +365,7 @@ func handleFundingFee(
 	result *engines.BuildResult,
 	inventory map[string][]int,
 	method domain.CostBasisMethod,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	tx domain.AggregatedTransaction,
 	feeLeg parsedLeg,
 	hasFee bool,
@@ -373,17 +373,17 @@ func handleFundingFee(
 	hasOut bool,
 ) error {
 	if hasFee {
-		return addExpense(result, inventory, method, tenantID, tx, feeLeg, events.ExpenseFundingFee)
+		return addExpense(result, inventory, method, userID, tx, feeLeg, events.ExpenseFundingFee)
 	}
 	if hasOut {
-		return addExpense(result, inventory, method, tenantID, tx, outLeg, events.ExpenseFundingFee)
+		return addExpense(result, inventory, method, userID, tx, outLeg, events.ExpenseFundingFee)
 	}
 	return invalidShape(tx, "funding fee requires fee_money or out_money")
 }
 
 func addMovement(
 	result *engines.BuildResult,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	tx domain.AggregatedTransaction,
 	direction events.MovementDirection,
 	leg parsedLeg,
@@ -394,7 +394,7 @@ func addMovement(
 	}
 	result.MovementEvents = append(result.MovementEvents, events.MovementEvent{
 		ID:         uuid.New(),
-		TenantID:   tenantID,
+		UserID:     userID,
 		OccurredAt: tx.TimeUTC.UTC(),
 		Asset:      leg.symbol,
 		Qty:        leg.qty,
@@ -406,7 +406,7 @@ func addMovement(
 
 func addInternalMovement(
 	result *engines.BuildResult,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	tx domain.AggregatedTransaction,
 	inLeg parsedLeg,
 	hasIn bool,
@@ -415,9 +415,9 @@ func addInternalMovement(
 ) error {
 	switch {
 	case hasOut:
-		return addMovement(result, tenantID, tx, events.MovementInternal, outLeg, true)
+		return addMovement(result, userID, tx, events.MovementInternal, outLeg, true)
 	case hasIn:
-		return addMovement(result, tenantID, tx, events.MovementInternal, inLeg, true)
+		return addMovement(result, userID, tx, events.MovementInternal, inLeg, true)
 	default:
 		return invalidShape(tx, "transfer internal requires in_money or out_money")
 	}
@@ -427,7 +427,7 @@ func addRealization(
 	result *engines.BuildResult,
 	inventory map[string][]int,
 	method domain.CostBasisMethod,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	tx domain.AggregatedTransaction,
 	leg parsedLeg,
 	ok bool,
@@ -457,7 +457,7 @@ func addRealization(
 	realizationID := uuid.New()
 	result.RealizationEvents = append(result.RealizationEvents, events.RealizationEvent{
 		ID:            realizationID,
-		TenantID:      tenantID,
+		UserID:        userID,
 		OccurredAt:    tx.TimeUTC.UTC(),
 		Asset:         leg.symbol,
 		Qty:           leg.qty,
@@ -482,7 +482,7 @@ func addExpense(
 	result *engines.BuildResult,
 	inventory map[string][]int,
 	method domain.CostBasisMethod,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	tx domain.AggregatedTransaction,
 	leg parsedLeg,
 	kind events.ExpenseKind,
@@ -495,7 +495,7 @@ func addExpense(
 	expenseID := uuid.New()
 	result.ExpenseEvents = append(result.ExpenseEvents, events.ExpenseEvent{
 		ID:         expenseID,
-		TenantID:   tenantID,
+		UserID:     userID,
 		OccurredAt: tx.TimeUTC.UTC(),
 		AmountFiat: amountFiat,
 		Asset:      leg.symbol,
@@ -531,7 +531,7 @@ func addExpense(
 func addLot(
 	result *engines.BuildResult,
 	inventory map[string][]int,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	tx domain.AggregatedTransaction,
 	asset string,
 	qty decimal.Decimal,
@@ -539,7 +539,7 @@ func addLot(
 ) {
 	lot := domain.Lot{
 		ID:           uuid.New(),
-		TenantID:     tenantID,
+		UserID:       userID,
 		AcquiredAt:   tx.TimeUTC.UTC(),
 		Asset:        normalizeSymbol(asset),
 		QtyTotal:     qty,

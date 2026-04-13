@@ -58,18 +58,18 @@ func (mr *MockStoreMockRecorder) ClaimNextQueuedTaxJob(ctx any) *gomock.Call {
 }
 
 // CountTaxJobs mocks base method.
-func (m *MockStore) CountTaxJobs(ctx context.Context, tenantID uuid.UUID) (int64, error) {
+func (m *MockStore) CountTaxJobs(ctx context.Context, userID uuid.UUID) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CountTaxJobs", ctx, tenantID)
+	ret := m.ctrl.Call(m, "CountTaxJobs", ctx, userID)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CountTaxJobs indicates an expected call of CountTaxJobs.
-func (mr *MockStoreMockRecorder) CountTaxJobs(ctx, tenantID any) *gomock.Call {
+func (mr *MockStoreMockRecorder) CountTaxJobs(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountTaxJobs", reflect.TypeOf((*MockStore)(nil).CountTaxJobs), ctx, tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountTaxJobs", reflect.TypeOf((*MockStore)(nil).CountTaxJobs), ctx, userID)
 }
 
 // CreateTaxJob mocks base method.
@@ -88,18 +88,18 @@ func (mr *MockStoreMockRecorder) CreateTaxJob(ctx, arg any) *gomock.Call {
 }
 
 // DeleteTaxProfile mocks base method.
-func (m *MockStore) DeleteTaxProfile(ctx context.Context, tenantID uuid.UUID) (int64, error) {
+func (m *MockStore) DeleteTaxProfile(ctx context.Context, userID uuid.UUID) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteTaxProfile", ctx, tenantID)
+	ret := m.ctrl.Call(m, "DeleteTaxProfile", ctx, userID)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DeleteTaxProfile indicates an expected call of DeleteTaxProfile.
-func (mr *MockStoreMockRecorder) DeleteTaxProfile(ctx, tenantID any) *gomock.Call {
+func (mr *MockStoreMockRecorder) DeleteTaxProfile(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTaxProfile", reflect.TypeOf((*MockStore)(nil).DeleteTaxProfile), ctx, tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTaxProfile", reflect.TypeOf((*MockStore)(nil).DeleteTaxProfile), ctx, userID)
 }
 
 // ExecTx mocks base method.
@@ -132,18 +132,18 @@ func (mr *MockStoreMockRecorder) GetTaxJob(ctx, arg any) *gomock.Call {
 }
 
 // GetTaxProfile mocks base method.
-func (m *MockStore) GetTaxProfile(ctx context.Context, tenantID uuid.UUID) (db.TaxProfile, error) {
+func (m *MockStore) GetTaxProfile(ctx context.Context, userID uuid.UUID) (db.TaxProfile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTaxProfile", ctx, tenantID)
+	ret := m.ctrl.Call(m, "GetTaxProfile", ctx, userID)
 	ret0, _ := ret[0].(db.TaxProfile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTaxProfile indicates an expected call of GetTaxProfile.
-func (mr *MockStoreMockRecorder) GetTaxProfile(ctx, tenantID any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetTaxProfile(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTaxProfile", reflect.TypeOf((*MockStore)(nil).GetTaxProfile), ctx, tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTaxProfile", reflect.TypeOf((*MockStore)(nil).GetTaxProfile), ctx, userID)
 }
 
 // ListTaxJobs mocks base method.

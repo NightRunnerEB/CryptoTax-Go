@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/config"
-	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain"
-	apperr "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain/error"
 	"github.com/google/uuid"
 	rabbitmq "github.com/wagslane/go-rabbitmq"
 	"go.uber.org/zap"
+
+	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/config"
+	"github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain"
+	apperr "github.com/NightRunner/CryptoTax-Go/services/report-svc/internal/domain/error"
 )
 
 type ReportRenderRequestedConsumer struct {
@@ -150,7 +151,7 @@ func (c *ReportRenderRequestedConsumer) decodeRenderRequested(d rabbitmq.Deliver
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return domain.ReportRenderRequestedEvent{}, fmt.Errorf("decode payload: %w", err)
 	}
-	if event.EventID == uuid.Nil || event.ReportID == uuid.Nil || event.TenantID == uuid.Nil {
+	if event.EventID == uuid.Nil || event.ReportID == uuid.Nil || event.UserID == uuid.Nil {
 		return domain.ReportRenderRequestedEvent{}, fmt.Errorf("missing ids in payload")
 	}
 	return event, nil

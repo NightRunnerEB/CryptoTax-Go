@@ -1,6 +1,6 @@
 -- name: GetTaxProfile :one
 SELECT
-  tenant_id,
+  user_id,
   inn,
   last_name,
   first_name,
@@ -13,11 +13,11 @@ SELECT
   created_at,
   updated_at
 FROM tax_profile
-WHERE tenant_id = $1;
+WHERE user_id = $1;
 
 -- name: UpsertTaxProfile :one
 INSERT INTO tax_profile (
-  tenant_id,
+  user_id,
   inn,
   last_name,
   first_name,
@@ -29,7 +29,7 @@ INSERT INTO tax_profile (
   taxpayer_type
 )
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-ON CONFLICT (tenant_id)
+ON CONFLICT (user_id)
 DO UPDATE SET
   inn = EXCLUDED.inn,
   last_name = EXCLUDED.last_name,
@@ -42,7 +42,7 @@ DO UPDATE SET
   taxpayer_type = EXCLUDED.taxpayer_type,
   updated_at = now()
 RETURNING
-  tenant_id,
+  user_id,
   inn,
   last_name,
   first_name,
@@ -57,4 +57,4 @@ RETURNING
 
 -- name: DeleteTaxProfile :execrows
 DELETE FROM tax_profile
-WHERE tenant_id = $1;
+WHERE user_id = $1;

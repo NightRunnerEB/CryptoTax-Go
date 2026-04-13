@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type TenantSettings struct {
-	TenantID     uuid.UUID `json:"tenant_id"`
+type UserSettings struct {
+	UserID       uuid.UUID `json:"user_id"`
 	FiatCurrency string    `json:"fiat_currency"`
 	Timezone     string    `json:"timezone"`
 	UpdatedAt    time.Time `json:"updated_at"`

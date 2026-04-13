@@ -24,7 +24,7 @@ const (
 type RequestRenderRequest struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	ReportId         string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
-	TenantId         string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId           string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Jurisdiction     string                 `protobuf:"bytes,3,opt,name=jurisdiction,proto3" json:"jurisdiction,omitempty"`
 	TaxYear          int32                  `protobuf:"varint,4,opt,name=tax_year,json=taxYear,proto3" json:"tax_year,omitempty"`
 	DatasetObjectKey string                 `protobuf:"bytes,5,opt,name=dataset_object_key,json=datasetObjectKey,proto3" json:"dataset_object_key,omitempty"`
@@ -70,9 +70,9 @@ func (x *RequestRenderRequest) GetReportId() string {
 	return ""
 }
 
-func (x *RequestRenderRequest) GetTenantId() string {
+func (x *RequestRenderRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -145,10 +145,10 @@ var File_report_v1_report_proto protoreflect.FileDescriptor
 
 const file_report_v1_report_proto_rawDesc = "" +
 	"\n" +
-	"\x16report/v1/report.proto\x12\treport.v1\"\xe8\x01\n" +
+	"\x16report/v1/report.proto\x12\treport.v1\"\xe4\x01\n" +
 	"\x14RequestRenderRequest\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x1b\n" +
-	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12\"\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\"\n" +
 	"\fjurisdiction\x18\x03 \x01(\tR\fjurisdiction\x12\x19\n" +
 	"\btax_year\x18\x04 \x01(\x05R\ataxYear\x12,\n" +
 	"\x12dataset_object_key\x18\x05 \x01(\tR\x10datasetObjectKey\x12)\n" +

@@ -36,14 +36,14 @@ type PriceServer struct {
 	v1.UnimplementedPriceServer
 	resolver          domain.CoinIdResolver
 	historicalPriceUC domain.HistoricalPriceUseCase
-	tenantSymbolUC    domain.TenantSymbolUseCase
+	userSymbolUC      domain.UserSymbolUseCase
 }
 
-func NewPriceServer(resolver domain.CoinIdResolver, historicalPriceUC domain.HistoricalPriceUseCase, tenantSymbolUC domain.TenantSymbolUseCase) *PriceServer {
+func NewPriceServer(resolver domain.CoinIdResolver, historicalPriceUC domain.HistoricalPriceUseCase, userSymbolUC domain.UserSymbolUseCase) *PriceServer {
 	return &PriceServer{
 		resolver:          resolver,
 		historicalPriceUC: historicalPriceUC,
-		tenantSymbolUC:    tenantSymbolUC,
+		userSymbolUC:      userSymbolUC,
 	}
 }
 
@@ -194,35 +194,35 @@ func (server *PriceServer) ValuateTransactionsBatch(ctx context.Context, req *v1
 	return resp, nil
 }
 
-func (server PriceServer) UpsertTenantSymbol(ctx context.Context, req *v1.UpsertTenantSymbolRequest) (*v1.UpsertTenantSymbolResponse, error) {
+func (server PriceServer) UpsertUserSymbol(ctx context.Context, req *v1.UpsertUserSymbolRequest) (*v1.UpsertUserSymbolResponse, error) {
 	log := applogger.FromContext(ctx)
-	tenantId, err := parseUUID(req.TenantId)
+	userId, err := parseUUID(req.UserId)
 	if err != nil {
-		log.Warn("UpsertTenantSymbol: invalid tenant ID", zap.Error(err))
+		log.Warn("UpsertUserSymbol: invalid user ID", zap.Error(err))
 		return nil, apperr.InvalidArgument(
-			"invalid tenant id",
+			"invalid user id",
 			err,
 			apperr.FieldViolation{
-				Field:       "tenant_id",
+				Field:       "user_id",
 				Description: "invalid format",
 			},
 		)
 	}
 
-	tenantSymbol := domain.TenantSymbol{
-		TenantID: tenantId,
-		Source:   req.Source,
-		Symbol:   req.Symbol,
-		CoinID:   req.CoinId,
+	userSymbol := domain.UserSymbol{
+		UserID: userId,
+		Source: req.Source,
+		Symbol: req.Symbol,
+		CoinID: req.CoinId,
 	}
 
-	if err := server.tenantSymbolUC.Upsert(ctx, tenantSymbol); err != nil {
+	if err := server.userSymbolUC.Upsert(ctx, userSymbol); err != nil {
 		return nil, err
 	}
 
 	log.Info(
-		"UpsertTenantSymbol: upserted",
-		zap.String("tenant_id", tenantId.String()),
+		"UpsertUserSymbol: upserted",
+		zap.String("user_id", userId.String()),
 		zap.String("source", req.Source),
 		zap.String("symbol", req.Symbol),
 	)

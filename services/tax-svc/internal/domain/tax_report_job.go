@@ -19,7 +19,7 @@ const (
 
 type TaxJob struct {
 	ID             uuid.UUID
-	TenantID       uuid.UUID
+	UserID         uuid.UUID
 	PolicySnapshot TaxPolicy
 	TaxYear        int
 
@@ -42,15 +42,15 @@ type TaxJob struct {
 }
 
 type TaxJobUseCase interface {
-	Enqueue(ctx context.Context, tenantID uuid.UUID, taxYear int, taxPolicy TaxPolicy) (TaxJob, error)
-	GetStatus(ctx context.Context, tenantID, jobID uuid.UUID) (TaxJob, error)
-	List(ctx context.Context, tenantID uuid.UUID, limit, offset int32) ([]TaxJob, int64, error)
+	Enqueue(ctx context.Context, userID uuid.UUID, taxYear int, taxPolicy TaxPolicy) (TaxJob, error)
+	GetStatus(ctx context.Context, userID, jobID uuid.UUID) (TaxJob, error)
+	List(ctx context.Context, userID uuid.UUID, limit, offset int32) ([]TaxJob, int64, error)
 }
 
 type TaxJobRepo interface {
 	Create(ctx context.Context, job TaxJob) (TaxJob, error)
-	Get(ctx context.Context, tenantID, jobID uuid.UUID) (TaxJob, error)
-	List(ctx context.Context, tenantID uuid.UUID, limit, offset int32) ([]TaxJob, int64, error)
+	Get(ctx context.Context, userID, jobID uuid.UUID) (TaxJob, error)
+	List(ctx context.Context, userID uuid.UUID, limit, offset int32) ([]TaxJob, int64, error)
 	ClaimNextQueued(ctx context.Context) (*TaxJob, error)
 	Requeue(ctx context.Context, jobID uuid.UUID, retryAt time.Time, errCode, errMsg string) error
 	SaveResult(ctx context.Context, jobID uuid.UUID, summary TaxSummary, auditObjectKey *string, reportObjectKey *string) error

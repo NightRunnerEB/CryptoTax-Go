@@ -436,7 +436,7 @@ func (x *ValuatedTx) GetFeeFiat() *FiatLeg {
 
 type ValuateTransactionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Source        string                 `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
 	FiatCurrency  string                 `protobuf:"bytes,3,opt,name=fiat_currency,json=fiatCurrency,proto3" json:"fiat_currency,omitempty"`
 	Transactions  []*TxToValuate         `protobuf:"bytes,4,rep,name=transactions,proto3" json:"transactions,omitempty"`
@@ -474,9 +474,9 @@ func (*ValuateTransactionsRequest) Descriptor() ([]byte, []int) {
 	return file_price_v1_price_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *ValuateTransactionsRequest) GetTenantId() string {
+func (x *ValuateTransactionsRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
@@ -546,9 +546,9 @@ func (x *ValuateTransactionsResponse) GetTransactions() []*ValuatedTx {
 	return nil
 }
 
-type UpsertTenantSymbolRequest struct {
+type UpsertUserSymbolRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Source        string                 `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
 	Symbol        string                 `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	CoinId        string                 `protobuf:"bytes,4,opt,name=coin_id,json=coinId,proto3" json:"coin_id,omitempty"`
@@ -556,20 +556,20 @@ type UpsertTenantSymbolRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpsertTenantSymbolRequest) Reset() {
-	*x = UpsertTenantSymbolRequest{}
+func (x *UpsertUserSymbolRequest) Reset() {
+	*x = UpsertUserSymbolRequest{}
 	mi := &file_price_v1_price_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpsertTenantSymbolRequest) String() string {
+func (x *UpsertUserSymbolRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpsertTenantSymbolRequest) ProtoMessage() {}
+func (*UpsertUserSymbolRequest) ProtoMessage() {}
 
-func (x *UpsertTenantSymbolRequest) ProtoReflect() protoreflect.Message {
+func (x *UpsertUserSymbolRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_price_v1_price_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -581,59 +581,59 @@ func (x *UpsertTenantSymbolRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpsertTenantSymbolRequest.ProtoReflect.Descriptor instead.
-func (*UpsertTenantSymbolRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpsertUserSymbolRequest.ProtoReflect.Descriptor instead.
+func (*UpsertUserSymbolRequest) Descriptor() ([]byte, []int) {
 	return file_price_v1_price_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *UpsertTenantSymbolRequest) GetTenantId() string {
+func (x *UpsertUserSymbolRequest) GetUserId() string {
 	if x != nil {
-		return x.TenantId
+		return x.UserId
 	}
 	return ""
 }
 
-func (x *UpsertTenantSymbolRequest) GetSource() string {
+func (x *UpsertUserSymbolRequest) GetSource() string {
 	if x != nil {
 		return x.Source
 	}
 	return ""
 }
 
-func (x *UpsertTenantSymbolRequest) GetSymbol() string {
+func (x *UpsertUserSymbolRequest) GetSymbol() string {
 	if x != nil {
 		return x.Symbol
 	}
 	return ""
 }
 
-func (x *UpsertTenantSymbolRequest) GetCoinId() string {
+func (x *UpsertUserSymbolRequest) GetCoinId() string {
 	if x != nil {
 		return x.CoinId
 	}
 	return ""
 }
 
-type UpsertTenantSymbolResponse struct {
+type UpsertUserSymbolResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpsertTenantSymbolResponse) Reset() {
-	*x = UpsertTenantSymbolResponse{}
+func (x *UpsertUserSymbolResponse) Reset() {
+	*x = UpsertUserSymbolResponse{}
 	mi := &file_price_v1_price_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpsertTenantSymbolResponse) String() string {
+func (x *UpsertUserSymbolResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpsertTenantSymbolResponse) ProtoMessage() {}
+func (*UpsertUserSymbolResponse) ProtoMessage() {}
 
-func (x *UpsertTenantSymbolResponse) ProtoReflect() protoreflect.Message {
+func (x *UpsertUserSymbolResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_price_v1_price_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -645,8 +645,8 @@ func (x *UpsertTenantSymbolResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpsertTenantSymbolResponse.ProtoReflect.Descriptor instead.
-func (*UpsertTenantSymbolResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpsertUserSymbolResponse.ProtoReflect.Descriptor instead.
+func (*UpsertUserSymbolResponse) Descriptor() ([]byte, []int) {
 	return file_price_v1_price_proto_rawDescGZIP(), []int{9}
 }
 
@@ -692,28 +692,28 @@ const file_price_v1_price_proto_rawDesc = "" +
 	"\n" +
 	"\b_in_fiatB\v\n" +
 	"\t_out_fiatB\v\n" +
-	"\t_fee_fiat\"\xb1\x01\n" +
-	"\x1aValuateTransactionsRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x16\n" +
+	"\t_fee_fiat\"\xad\x01\n" +
+	"\x1aValuateTransactionsRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12#\n" +
 	"\rfiat_currency\x18\x03 \x01(\tR\ffiatCurrency\x129\n" +
 	"\ftransactions\x18\x04 \x03(\v2\x15.price.v1.TxToValuateR\ftransactions\"W\n" +
 	"\x1bValuateTransactionsResponse\x128\n" +
-	"\ftransactions\x18\x01 \x03(\v2\x14.price.v1.ValuatedTxR\ftransactions\"\x81\x01\n" +
-	"\x19UpsertTenantSymbolRequest\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x16\n" +
+	"\ftransactions\x18\x01 \x03(\v2\x14.price.v1.ValuatedTxR\ftransactions\"{\n" +
+	"\x17UpsertUserSymbolRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12\x16\n" +
 	"\x06symbol\x18\x03 \x01(\tR\x06symbol\x12\x17\n" +
-	"\acoin_id\x18\x04 \x01(\tR\x06coinId\"\x1c\n" +
-	"\x1aUpsertTenantSymbolResponse*`\n" +
+	"\acoin_id\x18\x04 \x01(\tR\x06coinId\"\x1a\n" +
+	"\x18UpsertUserSymbolResponse*`\n" +
 	"\x0eAssetErrorCode\x12\x11\n" +
 	"\rASSET_UNKNOWN\x10\x00\x12\x13\n" +
 	"\x0fASSET_AMBIGUOUS\x10\x01\x12\x12\n" +
 	"\x0eRATE_NOT_FOUND\x10\x02\x12\x12\n" +
-	"\x0ePROVIDER_ERROR\x10\x032\xd1\x01\n" +
+	"\x0ePROVIDER_ERROR\x10\x032\xcb\x01\n" +
 	"\x05Price\x12g\n" +
-	"\x18ValuateTransactionsBatch\x12$.price.v1.ValuateTransactionsRequest\x1a%.price.v1.ValuateTransactionsResponse\x12_\n" +
-	"\x12UpsertTenantSymbol\x12#.price.v1.UpsertTenantSymbolRequest\x1a$.price.v1.UpsertTenantSymbolResponseB:Z8github.com/NightRunner/CryptoTax-Go/gen/price/v1;pricev1b\x06proto3"
+	"\x18ValuateTransactionsBatch\x12$.price.v1.ValuateTransactionsRequest\x1a%.price.v1.ValuateTransactionsResponse\x12Y\n" +
+	"\x10UpsertUserSymbol\x12!.price.v1.UpsertUserSymbolRequest\x1a\".price.v1.UpsertUserSymbolResponseB:Z8github.com/NightRunner/CryptoTax-Go/gen/price/v1;pricev1b\x06proto3"
 
 var (
 	file_price_v1_price_proto_rawDescOnce sync.Once
@@ -739,8 +739,8 @@ var file_price_v1_price_proto_goTypes = []any{
 	(*ValuatedTx)(nil),                  // 6: price.v1.ValuatedTx
 	(*ValuateTransactionsRequest)(nil),  // 7: price.v1.ValuateTransactionsRequest
 	(*ValuateTransactionsResponse)(nil), // 8: price.v1.ValuateTransactionsResponse
-	(*UpsertTenantSymbolRequest)(nil),   // 9: price.v1.UpsertTenantSymbolRequest
-	(*UpsertTenantSymbolResponse)(nil),  // 10: price.v1.UpsertTenantSymbolResponse
+	(*UpsertUserSymbolRequest)(nil),     // 9: price.v1.UpsertUserSymbolRequest
+	(*UpsertUserSymbolResponse)(nil),    // 10: price.v1.UpsertUserSymbolResponse
 	(*timestamppb.Timestamp)(nil),       // 11: google.protobuf.Timestamp
 }
 var file_price_v1_price_proto_depIdxs = []int32{
@@ -757,9 +757,9 @@ var file_price_v1_price_proto_depIdxs = []int32{
 	3,  // 10: price.v1.ValuateTransactionsRequest.transactions:type_name -> price.v1.TxToValuate
 	6,  // 11: price.v1.ValuateTransactionsResponse.transactions:type_name -> price.v1.ValuatedTx
 	7,  // 12: price.v1.Price.ValuateTransactionsBatch:input_type -> price.v1.ValuateTransactionsRequest
-	9,  // 13: price.v1.Price.UpsertTenantSymbol:input_type -> price.v1.UpsertTenantSymbolRequest
+	9,  // 13: price.v1.Price.UpsertUserSymbol:input_type -> price.v1.UpsertUserSymbolRequest
 	8,  // 14: price.v1.Price.ValuateTransactionsBatch:output_type -> price.v1.ValuateTransactionsResponse
-	10, // 15: price.v1.Price.UpsertTenantSymbol:output_type -> price.v1.UpsertTenantSymbolResponse
+	10, // 15: price.v1.Price.UpsertUserSymbol:output_type -> price.v1.UpsertUserSymbolResponse
 	14, // [14:16] is the sub-list for method output_type
 	12, // [12:14] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name

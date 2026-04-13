@@ -14,26 +14,26 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/mocks"
 )
 
-func TestTenantSettingsUC_Get_NotFoundReturnsDefaults(t *testing.T) {
+func TestUserSettingsUC_Get_NotFoundReturnsDefaults(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	repo := mocks.NewMockTenantSettingsRepo(ctrl)
-	uc := NewTenantSettingsUC(repo)
+	repo := mocks.NewMockUserSettingsRepo(ctrl)
+	uc := NewUserSettingsUC(repo)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	repo.EXPECT().
-		Get(gomock.Any(), tenantID).
-		Return(domain.TenantSettings{}, apperr.NotFound("not found", apperr.Resource{Type: "tenant_settings", Name: tenantID.String()}, nil))
+		Get(gomock.Any(), userID).
+		Return(domain.UserSettings{}, apperr.NotFound("not found", apperr.Resource{Type: "user_settings", Name: userID.String()}, nil))
 
-	got, err := uc.Get(context.Background(), tenantID)
+	got, err := uc.Get(context.Background(), userID)
 	if err != nil {
 		t.Fatalf("Get returned error: %v", err)
 	}
-	if got.TenantID != tenantID {
-		t.Fatalf("unexpected tenant id: %s", got.TenantID)
+	if got.UserID != userID {
+		t.Fatalf("unexpected user id: %s", got.UserID)
 	}
 	if got.FiatCurrency != DefaultFiatCurrency {
 		t.Fatalf("unexpected default fiat: %s", got.FiatCurrency)
@@ -43,17 +43,17 @@ func TestTenantSettingsUC_Get_NotFoundReturnsDefaults(t *testing.T) {
 	}
 }
 
-func TestTenantSettingsUC_Upsert_UnsupportedFiat(t *testing.T) {
+func TestUserSettingsUC_Upsert_UnsupportedFiat(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	repo := mocks.NewMockTenantSettingsRepo(ctrl)
-	uc := NewTenantSettingsUC(repo)
+	repo := mocks.NewMockUserSettingsRepo(ctrl)
+	uc := NewUserSettingsUC(repo)
 
-	_, err := uc.Upsert(context.Background(), domain.TenantSettings{
-		TenantID:     uuid.New(),
+	_, err := uc.Upsert(context.Background(), domain.UserSettings{
+		UserID:       uuid.New(),
 		FiatCurrency: "ABC",
 		Timezone:     "UTC",
 	})
@@ -70,21 +70,21 @@ func TestTenantSettingsUC_Upsert_UnsupportedFiat(t *testing.T) {
 	}
 }
 
-func TestTenantSettingsUC_Upsert_NormalizesAndDelegates(t *testing.T) {
+func TestUserSettingsUC_Upsert_NormalizesAndDelegates(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	repo := mocks.NewMockTenantSettingsRepo(ctrl)
-	uc := NewTenantSettingsUC(repo)
+	repo := mocks.NewMockUserSettingsRepo(ctrl)
+	uc := NewUserSettingsUC(repo)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	repo.EXPECT().
-		Upsert(gomock.Any(), gomock.AssignableToTypeOf(domain.TenantSettings{})).
-		DoAndReturn(func(_ context.Context, settings domain.TenantSettings) (domain.TenantSettings, error) {
-			if settings.TenantID != tenantID {
-				t.Fatalf("unexpected tenant id: %s", settings.TenantID)
+		Upsert(gomock.Any(), gomock.AssignableToTypeOf(domain.UserSettings{})).
+		DoAndReturn(func(_ context.Context, settings domain.UserSettings) (domain.UserSettings, error) {
+			if settings.UserID != userID {
+				t.Fatalf("unexpected user id: %s", settings.UserID)
 			}
 			if settings.FiatCurrency != "RUB" {
 				t.Fatalf("unexpected normalized fiat: %s", settings.FiatCurrency)
@@ -95,8 +95,8 @@ func TestTenantSettingsUC_Upsert_NormalizesAndDelegates(t *testing.T) {
 			return settings, nil
 		})
 
-	got, err := uc.Upsert(context.Background(), domain.TenantSettings{
-		TenantID: tenantID,
+	got, err := uc.Upsert(context.Background(), domain.UserSettings{
+		UserID: userID,
 	})
 	if err != nil {
 		t.Fatalf("Upsert returned error: %v", err)
@@ -106,10 +106,10 @@ func TestTenantSettingsUC_Upsert_NormalizesAndDelegates(t *testing.T) {
 	}
 }
 
-func TestTenantSettingsUC_ListSupportedFiatCurrencies_Deterministic(t *testing.T) {
+func TestUserSettingsUC_ListSupportedFiatCurrencies_Deterministic(t *testing.T) {
 	t.Parallel()
 
-	uc := NewTenantSettingsUC(nil)
+	uc := NewUserSettingsUC(nil)
 	got, err := uc.ListSupportedFiatCurrencies(context.Background())
 	if err != nil {
 		t.Fatalf("ListSupportedFiatCurrencies returned error: %v", err)

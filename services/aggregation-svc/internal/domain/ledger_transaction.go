@@ -13,7 +13,7 @@ type LedgerAsset struct {
 
 type LedgerTransaction struct {
 	ID             uuid.UUID    `json:"id"`
-	TenantID       uuid.UUID    `json:"tenant_id"`
+	UserID         uuid.UUID    `json:"user_id"`
 	Source         string       `json:"source"`
 	TimeUTC        time.Time    `json:"time_utc"`
 	Kind           string       `json:"kind"`

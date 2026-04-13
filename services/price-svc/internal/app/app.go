@@ -102,11 +102,11 @@ func Run(cfg *config.Config) {
 	}
 	defer redis.Close()
 
-	tenantSymbolRepo := repository.NewTenantSymbolRepo(db)
+	userSymbolRepo := repository.NewUserSymbolRepo(db)
 	historicalPriceRepo := repository.NewHistoricalPriceRepo(db)
 	fxRateRepo := repository.NewFXRateRepo(db)
 
-	tenantSymbolUC := usecase.NewTenantSymbolUC(tenantSymbolRepo, time.Second*5)
+	userSymbolUC := usecase.NewUserSymbolUC(userSymbolRepo, time.Second*5)
 
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
@@ -142,7 +142,7 @@ func Run(cfg *config.Config) {
 	if err != nil {
 		log.Fatal("cannot create coin id cache", zap.Error(err))
 	}
-	resolver := resolver.NewCoinIdResolver(tenantSymbolRepo, coinIdCache)
+	resolver := resolver.NewCoinIdResolver(userSymbolRepo, coinIdCache)
 
 	statsHandler := otelgrpc.NewServerHandler(
 		otelgrpc.WithTracerProvider(noop.NewTracerProvider()),
@@ -158,7 +158,7 @@ func Run(cfg *config.Config) {
 		fxProvider,
 		resolver,
 		historicalPriceUC,
-		tenantSymbolUC,
+		userSymbolUC,
 	)
 
 	err = waitGroup.Wait()
@@ -176,10 +176,10 @@ func runGrpcServer(
 	fxProvider domain.FXProvider,
 	resolver domain.CoinIdResolver,
 	historicalPriceUC domain.HistoricalPriceUseCase,
-	tenantSymbolUC domain.TenantSymbolUseCase,
+	userSymbolUC domain.UserSymbolUseCase,
 ) {
 	log := logger.FromContext(ctx)
-	server := grpcserver.NewPriceServer(resolver, historicalPriceUC, tenantSymbolUC)
+	server := grpcserver.NewPriceServer(resolver, historicalPriceUC, userSymbolUC)
 
 	grpcServer := grpc.NewServer(
 		grpc.StatsHandler(statsHandler),

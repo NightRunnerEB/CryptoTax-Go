@@ -1,7 +1,7 @@
 -- name: UpsertAggregatedTransaction :exec
 INSERT INTO aggregated_transactions (
   id,
-  tenant_id,
+  user_id,
   source,
   import_id,
   time_utc,
@@ -61,12 +61,12 @@ SET
   note = $15,
   created_at = $17,
   updated_at = now()
-WHERE tenant_id = $2 AND tx_fingerprint = $16;
+WHERE user_id = $2 AND tx_fingerprint = $16;
 
 -- name: ListAggregatedTransactionsByImport :many
 SELECT
   id,
-  tenant_id,
+  user_id,
   source,
   import_id,
   time_utc,
@@ -84,19 +84,19 @@ SELECT
   created_at,
   updated_at
 FROM aggregated_transactions
-WHERE tenant_id = $1 AND import_id = $2
+WHERE user_id = $1 AND import_id = $2
 ORDER BY time_utc DESC
 LIMIT $3 OFFSET $4;
 
 -- name: CountAggregatedTransactionsByImport :one
 SELECT count(*)
 FROM aggregated_transactions
-WHERE tenant_id = $1 AND import_id = $2;
+WHERE user_id = $1 AND import_id = $2;
 
 -- name: ListAggregatedTransactionsByRange :many
 SELECT
   id,
-  tenant_id,
+  user_id,
   source,
   import_id,
   time_utc,
@@ -114,7 +114,7 @@ SELECT
   created_at,
   updated_at
 FROM aggregated_transactions
-WHERE tenant_id = $1
+WHERE user_id = $1
   AND time_utc >= $2
   AND time_utc < $3
 ORDER BY time_utc ASC
@@ -123,6 +123,6 @@ LIMIT $4 OFFSET $5;
 -- name: CountAggregatedTransactionsByRange :one
 SELECT count(*)
 FROM aggregated_transactions
-WHERE tenant_id = $1
+WHERE user_id = $1
   AND time_utc >= $2
   AND time_utc < $3;

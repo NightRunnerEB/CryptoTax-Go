@@ -136,7 +136,7 @@ func (c *ImportCompletedConsumer) handleDelivery(d rabbitmq.Delivery) rabbitmq.A
 	if err := c.uc.ProcessImport(ucCtx, event); err != nil {
 		if shouldRequeue(err) {
 			logFields := []zap.Field{
-				zap.String("tenant_id", event.TenantID.String()),
+				zap.String("user_id", event.UserID.String()),
 				zap.String("import_id", event.ImportID.String()),
 			}
 			logFields = append(logFields, buildErrorFields(err)...)
@@ -145,7 +145,7 @@ func (c *ImportCompletedConsumer) handleDelivery(d rabbitmq.Delivery) rabbitmq.A
 			return rabbitmq.NackRequeue
 		}
 		logFields := []zap.Field{
-			zap.String("tenant_id", event.TenantID.String()),
+			zap.String("user_id", event.UserID.String()),
 			zap.String("import_id", event.ImportID.String()),
 		}
 		logFields = append(logFields, buildErrorFields(err)...)
@@ -170,8 +170,8 @@ func decodeImportCompletedEvent(body []byte) (domain.ImportEvent, error) {
 			if err := json.Unmarshal(rawEvent, &event); err != nil {
 				return domain.ImportEvent{}, fmt.Errorf("decode ImportCompleted payload: %w", err)
 			}
-			if event.TenantID == uuid.Nil || event.ImportID == uuid.Nil {
-				return domain.ImportEvent{}, fmt.Errorf("missing tenant_id or import_id in ImportCompleted payload")
+			if event.UserID == uuid.Nil || event.ImportID == uuid.Nil {
+				return domain.ImportEvent{}, fmt.Errorf("missing user_id or import_id in ImportCompleted payload")
 			}
 			return event, nil
 		}
@@ -186,8 +186,8 @@ func decodeImportCompletedEvent(body []byte) (domain.ImportEvent, error) {
 	var envelope importCompletedEnvelope
 	if err := json.Unmarshal(body, &envelope); err == nil && envelope.ImportCompleted != nil {
 		event := *envelope.ImportCompleted
-		if event.TenantID == uuid.Nil || event.ImportID == uuid.Nil {
-			return domain.ImportEvent{}, fmt.Errorf("missing tenant_id or import_id in ImportCompleted payload")
+		if event.UserID == uuid.Nil || event.ImportID == uuid.Nil {
+			return domain.ImportEvent{}, fmt.Errorf("missing user_id or import_id in ImportCompleted payload")
 		}
 		return event, nil
 	}
@@ -196,8 +196,8 @@ func decodeImportCompletedEvent(body []byte) (domain.ImportEvent, error) {
 	if err := json.Unmarshal(body, &event); err != nil {
 		return domain.ImportEvent{}, fmt.Errorf("decode import event: %w", err)
 	}
-	if event.TenantID == uuid.Nil || event.ImportID == uuid.Nil {
-		return domain.ImportEvent{}, fmt.Errorf("missing tenant_id or import_id")
+	if event.UserID == uuid.Nil || event.ImportID == uuid.Nil {
+		return domain.ImportEvent{}, fmt.Errorf("missing user_id or import_id")
 	}
 
 	return event, nil

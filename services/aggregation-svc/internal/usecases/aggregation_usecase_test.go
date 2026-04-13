@@ -23,7 +23,7 @@ func TestProcessImport_HappyPath(t *testing.T) {
 
 	txRepo := mocks.NewMockAggregatedTransactionRepo(ctrl)
 	importRepo := mocks.NewMockImportStateRepo(ctrl)
-	settingsRepo := mocks.NewMockTenantSettingsRepo(ctrl)
+	settingsRepo := mocks.NewMockUserSettingsRepo(ctrl)
 	ledgerClient := mocks.NewMockLedgerClient(ctrl)
 	priceClient := mocks.NewMockPriceClient(ctrl)
 	lockManager := mocks.NewMockLockManager(ctrl)
@@ -39,7 +39,7 @@ func TestProcessImport_HappyPath(t *testing.T) {
 		10*time.Minute,
 	)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 	eventID := uuid.New()
 	txID := uuid.New()
@@ -48,7 +48,7 @@ func TestProcessImport_HappyPath(t *testing.T) {
 	ledgerTxs := []domain.LedgerTransaction{
 		{
 			ID:            txID,
-			TenantID:      tenantID,
+			UserID:        userID,
 			Source:        "",
 			ImportID:      importID,
 			TimeUTC:       now,
@@ -79,25 +79,25 @@ func TestProcessImport_HappyPath(t *testing.T) {
 	}
 
 	settingsRepo.EXPECT().
-		Get(gomock.Any(), tenantID).
-		Return(domain.TenantSettings{TenantID: tenantID, FiatCurrency: "rub", Timezone: "Europe/Moscow"}, nil)
+		Get(gomock.Any(), userID).
+		Return(domain.UserSettings{UserID: userID, FiatCurrency: "rub", Timezone: "Europe/Moscow"}, nil)
 
 	importRepo.EXPECT().
-		Get(gomock.Any(), tenantID, importID).
-		Return(domain.AggregationImportState{}, apperr.NotFound("not found", apperr.Resource{Type: "aggregation_import_state", Name: tenantID.String() + ":" + importID.String()}, nil))
+		Get(gomock.Any(), userID, importID).
+		Return(domain.AggregationImportState{}, apperr.NotFound("not found", apperr.Resource{Type: "aggregation_import_state", Name: userID.String() + ":" + importID.String()}, nil))
 
 	lockManager.EXPECT().
-		AcquireImportLock(gomock.Any(), tenantID, importID, 10*time.Minute).
+		AcquireImportLock(gomock.Any(), userID, importID, 10*time.Minute).
 		Return(true, nil)
 
 	lockManager.EXPECT().
-		ReleaseImportLock(gomock.Any(), tenantID, importID).
+		ReleaseImportLock(gomock.Any(), userID, importID).
 		Return(nil)
 
 	importRepo.EXPECT().
 		UpsertProcessing(gomock.Any(), gomock.AssignableToTypeOf(domain.AggregationImportState{})).
 		DoAndReturn(func(_ context.Context, state domain.AggregationImportState) error {
-			if state.TenantID != tenantID || state.ImportID != importID || state.EventId != eventID {
+			if state.UserID != userID || state.ImportID != importID || state.EventId != eventID {
 				t.Fatalf("unexpected processing state: %+v", state)
 			}
 			if state.Status != domain.ImportStatusProcessing {
@@ -107,14 +107,14 @@ func TestProcessImport_HappyPath(t *testing.T) {
 		})
 
 	ledgerClient.EXPECT().
-		ListTransactionsByImport(gomock.Any(), tenantID, importID).
+		ListTransactionsByImport(gomock.Any(), userID, importID).
 		Return(ledgerTxs, nil)
 
 	priceClient.EXPECT().
 		ValuateTransactionsBatch(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, req *pricev1.ValuateTransactionsRequest) (*pricev1.ValuateTransactionsResponse, error) {
-			if req.GetTenantId() != tenantID.String() {
-				t.Fatalf("unexpected tenant_id: %s", req.GetTenantId())
+			if req.GetUserId() != userID.String() {
+				t.Fatalf("unexpected user_id: %s", req.GetUserId())
 			}
 			if req.GetSource() != defaultImportSource {
 				t.Fatalf("unexpected source: %s", req.GetSource())
@@ -138,7 +138,7 @@ func TestProcessImport_HappyPath(t *testing.T) {
 				t.Fatalf("unexpected tx count: %d", len(got))
 			}
 			item := got[0]
-			if item.ID != txID || item.TenantID != tenantID || item.ImportID != importID {
+			if item.ID != txID || item.UserID != userID || item.ImportID != importID {
 				t.Fatalf("unexpected ids in tx: %+v", item)
 			}
 			if item.Source != defaultImportSource {
@@ -160,12 +160,12 @@ func TestProcessImport_HappyPath(t *testing.T) {
 		})
 
 	importRepo.EXPECT().
-		MarkCompleted(gomock.Any(), tenantID, importID).
+		MarkCompleted(gomock.Any(), userID, importID).
 		Return(nil)
 
 	err := uc.ProcessImport(context.Background(), domain.ImportEvent{
 		EventId:  eventID,
-		TenantID: tenantID,
+		UserID:   userID,
 		ImportID: importID,
 	})
 	if err != nil {
@@ -181,23 +181,23 @@ func TestProcessImport_LockNotAcquired_Skip(t *testing.T) {
 
 	txRepo := mocks.NewMockAggregatedTransactionRepo(ctrl)
 	importRepo := mocks.NewMockImportStateRepo(ctrl)
-	settingsRepo := mocks.NewMockTenantSettingsRepo(ctrl)
+	settingsRepo := mocks.NewMockUserSettingsRepo(ctrl)
 	ledgerClient := mocks.NewMockLedgerClient(ctrl)
 	priceClient := mocks.NewMockPriceClient(ctrl)
 	lockManager := mocks.NewMockLockManager(ctrl)
 
 	uc := NewAggregationUC(txRepo, importRepo, settingsRepo, ledgerClient, priceClient, lockManager, 100, 5*time.Minute)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 
 	lockManager.EXPECT().
-		AcquireImportLock(gomock.Any(), tenantID, importID, 5*time.Minute).
+		AcquireImportLock(gomock.Any(), userID, importID, 5*time.Minute).
 		Return(false, nil)
 
 	err := uc.ProcessImport(context.Background(), domain.ImportEvent{
 		EventId:  uuid.New(),
-		TenantID: tenantID,
+		UserID:   userID,
 		ImportID: importID,
 	})
 	if err != nil {
@@ -213,30 +213,30 @@ func TestProcessImport_LedgerUnavailable_MarkFailed(t *testing.T) {
 
 	txRepo := mocks.NewMockAggregatedTransactionRepo(ctrl)
 	importRepo := mocks.NewMockImportStateRepo(ctrl)
-	settingsRepo := mocks.NewMockTenantSettingsRepo(ctrl)
+	settingsRepo := mocks.NewMockUserSettingsRepo(ctrl)
 	ledgerClient := mocks.NewMockLedgerClient(ctrl)
 	priceClient := mocks.NewMockPriceClient(ctrl)
 	lockManager := mocks.NewMockLockManager(ctrl)
 
 	uc := NewAggregationUC(txRepo, importRepo, settingsRepo, ledgerClient, priceClient, lockManager, 100, time.Minute)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 	ledgerErr := apperr.LedgerUnavailable("ledger down", errors.New("dial tcp: refused"), map[string]string{"status_code": "503"})
 
 	lockManager.EXPECT().
-		AcquireImportLock(gomock.Any(), tenantID, importID, time.Minute).
+		AcquireImportLock(gomock.Any(), userID, importID, time.Minute).
 		Return(true, nil)
 	lockManager.EXPECT().
-		ReleaseImportLock(gomock.Any(), tenantID, importID).
+		ReleaseImportLock(gomock.Any(), userID, importID).
 		Return(nil)
 
 	settingsRepo.EXPECT().
-		Get(gomock.Any(), tenantID).
-		Return(domain.TenantSettings{TenantID: tenantID, FiatCurrency: "USD", Timezone: "UTC"}, nil)
+		Get(gomock.Any(), userID).
+		Return(domain.UserSettings{UserID: userID, FiatCurrency: "USD", Timezone: "UTC"}, nil)
 
 	importRepo.EXPECT().
-		Get(gomock.Any(), tenantID, importID).
+		Get(gomock.Any(), userID, importID).
 		Return(domain.AggregationImportState{}, apperr.NotFound("not found", apperr.Resource{Type: "aggregation_import_state", Name: "x"}, nil))
 
 	importRepo.EXPECT().
@@ -244,11 +244,11 @@ func TestProcessImport_LedgerUnavailable_MarkFailed(t *testing.T) {
 		Return(nil)
 
 	ledgerClient.EXPECT().
-		ListTransactionsByImport(gomock.Any(), tenantID, importID).
+		ListTransactionsByImport(gomock.Any(), userID, importID).
 		Return(nil, ledgerErr)
 
 	importRepo.EXPECT().
-		MarkFailed(gomock.Any(), tenantID, importID, gomock.Any()).
+		MarkFailed(gomock.Any(), userID, importID, gomock.Any()).
 		DoAndReturn(func(_ context.Context, _, _ uuid.UUID, msg string) error {
 			if msg == "" {
 				t.Fatal("expected non-empty error message")
@@ -258,7 +258,7 @@ func TestProcessImport_LedgerUnavailable_MarkFailed(t *testing.T) {
 
 	err := uc.ProcessImport(context.Background(), domain.ImportEvent{
 		EventId:  uuid.New(),
-		TenantID: tenantID,
+		UserID:   userID,
 		ImportID: importID,
 	})
 	if err == nil {
@@ -301,14 +301,14 @@ func TestListTransactionsByRange_RevaluationIncomplete_ReturnsDataNotReady(t *te
 	priceClient := mocks.NewMockPriceClient(ctrl)
 	uc := NewAggregationUC(txRepo, nil, nil, nil, priceClient, nil, 100, 0)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	txID := uuid.New()
 
 	page := domain.AggregatedTxPage{
 		Transactions: []domain.AggregatedTransaction{
 			{
 				ID:            txID,
-				TenantID:      tenantID,
+				UserID:        userID,
 				Source:        "",
 				ImportID:      uuid.New(),
 				TimeUTC:       time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
@@ -321,7 +321,7 @@ func TestListTransactionsByRange_RevaluationIncomplete_ReturnsDataNotReady(t *te
 	}
 
 	txRepo.EXPECT().
-		ListByRange(gomock.Any(), tenantID, gomock.Any(), gomock.Any(), int32(100), int32(0)).
+		ListByRange(gomock.Any(), userID, gomock.Any(), gomock.Any(), int32(100), int32(0)).
 		Return(page, nil)
 
 	priceClient.EXPECT().
@@ -341,7 +341,7 @@ func TestListTransactionsByRange_RevaluationIncomplete_ReturnsDataNotReady(t *te
 
 	_, err := uc.ListTransactionsByRange(
 		context.Background(),
-		tenantID,
+		userID,
 		time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
 		time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC),
 		100,

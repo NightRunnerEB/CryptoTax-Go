@@ -11,10 +11,10 @@ import (
 	apperr "github.com/NightRunner/CryptoTax-Go/services/price-svc/internal/domain/error"
 )
 
-func TestTenantSymbolRepo_Upsert_InvalidInput(t *testing.T) {
-	repo := NewTenantSymbolRepo(&fakeStore{})
+func TestUserSymbolRepo_Upsert_InvalidInput(t *testing.T) {
+	repo := NewUserSymbolRepo(&fakeStore{})
 
-	err := repo.Upsert(context.Background(), domain.TenantSymbol{})
+	err := repo.Upsert(context.Background(), domain.UserSymbol{})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -24,26 +24,26 @@ func TestTenantSymbolRepo_Upsert_InvalidInput(t *testing.T) {
 	}
 }
 
-func TestTenantSymbolRepo_Upsert_CallsStore(t *testing.T) {
-	tenantID := uuid.New()
+func TestUserSymbolRepo_Upsert_CallsStore(t *testing.T) {
+	userID := uuid.New()
 	called := false
 
 	store := &fakeStore{
-		upsertTenantSymbolFn: func(_ context.Context, arg db.UpsertTenantSymbolParams) error {
+		upsertUserSymbolFn: func(_ context.Context, arg db.UpsertUserSymbolParams) error {
 			called = true
-			if arg.TenantID != tenantID || arg.Source != "MEXC" || arg.Symbol != "BTC" || arg.CoinID != "bitcoin" {
+			if arg.UserID != userID || arg.Source != "MEXC" || arg.Symbol != "BTC" || arg.CoinID != "bitcoin" {
 				t.Fatalf("unexpected args: %+v", arg)
 			}
 			return nil
 		},
 	}
-	repo := NewTenantSymbolRepo(store)
+	repo := NewUserSymbolRepo(store)
 
-	err := repo.Upsert(context.Background(), domain.TenantSymbol{
-		TenantID: tenantID,
-		Source:   "MEXC",
-		Symbol:   "BTC",
-		CoinID:   "bitcoin",
+	err := repo.Upsert(context.Background(), domain.UserSymbol{
+		UserID: userID,
+		Source: "MEXC",
+		Symbol: "BTC",
+		CoinID: "bitcoin",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -53,16 +53,16 @@ func TestTenantSymbolRepo_Upsert_CallsStore(t *testing.T) {
 	}
 }
 
-func TestTenantSymbolRepo_Delete_NotFound(t *testing.T) {
-	tenantID := uuid.New()
+func TestUserSymbolRepo_Delete_NotFound(t *testing.T) {
+	userID := uuid.New()
 	store := &fakeStore{
-		deleteTenantSymbolFn: func(context.Context, db.DeleteTenantSymbolParams) (int64, error) {
+		deleteUserSymbolFn: func(context.Context, db.DeleteUserSymbolParams) (int64, error) {
 			return 0, nil
 		},
 	}
-	repo := NewTenantSymbolRepo(store)
+	repo := NewUserSymbolRepo(store)
 
-	err := repo.Delete(context.Background(), tenantID, "MEXC", "BTC")
+	err := repo.Delete(context.Background(), userID, "MEXC", "BTC")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -72,15 +72,15 @@ func TestTenantSymbolRepo_Delete_NotFound(t *testing.T) {
 	}
 }
 
-func TestTenantSymbolRepo_GetList_EmptySymbols(t *testing.T) {
+func TestUserSymbolRepo_GetList_EmptySymbols(t *testing.T) {
 	called := false
 	store := &fakeStore{
-		getTenantSymbolsFn: func(context.Context, db.GetTenantSymbolsParams) ([]db.TenantSymbol, error) {
+		getUserSymbolsFn: func(context.Context, db.GetUserSymbolsParams) ([]db.UserSymbol, error) {
 			called = true
 			return nil, nil
 		},
 	}
-	repo := NewTenantSymbolRepo(store)
+	repo := NewUserSymbolRepo(store)
 
 	out, err := repo.GetList(context.Background(), uuid.New(), "MEXC", nil)
 	if err != nil {
@@ -94,21 +94,21 @@ func TestTenantSymbolRepo_GetList_EmptySymbols(t *testing.T) {
 	}
 }
 
-func TestTenantSymbolRepo_GetListBySource_MapsRows(t *testing.T) {
-	tenantID := uuid.New()
+func TestUserSymbolRepo_GetListBySource_MapsRows(t *testing.T) {
+	userID := uuid.New()
 	store := &fakeStore{
-		listTenantSymbolsBySourceFn: func(context.Context, db.ListTenantSymbolsBySourceParams) ([]db.TenantSymbol, error) {
-			return []db.TenantSymbol{{
-				TenantID: tenantID,
-				Source:   "MEXC",
-				Symbol:   "BTC",
-				CoinID:   "bitcoin",
+		listUserSymbolsBySourceFn: func(context.Context, db.ListUserSymbolsBySourceParams) ([]db.UserSymbol, error) {
+			return []db.UserSymbol{{
+				UserID: userID,
+				Source: "MEXC",
+				Symbol: "BTC",
+				CoinID: "bitcoin",
 			}}, nil
 		},
 	}
-	repo := NewTenantSymbolRepo(store)
+	repo := NewUserSymbolRepo(store)
 
-	out, err := repo.GetListBySource(context.Background(), tenantID, "MEXC")
+	out, err := repo.GetListBySource(context.Background(), userID, "MEXC")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

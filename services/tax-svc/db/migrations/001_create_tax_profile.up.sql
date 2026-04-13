@@ -1,6 +1,6 @@
 CREATE TABLE
   IF NOT EXISTS tax_profile (
-    tenant_id uuid PRIMARY KEY,
+    user_id uuid PRIMARY KEY,
     inn text NOT NULL,
     last_name text NOT NULL,
     first_name text NOT NULL,

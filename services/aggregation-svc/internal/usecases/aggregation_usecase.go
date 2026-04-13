@@ -28,7 +28,7 @@ const (
 type aggregationUC struct {
 	txRepo        domain.AggregatedTransactionRepo
 	importRepo    domain.ImportStateRepo
-	settingsRepo  domain.TenantSettingsRepo
+	settingsRepo  domain.UserSettingsRepo
 	ledgerClient  domain.LedgerClient
 	priceClient   domain.PriceClient
 	lockManager   domain.LockManager
@@ -39,7 +39,7 @@ type aggregationUC struct {
 func NewAggregationUC(
 	txRepo domain.AggregatedTransactionRepo,
 	importRepo domain.ImportStateRepo,
-	settingsRepo domain.TenantSettingsRepo,
+	settingsRepo domain.UserSettingsRepo,
 	ledgerClient domain.LedgerClient,
 	priceClient domain.PriceClient,
 	lockManager domain.LockManager,
@@ -61,7 +61,7 @@ func NewAggregationUC(
 func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEvent) (retErr error) {
 	startedAt := time.Now()
 	log := logger.FromContext(ctx).With(
-		zap.String("tenant_id", event.TenantID.String()),
+		zap.String("user_id", event.UserID.String()),
 		zap.String("import_id", event.ImportID.String()),
 		zap.String("event_id", event.EventId.String()),
 	)
@@ -80,21 +80,21 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 	if err := u.validateDeps(); err != nil {
 		return err
 	}
-	if event.TenantID == uuid.Nil || event.ImportID == uuid.Nil {
+	if event.UserID == uuid.Nil || event.ImportID == uuid.Nil {
 		return apperr.InvalidArgument(
 			"invalid import event",
 			nil,
 			apperr.FieldViolation{
 				Field:       "event",
-				Description: "tenant_id and import_id are required",
+				Description: "user_id and import_id are required",
 			},
 		)
 	}
 
-	locked, err := u.lockManager.AcquireImportLock(ctx, event.TenantID, event.ImportID, u.importLockTTL)
+	locked, err := u.lockManager.AcquireImportLock(ctx, event.UserID, event.ImportID, u.importLockTTL)
 	if err != nil {
 		return apperr.Internal("acquire import lock failed", err, map[string]string{
-			"tenant_id": event.TenantID.String(),
+			"user_id":   event.UserID.String(),
 			"import_id": event.ImportID.String(),
 		})
 	}
@@ -105,9 +105,9 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 	}
 	log.Debug("ProcessImport: import lock acquired", zap.Duration("lock_ttl", u.importLockTTL))
 	defer func() {
-		if releaseErr := u.lockManager.ReleaseImportLock(ctx, event.TenantID, event.ImportID); releaseErr != nil && retErr == nil {
+		if releaseErr := u.lockManager.ReleaseImportLock(ctx, event.UserID, event.ImportID); releaseErr != nil && retErr == nil {
 			retErr = apperr.Internal("release import lock failed", releaseErr, map[string]string{
-				"tenant_id": event.TenantID.String(),
+				"user_id":   event.UserID.String(),
 				"import_id": event.ImportID.String(),
 			})
 		} else if releaseErr == nil {
@@ -115,16 +115,16 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 		}
 	}()
 
-	settings, err := u.loadTenantSettings(ctx, event.TenantID)
+	settings, err := u.loadUserSettings(ctx, event.UserID)
 	if err != nil {
 		return err
 	}
-	log.Debug("ProcessImport: tenant settings loaded",
+	log.Debug("ProcessImport: user settings loaded",
 		zap.String("fiat_currency", settings.FiatCurrency),
 		zap.String("timezone", settings.Timezone),
 	)
 
-	state, err := u.importRepo.Get(ctx, event.TenantID, event.ImportID)
+	state, err := u.importRepo.Get(ctx, event.UserID, event.ImportID)
 	if err != nil && !isNotFound(err) {
 		return err
 	}
@@ -139,7 +139,7 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 	}
 
 	if err := u.importRepo.UpsertProcessing(ctx, domain.AggregationImportState{
-		TenantID: event.TenantID,
+		UserID:   event.UserID,
 		ImportID: event.ImportID,
 		EventId:  event.EventId,
 		Status:   domain.ImportStatusProcessing,
@@ -148,14 +148,14 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 	}
 	log.Debug("ProcessImport: import state set to processing")
 
-	ledgerTxs, err := u.ledgerClient.ListTransactionsByImport(ctx, event.TenantID, event.ImportID)
+	ledgerTxs, err := u.ledgerClient.ListTransactionsByImport(ctx, event.UserID, event.ImportID)
 	if err != nil {
 		return u.markImportFailed(ctx, event, err)
 	}
 	log.Debug("ProcessImport: ledger transactions loaded", zap.Int("count", len(ledgerTxs)))
 	log.Debug("ProcessImport: ledger tx fingerprints", zap.Any("tx_fingerprints", ledgerTxFingerprints(ledgerTxs)))
 	if len(ledgerTxs) == 0 {
-		if err := u.importRepo.MarkCompleted(ctx, event.TenantID, event.ImportID); err != nil {
+		if err := u.importRepo.MarkCompleted(ctx, event.UserID, event.ImportID); err != nil {
 			return err
 		}
 		log.Debug("ProcessImport: no ledger transactions, marked completed")
@@ -168,7 +168,7 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 		zap.String("fiat_currency", settings.FiatCurrency),
 		zap.Int("batch_size", u.batchSize),
 	)
-	priceByTxID, err := u.valuateTransactions(ctx, event.TenantID, source, settings.FiatCurrency, ledgerTxs)
+	priceByTxID, err := u.valuateTransactions(ctx, event.UserID, source, settings.FiatCurrency, ledgerTxs)
 	if err != nil {
 		return u.markImportFailed(ctx, event, err)
 	}
@@ -181,7 +181,7 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 
 		aggregatedTx := domain.AggregatedTransaction{
 			ID:             tx.ID,
-			TenantID:       event.TenantID,
+			UserID:         event.UserID,
 			Source:         tx.Source,
 			ImportID:       event.ImportID,
 			TimeUTC:        tx.TimeUTC,
@@ -214,7 +214,7 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 	}
 	log.Debug("ProcessImport: aggregated transactions persisted", zap.Int("count", len(aggregated)))
 
-	if err := u.importRepo.MarkCompleted(ctx, event.TenantID, event.ImportID); err != nil {
+	if err := u.importRepo.MarkCompleted(ctx, event.UserID, event.ImportID); err != nil {
 		return err
 	}
 	log.Debug("ProcessImport: import state marked completed")
@@ -222,16 +222,16 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 	return nil
 }
 
-func (u *aggregationUC) ListTransactionsByImport(ctx context.Context, tenantID, importID uuid.UUID, limit, offset int32) (domain.AggregatedTxPage, error) {
+func (u *aggregationUC) ListTransactionsByImport(ctx context.Context, userID, importID uuid.UUID, limit, offset int32) (domain.AggregatedTxPage, error) {
 	if u.txRepo == nil {
 		return domain.AggregatedTxPage{}, apperr.Internal("aggregated transaction repo is not configured", nil, nil)
 	}
-	if tenantID == uuid.Nil || importID == uuid.Nil {
+	if userID == uuid.Nil || importID == uuid.Nil {
 		return domain.AggregatedTxPage{}, apperr.InvalidArgument(
 			"invalid request",
 			nil,
 			apperr.FieldViolation{
-				Field:       "tenant_id/import_id",
+				Field:       "user_id/import_id",
 				Description: "required",
 			},
 		)
@@ -250,12 +250,12 @@ func (u *aggregationUC) ListTransactionsByImport(ctx context.Context, tenantID, 
 		)
 	}
 
-	return u.txRepo.ListByImport(ctx, tenantID, importID, limit, offset)
+	return u.txRepo.ListByImport(ctx, userID, importID, limit, offset)
 }
 
 func (u *aggregationUC) ListTransactionsByRange(
 	ctx context.Context,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	fromUTC, toUTC time.Time,
 	limit, offset int32,
 	targetFiat string,
@@ -263,12 +263,12 @@ func (u *aggregationUC) ListTransactionsByRange(
 	if u.txRepo == nil {
 		return domain.AggregatedTxPage{}, apperr.Internal("aggregated transaction repo is not configured", nil, nil)
 	}
-	if tenantID == uuid.Nil {
+	if userID == uuid.Nil {
 		return domain.AggregatedTxPage{}, apperr.InvalidArgument(
-			"invalid tenant id",
+			"invalid user id",
 			nil,
 			apperr.FieldViolation{
-				Field:       "tenant_id",
+				Field:       "user_id",
 				Description: "required",
 			},
 		)
@@ -308,12 +308,12 @@ func (u *aggregationUC) ListTransactionsByRange(
 		)
 	}
 
-	page, err := u.txRepo.ListByRange(ctx, tenantID, fromUTC, toUTC, limit, offset)
+	page, err := u.txRepo.ListByRange(ctx, userID, fromUTC, toUTC, limit, offset)
 	if err != nil {
 		return domain.AggregatedTxPage{}, err
 	}
 	if targetFiat != "" {
-		revalued, err := u.revaluateTransactionsToTargetFiat(ctx, tenantID, targetFiat, page.Transactions)
+		revalued, err := u.revaluateTransactionsToTargetFiat(ctx, userID, targetFiat, page.Transactions)
 		if err != nil {
 			return domain.AggregatedTxPage{}, err
 		}
@@ -332,7 +332,7 @@ func (u *aggregationUC) validateDeps() error {
 	case u.importRepo == nil:
 		return apperr.Internal("import state repo is not configured", nil, nil)
 	case u.settingsRepo == nil:
-		return apperr.Internal("tenant settings repo is not configured", nil, nil)
+		return apperr.Internal("user settings repo is not configured", nil, nil)
 	case u.ledgerClient == nil:
 		return apperr.Internal("ledger client is not configured", nil, nil)
 	case u.priceClient == nil:
@@ -344,17 +344,17 @@ func (u *aggregationUC) validateDeps() error {
 	}
 }
 
-func (u *aggregationUC) loadTenantSettings(ctx context.Context, tenantID uuid.UUID) (domain.TenantSettings, error) {
-	settings, err := u.settingsRepo.Get(ctx, tenantID)
+func (u *aggregationUC) loadUserSettings(ctx context.Context, userID uuid.UUID) (domain.UserSettings, error) {
+	settings, err := u.settingsRepo.Get(ctx, userID)
 	if err != nil {
 		if isNotFound(err) {
-			return domain.TenantSettings{
-				TenantID:     tenantID,
+			return domain.UserSettings{
+				UserID:       userID,
 				FiatCurrency: DefaultFiatCurrency,
 				Timezone:     DefaultTimezone,
 			}, nil
 		}
-		return domain.TenantSettings{}, err
+		return domain.UserSettings{}, err
 	}
 	settings.FiatCurrency = normalizeFiatForPricing(settings.FiatCurrency)
 
@@ -363,7 +363,7 @@ func (u *aggregationUC) loadTenantSettings(ctx context.Context, tenantID uuid.UU
 
 func (u *aggregationUC) valuateTransactions(
 	ctx context.Context,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	source string,
 	fiatCurrency string,
 	ledgerTxs []domain.LedgerTransaction,
@@ -400,14 +400,14 @@ func (u *aggregationUC) valuateTransactions(
 		)
 
 		resp, err := u.priceClient.ValuateTransactionsBatch(ctx, &pricev1.ValuateTransactionsRequest{
-			TenantId:     tenantID.String(),
+			UserId:       userID.String(),
 			Source:       source,
 			FiatCurrency: fiatCurrency,
 			Transactions: toValuate[start:end],
 		})
 		if err != nil {
 			return nil, mapPriceValuationError("price valuation failed", err, map[string]string{
-				"tenant_id":     tenantID.String(),
+				"user_id":       userID.String(),
 				"source":        source,
 				"fiat_currency": fiatCurrency,
 			})
@@ -428,7 +428,7 @@ func (u *aggregationUC) valuateTransactions(
 
 func (u *aggregationUC) revaluateTransactionsToTargetFiat(
 	ctx context.Context,
-	tenantID uuid.UUID,
+	userID uuid.UUID,
 	targetFiat string,
 	txs []domain.AggregatedTransaction,
 ) ([]domain.AggregatedTransaction, error) {
@@ -470,14 +470,14 @@ func (u *aggregationUC) revaluateTransactionsToTargetFiat(
 			}
 
 			resp, err := u.priceClient.ValuateTransactionsBatch(ctx, &pricev1.ValuateTransactionsRequest{
-				TenantId:     tenantID.String(),
+				UserId:       userID.String(),
 				Source:       source,
 				FiatCurrency: targetFiat,
 				Transactions: items[start:end],
 			})
 			if err != nil {
 				return nil, mapPriceValuationError("price revaluation failed", err, map[string]string{
-					"tenant_id":   tenantID.String(),
+					"user_id":     userID.String(),
 					"source":      source,
 					"target_fiat": targetFiat,
 				})
@@ -500,7 +500,7 @@ func (u *aggregationUC) revaluateTransactionsToTargetFiat(
 				"aggregated data is not ready for requested fiat revaluation",
 				nil,
 				map[string]string{
-					"tenant_id":   tenantID.String(),
+					"user_id":     userID.String(),
 					"tx_id":       tx.ID.String(),
 					"target_fiat": targetFiat,
 				},
@@ -529,7 +529,7 @@ func (u *aggregationUC) markImportFailed(ctx context.Context, event domain.Impor
 	}
 
 	message := processingErr.Error()
-	if markErr := u.importRepo.MarkFailed(ctx, event.TenantID, event.ImportID, message); markErr != nil {
+	if markErr := u.importRepo.MarkFailed(ctx, event.UserID, event.ImportID, message); markErr != nil {
 		return errors.Join(processingErr, markErr)
 	}
 	return processingErr

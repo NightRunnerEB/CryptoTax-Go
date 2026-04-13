@@ -18,12 +18,12 @@ func TestAggregatedTransactionRepo_UpsertBatch_DuplicateFingerprint(t *testing.T
 	t.Parallel()
 
 	repo := NewAggregatedTransactionRepo(&fakeStore{})
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 
 	txs := []domain.AggregatedTransaction{
-		{ID: uuid.New(), TenantID: tenantID, ImportID: importID, TxFingerprint: "fp-1"},
-		{ID: uuid.New(), TenantID: tenantID, ImportID: importID, TxFingerprint: "fp-1"},
+		{ID: uuid.New(), UserID: userID, ImportID: importID, TxFingerprint: "fp-1"},
+		{ID: uuid.New(), UserID: userID, ImportID: importID, TxFingerprint: "fp-1"},
 	}
 
 	err := repo.UpsertBatch(context.Background(), txs)
@@ -45,7 +45,7 @@ func TestAggregatedTransactionRepo_UpsertBatch_TrimFingerprintAndPersist(t *test
 	}
 	repo := NewAggregatedTransactionRepo(store)
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 	txID := uuid.New()
 	now := time.Date(2026, 3, 1, 10, 0, 0, 0, time.UTC)
@@ -53,7 +53,7 @@ func TestAggregatedTransactionRepo_UpsertBatch_TrimFingerprintAndPersist(t *test
 	err := repo.UpsertBatch(context.Background(), []domain.AggregatedTransaction{
 		{
 			ID:            txID,
-			TenantID:      tenantID,
+			UserID:        userID,
 			ImportID:      importID,
 			Source:        "MEXC",
 			TimeUTC:       now,
@@ -66,7 +66,7 @@ func TestAggregatedTransactionRepo_UpsertBatch_TrimFingerprintAndPersist(t *test
 	if err != nil {
 		t.Fatalf("UpsertBatch returned error: %v", err)
 	}
-	if captured.ID != txID || captured.TenantID != tenantID || captured.ImportID != importID {
+	if captured.ID != txID || captured.UserID != userID || captured.ImportID != importID {
 		t.Fatalf("unexpected captured ids: %+v", captured)
 	}
 	if captured.TxFingerprint != "fp-1" {
@@ -80,14 +80,14 @@ func TestAggregatedTransactionRepo_UpsertBatch_TrimFingerprintAndPersist(t *test
 func TestAggregatedTransactionRepo_ListByImport_MapsRows(t *testing.T) {
 	t.Parallel()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 	txID := uuid.New()
 	createdAt := time.Date(2026, 3, 1, 10, 0, 0, 0, time.UTC)
 
 	store := &fakeStore{
 		countByImportFn: func(_ context.Context, arg db.CountAggregatedTransactionsByImportParams) (int64, error) {
-			if arg.TenantID != tenantID || arg.ImportID != importID {
+			if arg.UserID != userID || arg.ImportID != importID {
 				t.Fatalf("unexpected count args: %+v", arg)
 			}
 			return 1, nil
@@ -99,7 +99,7 @@ func TestAggregatedTransactionRepo_ListByImport_MapsRows(t *testing.T) {
 			return []db.AggregatedTransaction{
 				{
 					ID:            txID,
-					TenantID:      tenantID,
+					UserID:        userID,
 					ImportID:      importID,
 					Source:        "MEXC",
 					TimeUtc:       pgtype.Timestamptz{Time: createdAt, Valid: true},
@@ -115,7 +115,7 @@ func TestAggregatedTransactionRepo_ListByImport_MapsRows(t *testing.T) {
 	}
 
 	repo := NewAggregatedTransactionRepo(store)
-	page, err := repo.ListByImport(context.Background(), tenantID, importID, 10, 0)
+	page, err := repo.ListByImport(context.Background(), userID, importID, 10, 0)
 	if err != nil {
 		t.Fatalf("ListByImport returned error: %v", err)
 	}
@@ -133,7 +133,7 @@ func TestAggregatedTransactionRepo_ListByImport_MapsRows(t *testing.T) {
 func TestAggregatedTransactionRepo_ListByImport_InvalidJSON(t *testing.T) {
 	t.Parallel()
 
-	tenantID := uuid.New()
+	userID := uuid.New()
 	importID := uuid.New()
 
 	store := &fakeStore{
@@ -143,7 +143,7 @@ func TestAggregatedTransactionRepo_ListByImport_InvalidJSON(t *testing.T) {
 		listByImportFn: func(_ context.Context, _ db.ListAggregatedTransactionsByImportParams) ([]db.AggregatedTransaction, error) {
 			return []db.AggregatedTransaction{{
 				ID:       uuid.New(),
-				TenantID: tenantID,
+				UserID:   userID,
 				ImportID: importID,
 				TimeUtc:  pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true},
 				Kind:     "Spot",
@@ -153,7 +153,7 @@ func TestAggregatedTransactionRepo_ListByImport_InvalidJSON(t *testing.T) {
 	}
 
 	repo := NewAggregatedTransactionRepo(store)
-	_, err := repo.ListByImport(context.Background(), tenantID, importID, 10, 0)
+	_, err := repo.ListByImport(context.Background(), userID, importID, 10, 0)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

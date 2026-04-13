@@ -6,7 +6,7 @@ import (
 )
 
 type TaxSummary struct {
-	TenantID     uuid.UUID
+	UserID       uuid.UUID
 	TaxYear      int
 	TotalIncome  decimal.Decimal
 	TotalExpense decimal.Decimal

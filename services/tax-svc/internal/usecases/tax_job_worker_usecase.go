@@ -92,7 +92,7 @@ func (uc *TaxJobWorkerUC) ProcessNextQueuedJob(ctx context.Context) (bool, error
 }
 
 func (uc *TaxJobWorkerUC) processJob(ctx context.Context, job domain.TaxJob) error {
-	profile, err := uc.profileRepo.Get(ctx, job.TenantID)
+	profile, err := uc.profileRepo.Get(ctx, job.UserID)
 	if err != nil {
 		return err
 	}
@@ -123,28 +123,28 @@ func (uc *TaxJobWorkerUC) processJob(ctx context.Context, job domain.TaxJob) err
 		})
 	}
 
-	transactions, err := uc.txProvider.ListTransactionsByRange(ctx, job.TenantID, fromUTC, toUTC, targetFiat)
+	transactions, err := uc.txProvider.ListTransactionsByRange(ctx, job.UserID, fromUTC, toUTC, targetFiat)
 	if err != nil {
 		var appErr *apperr.Error
 		if errors.As(err, &appErr) && appErr != nil {
 			return err
 		}
 		return apperr.AggregationFetchFailed("fetch aggregated transactions failed", err, map[string]string{
-			"tenant_id": job.TenantID.String(),
-			"tax_year":  fmt.Sprintf("%d", job.TaxYear),
+			"user_id":  job.UserID.String(),
+			"tax_year": fmt.Sprintf("%d", job.TaxYear),
 		})
 	}
 
-	buildResult, err := engine.Build(ctx, job.TenantID, job.PolicySnapshot, transactions)
+	buildResult, err := engine.Build(ctx, job.UserID, job.PolicySnapshot, transactions)
 	if err != nil {
 		return err
 	}
 	summary := summarizeResult(job, profile, buildResult)
 
-	objectKey := fmt.Sprintf("audits/%s/%s.json", job.TenantID.String(), job.ID.String())
+	objectKey := fmt.Sprintf("audits/%s/%s.json", job.UserID.String(), job.ID.String())
 	auditPayload := map[string]any{
 		"report_id":             job.ID.String(),
-		"tenant_id":             job.TenantID.String(),
+		"user_id":               job.UserID.String(),
 		"tax_year":              job.TaxYear,
 		"policy_snapshot":       job.PolicySnapshot,
 		"profile":               profile,
@@ -164,14 +164,14 @@ func (uc *TaxJobWorkerUC) processJob(ctx context.Context, job domain.TaxJob) err
 
 	if err := uc.report.RequestRender(ctx, domain.ReportRenderRequest{
 		ReportID:         job.ID,
-		TenantID:         job.TenantID,
+		UserID:           job.UserID,
 		Jurisdiction:     string(job.PolicySnapshot.Jurisdiction),
 		TaxYear:          int32(job.TaxYear),
 		DatasetObjectKey: objectKey,
 		TemplateVersion:  "",
 	}); err != nil {
 		return apperr.Internal("request report render failed", err, map[string]string{
-			"tenant_id": job.TenantID.String(),
+			"user_id":   job.UserID.String(),
 			"report_id": job.ID.String(),
 		})
 	}
@@ -297,7 +297,7 @@ func summarizeResult(job domain.TaxJob, profile domain.TaxProfile, result engine
 	taxDue := calculateTaxDue(job.PolicySnapshot.Jurisdiction, profile, taxBase)
 
 	return domain.TaxSummary{
-		TenantID:     job.TenantID,
+		UserID:       job.UserID,
 		TaxYear:      job.TaxYear,
 		TotalIncome:  totalIncome,
 		TotalExpense: totalExpense,

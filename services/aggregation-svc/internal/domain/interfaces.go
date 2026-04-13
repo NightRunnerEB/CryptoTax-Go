@@ -16,36 +16,36 @@ type AggregatedTxPage struct {
 
 type AggregationUseCase interface {
 	ProcessImport(ctx context.Context, event ImportEvent) error
-	ListTransactionsByImport(ctx context.Context, tenantID, importID uuid.UUID, limit, offset int32) (AggregatedTxPage, error)
-	ListTransactionsByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32, targetFiat string) (AggregatedTxPage, error)
+	ListTransactionsByImport(ctx context.Context, userID, importID uuid.UUID, limit, offset int32) (AggregatedTxPage, error)
+	ListTransactionsByRange(ctx context.Context, userID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32, targetFiat string) (AggregatedTxPage, error)
 }
 
-type TenantSettingsUseCase interface {
-	Get(ctx context.Context, tenantID uuid.UUID) (TenantSettings, error)
-	Upsert(ctx context.Context, settings TenantSettings) (TenantSettings, error)
+type UserSettingsUseCase interface {
+	Get(ctx context.Context, userID uuid.UUID) (UserSettings, error)
+	Upsert(ctx context.Context, settings UserSettings) (UserSettings, error)
 	ListSupportedFiatCurrencies(ctx context.Context) ([]SupportedFiatCurrency, error)
 }
 
 type AggregatedTransactionRepo interface {
 	UpsertBatch(ctx context.Context, txs []AggregatedTransaction) error
-	ListByImport(ctx context.Context, tenantID, importID uuid.UUID, limit, offset int32) (AggregatedTxPage, error)
-	ListByRange(ctx context.Context, tenantID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32) (AggregatedTxPage, error)
+	ListByImport(ctx context.Context, userID, importID uuid.UUID, limit, offset int32) (AggregatedTxPage, error)
+	ListByRange(ctx context.Context, userID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32) (AggregatedTxPage, error)
 }
 
 type ImportStateRepo interface {
-	Get(ctx context.Context, tenantID, importID uuid.UUID) (AggregationImportState, error)
+	Get(ctx context.Context, userID, importID uuid.UUID) (AggregationImportState, error)
 	UpsertProcessing(ctx context.Context, state AggregationImportState) error
-	MarkCompleted(ctx context.Context, tenantID, importID uuid.UUID) error
-	MarkFailed(ctx context.Context, tenantID, importID uuid.UUID, errMsg string) error
+	MarkCompleted(ctx context.Context, userID, importID uuid.UUID) error
+	MarkFailed(ctx context.Context, userID, importID uuid.UUID, errMsg string) error
 }
 
-type TenantSettingsRepo interface {
-	Get(ctx context.Context, tenantID uuid.UUID) (TenantSettings, error)
-	Upsert(ctx context.Context, settings TenantSettings) (TenantSettings, error)
+type UserSettingsRepo interface {
+	Get(ctx context.Context, userID uuid.UUID) (UserSettings, error)
+	Upsert(ctx context.Context, settings UserSettings) (UserSettings, error)
 }
 
 type LedgerClient interface {
-	ListTransactionsByImport(ctx context.Context, tenantID, importID uuid.UUID) ([]LedgerTransaction, error)
+	ListTransactionsByImport(ctx context.Context, userID, importID uuid.UUID) ([]LedgerTransaction, error)
 }
 
 type PriceClient interface {
@@ -57,7 +57,7 @@ type PriceClient interface {
 //   - locked=true: current worker acquired the lock and must continue processing.
 //   - locked=false: lock is already held by another worker, caller should skip processing.
 type LockManager interface {
-	AcquireImportLock(ctx context.Context, tenantID, importID uuid.UUID, ttl time.Duration) (bool, error)
-	// ReleaseImportLock releases previously acquired lock for (tenantID, importID).
-	ReleaseImportLock(ctx context.Context, tenantID, importID uuid.UUID) error
+	AcquireImportLock(ctx context.Context, userID, importID uuid.UUID, ttl time.Duration) (bool, error)
+	// ReleaseImportLock releases previously acquired lock for (userID, importID).
+	ReleaseImportLock(ctx context.Context, userID, importID uuid.UUID) error
 }

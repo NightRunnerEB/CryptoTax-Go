@@ -28,7 +28,7 @@ const bufSize = 1024 * 1024
 func startTestServer(
 	t *testing.T,
 	aggUC domain.AggregationUseCase,
-	settingsUC domain.TenantSettingsUseCase,
+	settingsUC domain.UserSettingsUseCase,
 ) (aggregationv1.AggregationClient, func()) {
 	t.Helper()
 
@@ -73,7 +73,7 @@ func TestSmoke_ListSupportedFiatCurrencies_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	settingsUC := mocks.NewMockTenantSettingsUseCase(ctrl)
+	settingsUC := mocks.NewMockUserSettingsUseCase(ctrl)
 	settingsUC.EXPECT().
 		ListSupportedFiatCurrencies(gomock.Any()).
 		Return([]domain.SupportedFiatCurrency{
@@ -84,7 +84,7 @@ func TestSmoke_ListSupportedFiatCurrencies_Success(t *testing.T) {
 	client, cleanup := startTestServer(t, nil, settingsUC)
 	defer cleanup()
 
-	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("x-tenant-id", uuid.NewString()))
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("x-user-id", uuid.NewString()))
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -100,16 +100,16 @@ func TestSmoke_ListSupportedFiatCurrencies_Success(t *testing.T) {
 	}
 }
 
-func TestSmoke_ListTransactionsByRange_SucceedsWithoutTenantHeader(t *testing.T) {
+func TestSmoke_ListTransactionsByRange_SucceedsWithoutUserHeader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	aggUC := mocks.NewMockAggregationUseCase(ctrl)
-	tenantID := uuid.New()
+	userID := uuid.New()
 	fromUTC := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	toUTC := time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)
 	aggUC.EXPECT().
-		ListTransactionsByRange(gomock.Any(), tenantID, fromUTC, toUTC, int32(0), int32(0), "").
+		ListTransactionsByRange(gomock.Any(), userID, fromUTC, toUTC, int32(0), int32(0), "").
 		Return(domain.AggregatedTxPage{}, nil)
 	client, cleanup := startTestServer(t, aggUC, nil)
 	defer cleanup()
@@ -118,9 +118,9 @@ func TestSmoke_ListTransactionsByRange_SucceedsWithoutTenantHeader(t *testing.T)
 	defer cancel()
 
 	_, err := client.ListTransactionsByRange(ctx, &aggregationv1.ListTransactionsByRangeRequest{
-		TenantId: tenantID.String(),
-		FromUtc:  timestamppb.New(fromUTC),
-		ToUtc:    timestamppb.New(toUTC),
+		UserId:  userID.String(),
+		FromUtc: timestamppb.New(fromUTC),
+		ToUtc:   timestamppb.New(toUTC),
 	})
 	if err != nil {
 		t.Fatalf("expected success, got %v", err)

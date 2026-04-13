@@ -21,7 +21,7 @@ and synchronized manually.
 ## Security model
 
 - JWT is validated at Nginx.
-- Backend services require `X-Tenant-Id` and validate tenant consistency for tenant-scoped endpoints.
+- Backend services require `X-User-Id` and validate user consistency for user-scoped endpoints.
 - Optional headers: `X-User-Id`, `X-Roles`.
 
 ## Error model

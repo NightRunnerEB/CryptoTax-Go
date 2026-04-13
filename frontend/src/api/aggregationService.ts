@@ -52,18 +52,18 @@ export interface ListTransactionsByImportResponse {
   total: number
 }
 
-export interface TenantSettings {
+export interface UserSettings {
   fiatCurrency: string
   timezone: string
 }
 
-export interface UpsertTenantSettingsBody {
+export interface UpsertUserSettingsBody {
   fiatCurrency: string
   timezone: string
 }
 
 interface SettingsResponse {
-  settings: TenantSettings
+  settings: UserSettings
 }
 
 interface ListTransactionsByImportInput {
@@ -93,7 +93,7 @@ export async function listTransactionsByImport(input: ListTransactionsByImportIn
   )
 }
 
-export async function getTenantSettings(): Promise<TenantSettings> {
+export async function getUserSettings(): Promise<UserSettings> {
   const response = await aggregationClient.request<SettingsResponse>('/settings', {
     method: 'GET',
   })
@@ -101,7 +101,7 @@ export async function getTenantSettings(): Promise<TenantSettings> {
   return response.settings
 }
 
-export async function upsertTenantSettings(body: UpsertTenantSettingsBody): Promise<TenantSettings> {
+export async function upsertUserSettings(body: UpsertUserSettingsBody): Promise<UserSettings> {
   const response = await aggregationClient.request<SettingsResponse>('/settings', {
     method: 'PUT',
     body,

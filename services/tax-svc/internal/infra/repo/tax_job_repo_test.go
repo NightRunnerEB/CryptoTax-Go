@@ -26,10 +26,10 @@ func TestTaxJobRepo_Create_Success(t *testing.T) {
 	repo := NewTaxJobRepo(store)
 
 	jobID := uuid.New()
-	tenantID := uuid.New()
+	userID := uuid.New()
 	job := domain.TaxJob{
 		ID:       jobID,
-		TenantID: tenantID,
+		UserID:   userID,
 		TaxYear:  2025,
 		Status:   domain.JobQueued,
 		Attempts: 0,
@@ -40,7 +40,7 @@ func TestTaxJobRepo_Create_Success(t *testing.T) {
 	}
 
 	store.EXPECT().CreateTaxJob(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, arg db.CreateTaxJobParams) (db.TaxJob, error) {
-		if arg.ID != jobID || arg.TenantID != tenantID {
+		if arg.ID != jobID || arg.UserID != userID {
 			t.Fatalf("unexpected create args: %+v", arg)
 		}
 		var policy domain.TaxPolicy
@@ -50,14 +50,14 @@ func TestTaxJobRepo_Create_Success(t *testing.T) {
 		if policy.Jurisdiction != domain.JurisdictionRU || policy.CostBasisMethod != domain.FIFO {
 			t.Fatalf("unexpected policy in sql args: %+v", policy)
 		}
-		return sampleTaxJobRow(jobID, tenantID), nil
+		return sampleTaxJobRow(jobID, userID), nil
 	}).Times(1)
 
 	created, err := repo.Create(context.Background(), job)
 	if err != nil {
 		t.Fatalf("Create() unexpected error: %v", err)
 	}
-	if created.ID != jobID || created.TenantID != tenantID {
+	if created.ID != jobID || created.UserID != userID {
 		t.Fatalf("unexpected created job: %+v", created)
 	}
 	if created.PolicySnapshot.Jurisdiction != domain.JurisdictionRU {
@@ -72,11 +72,11 @@ func TestTaxJobRepo_Get_NotFound(t *testing.T) {
 	store := mocks.NewMockStore(ctrl)
 	repo := NewTaxJobRepo(store)
 	jobID := uuid.New()
-	tenantID := uuid.New()
+	userID := uuid.New()
 
-	store.EXPECT().GetTaxJob(gomock.Any(), db.GetTaxJobParams{TenantID: tenantID, ID: jobID}).Return(db.TaxJob{}, pgx.ErrNoRows).Times(1)
+	store.EXPECT().GetTaxJob(gomock.Any(), db.GetTaxJobParams{UserID: userID, ID: jobID}).Return(db.TaxJob{}, pgx.ErrNoRows).Times(1)
 
-	_, err := repo.Get(context.Background(), tenantID, jobID)
+	_, err := repo.Get(context.Background(), userID, jobID)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -89,14 +89,14 @@ func TestTaxJobRepo_List_MapsRows(t *testing.T) {
 
 	store := mocks.NewMockStore(ctrl)
 	repo := NewTaxJobRepo(store)
-	tenantID := uuid.New()
+	userID := uuid.New()
 	jobID := uuid.New()
 
-	row := sampleTaxJobRow(jobID, tenantID)
-	store.EXPECT().CountTaxJobs(gomock.Any(), tenantID).Return(int64(1), nil).Times(1)
-	store.EXPECT().ListTaxJobs(gomock.Any(), db.ListTaxJobsParams{TenantID: tenantID, Limit: 20, Offset: 0}).Return([]db.TaxJob{row}, nil).Times(1)
+	row := sampleTaxJobRow(jobID, userID)
+	store.EXPECT().CountTaxJobs(gomock.Any(), userID).Return(int64(1), nil).Times(1)
+	store.EXPECT().ListTaxJobs(gomock.Any(), db.ListTaxJobsParams{UserID: userID, Limit: 20, Offset: 0}).Return([]db.TaxJob{row}, nil).Times(1)
 
-	jobs, total, err := repo.List(context.Background(), tenantID, 20, 0)
+	jobs, total, err := repo.List(context.Background(), userID, 20, 0)
 	if err != nil {
 		t.Fatalf("List() unexpected error: %v", err)
 	}
@@ -153,16 +153,16 @@ func TestTaxJobRepo_Requeue_SetsErrorAndRetryAt(t *testing.T) {
 	}
 }
 
-func sampleTaxJobRow(jobID, tenantID uuid.UUID) db.TaxJob {
+func sampleTaxJobRow(jobID, userID uuid.UUID) db.TaxJob {
 	policyJSON, _ := json.Marshal(domain.TaxPolicy{Jurisdiction: domain.JurisdictionRU, CostBasisMethod: domain.FIFO})
-	summaryJSON, _ := json.Marshal(domain.TaxSummary{TenantID: tenantID, TaxYear: 2025})
+	summaryJSON, _ := json.Marshal(domain.TaxSummary{UserID: userID, TaxYear: 2025})
 	now := time.Now().UTC()
 	errCode := "NONE"
 	errMessage := ""
-	auditKey := "audits/tenant/report.json"
+	auditKey := "audits/user/report.json"
 	return db.TaxJob{
 		ID:               jobID,
-		TenantID:         tenantID,
+		UserID:           userID,
 		TaxYear:          2025,
 		PolicySnapshot:   policyJSON,
 		Status:           string(domain.JobQueued),

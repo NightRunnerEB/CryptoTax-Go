@@ -11,41 +11,40 @@ import (
 )
 
 const (
-	headerTenantID = "x-tenant-id"
-	headerUserID   = "x-user-id"
-	headerRole     = "x-role"
+	headerUserID = "x-user-id"
+	headerRole   = "x-role"
 )
 
-func requireTenantHeader(ctx context.Context) error {
-	_, err := tenantIDFromHeader(ctx)
+func requireUserHeader(ctx context.Context) error {
+	_, err := userIDFromHeader(ctx)
 	return err
 }
 
-func tenantIDFromHeader(ctx context.Context) (uuid.UUID, error) {
+func userIDFromHeader(ctx context.Context) (uuid.UUID, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return uuid.Nil, apperr.InvalidArgument("missing headers", nil, apperr.FieldViolation{
-			Field:       "x-tenant-id",
+			Field:       "x-user-id",
 			Description: "required",
 		})
 	}
 
-	values := md.Get(headerTenantID)
+	values := md.Get(headerUserID)
 	if len(values) == 0 || strings.TrimSpace(values[0]) == "" {
-		return uuid.Nil, apperr.InvalidArgument("missing tenant header", nil, apperr.FieldViolation{
-			Field:       "x-tenant-id",
+		return uuid.Nil, apperr.InvalidArgument("missing user header", nil, apperr.FieldViolation{
+			Field:       "x-user-id",
 			Description: "required",
 		})
 	}
 
-	headerTenantID := strings.TrimSpace(values[0])
-	headerTenantUUID, err := uuid.Parse(headerTenantID)
+	headerUserID := strings.TrimSpace(values[0])
+	headerUserUUID, err := uuid.Parse(headerUserID)
 	if err != nil {
-		return uuid.Nil, apperr.InvalidArgument("invalid tenant header", err, apperr.FieldViolation{
-			Field:       "x-tenant-id",
+		return uuid.Nil, apperr.InvalidArgument("invalid user header", err, apperr.FieldViolation{
+			Field:       "x-user-id",
 			Description: "invalid uuid",
 		})
 	}
 
-	return headerTenantUUID, nil
+	return headerUserUUID, nil
 }
