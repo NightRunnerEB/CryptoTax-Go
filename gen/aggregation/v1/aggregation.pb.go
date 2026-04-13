@@ -900,13 +900,13 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"#ListSupportedFiatCurrenciesResponse\x12E\n" +
 	"\n" +
 	"currencies\x18\x01 \x03(\v2%.aggregation.v1.SupportedFiatCurrencyR\n" +
-	"currencies2\xd6\x06\n" +
-	"\vAggregation\x12\xbf\x01\n" +
-	"\x18ListTransactionsByImport\x12/.aggregation.v1.ListTransactionsByImportRequest\x1a0.aggregation.v1.ListTransactionsByImportResponse\"@\x82\xd3\xe4\x93\x02:\x128/v1/tenants/{tenant_id}/imports/{import_id}/transactions\x12\xa8\x01\n" +
-	"\x17ListTransactionsByRange\x12..aggregation.v1.ListTransactionsByRangeRequest\x1a/.aggregation.v1.ListTransactionsByRangeResponse\",\x82\xd3\xe4\x93\x02&\x12$/v1/tenants/{tenant_id}/transactions\x12\x92\x01\n" +
-	"\x11GetTenantSettings\x12(.aggregation.v1.GetTenantSettingsRequest\x1a).aggregation.v1.GetTenantSettingsResponse\"(\x82\xd3\xe4\x93\x02\"\x12 /v1/tenants/{tenant_id}/settings\x12\x9e\x01\n" +
-	"\x14UpsertTenantSettings\x12+.aggregation.v1.UpsertTenantSettingsRequest\x1a,.aggregation.v1.UpsertTenantSettingsResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\x1a /v1/tenants/{tenant_id}/settings\x12\xa3\x01\n" +
-	"\x1bListSupportedFiatCurrencies\x122.aggregation.v1.ListSupportedFiatCurrenciesRequest\x1a3.aggregation.v1.ListSupportedFiatCurrenciesResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/fiat-currenciesBFZDgithub.com/NightRunner/CryptoTax-Go/gen/aggregation/v1;aggregationv1b\x06proto3"
+	"currencies2\x8d\x06\n" +
+	"\vAggregation\x12\xa8\x01\n" +
+	"\x18ListTransactionsByImport\x12/.aggregation.v1.ListTransactionsByImportRequest\x1a0.aggregation.v1.ListTransactionsByImportResponse\")\x82\xd3\xe4\x93\x02#\x12!/imports/{import_id}/transactions\x12\xa8\x01\n" +
+	"\x17ListTransactionsByRange\x12..aggregation.v1.ListTransactionsByRangeRequest\x1a/.aggregation.v1.ListTransactionsByRangeResponse\",\x82\xd3\xe4\x93\x02&\x12$/v1/tenants/{tenant_id}/transactions\x12{\n" +
+	"\x11GetTenantSettings\x12(.aggregation.v1.GetTenantSettingsRequest\x1a).aggregation.v1.GetTenantSettingsResponse\"\x11\x82\xd3\xe4\x93\x02\v\x12\t/settings\x12\x87\x01\n" +
+	"\x14UpsertTenantSettings\x12+.aggregation.v1.UpsertTenantSettingsRequest\x1a,.aggregation.v1.UpsertTenantSettingsResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\x1a\t/settings\x12\xa0\x01\n" +
+	"\x1bListSupportedFiatCurrencies\x122.aggregation.v1.ListSupportedFiatCurrenciesRequest\x1a3.aggregation.v1.ListSupportedFiatCurrenciesResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/fiat-currenciesBFZDgithub.com/NightRunner/CryptoTax-Go/gen/aggregation/v1;aggregationv1b\x06proto3"
 
 var (
 	file_aggregation_v1_aggregation_proto_rawDescOnce sync.Once

@@ -12,7 +12,7 @@ export interface SupportedExchangesResponse {
 }
 
 export async function listSupportedExchanges(): Promise<string[]> {
-  const response = await ledgerClient.request<SupportedExchangesResponse>('/v1/exchanges/supported', {
+  const response = await ledgerClient.request<SupportedExchangesResponse>('/exchanges/supported', {
     method: 'GET',
   })
 

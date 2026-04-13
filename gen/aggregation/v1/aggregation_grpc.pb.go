@@ -34,14 +34,14 @@ const (
 // and tenant-level aggregation settings.
 type AggregationClient interface {
 	// ListTransactionsByImport returns paginated aggregated transactions
-	// for a specific tenant import.
+	// for a specific authenticated user import.
 	ListTransactionsByImport(ctx context.Context, in *ListTransactionsByImportRequest, opts ...grpc.CallOption) (*ListTransactionsByImportResponse, error)
 	// ListTransactionsByRange returns paginated aggregated transactions
 	// for a specific tenant and UTC time range [from_utc, to_utc).
 	ListTransactionsByRange(ctx context.Context, in *ListTransactionsByRangeRequest, opts ...grpc.CallOption) (*ListTransactionsByRangeResponse, error)
-	// GetTenantSettings returns aggregation settings for a tenant.
+	// GetTenantSettings returns aggregation settings for the authenticated user.
 	GetTenantSettings(ctx context.Context, in *GetTenantSettingsRequest, opts ...grpc.CallOption) (*GetTenantSettingsResponse, error)
-	// UpsertTenantSettings creates or updates aggregation settings for a tenant.
+	// UpsertTenantSettings creates or updates aggregation settings for the authenticated user.
 	UpsertTenantSettings(ctx context.Context, in *UpsertTenantSettingsRequest, opts ...grpc.CallOption) (*UpsertTenantSettingsResponse, error)
 	// ListSupportedFiatCurrencies returns fiat codes supported by valuation pipeline.
 	ListSupportedFiatCurrencies(ctx context.Context, in *ListSupportedFiatCurrenciesRequest, opts ...grpc.CallOption) (*ListSupportedFiatCurrenciesResponse, error)
@@ -113,14 +113,14 @@ func (c *aggregationClient) ListSupportedFiatCurrencies(ctx context.Context, in 
 // and tenant-level aggregation settings.
 type AggregationServer interface {
 	// ListTransactionsByImport returns paginated aggregated transactions
-	// for a specific tenant import.
+	// for a specific authenticated user import.
 	ListTransactionsByImport(context.Context, *ListTransactionsByImportRequest) (*ListTransactionsByImportResponse, error)
 	// ListTransactionsByRange returns paginated aggregated transactions
 	// for a specific tenant and UTC time range [from_utc, to_utc).
 	ListTransactionsByRange(context.Context, *ListTransactionsByRangeRequest) (*ListTransactionsByRangeResponse, error)
-	// GetTenantSettings returns aggregation settings for a tenant.
+	// GetTenantSettings returns aggregation settings for the authenticated user.
 	GetTenantSettings(context.Context, *GetTenantSettingsRequest) (*GetTenantSettingsResponse, error)
-	// UpsertTenantSettings creates or updates aggregation settings for a tenant.
+	// UpsertTenantSettings creates or updates aggregation settings for the authenticated user.
 	UpsertTenantSettings(context.Context, *UpsertTenantSettingsRequest) (*UpsertTenantSettingsResponse, error)
 	// ListSupportedFiatCurrencies returns fiat codes supported by valuation pipeline.
 	ListSupportedFiatCurrencies(context.Context, *ListSupportedFiatCurrenciesRequest) (*ListSupportedFiatCurrenciesResponse, error)

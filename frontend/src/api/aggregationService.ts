@@ -73,7 +73,7 @@ interface ListTransactionsByImportInput {
 }
 
 export async function listSupportedFiatCurrencies(): Promise<SupportedFiatCurrency[]> {
-  const response = await aggregationClient.request<ListSupportedFiatCurrenciesResponse>('/v1/fiat-currencies', {
+  const response = await aggregationClient.request<ListSupportedFiatCurrenciesResponse>('/fiat-currencies', {
     method: 'GET',
   })
 
@@ -82,7 +82,7 @@ export async function listSupportedFiatCurrencies(): Promise<SupportedFiatCurren
 
 export async function listTransactionsByImport(input: ListTransactionsByImportInput): Promise<ListTransactionsByImportResponse> {
   return aggregationClient.request<ListTransactionsByImportResponse>(
-    `/v1/imports/${input.importId}/transactions`,
+    `/imports/${input.importId}/transactions`,
     {
       method: 'GET',
       query: {
@@ -94,7 +94,7 @@ export async function listTransactionsByImport(input: ListTransactionsByImportIn
 }
 
 export async function getTenantSettings(): Promise<TenantSettings> {
-  const response = await aggregationClient.request<SettingsResponse>('/v1/settings', {
+  const response = await aggregationClient.request<SettingsResponse>('/settings', {
     method: 'GET',
   })
 
@@ -102,7 +102,7 @@ export async function getTenantSettings(): Promise<TenantSettings> {
 }
 
 export async function upsertTenantSettings(body: UpsertTenantSettingsBody): Promise<TenantSettings> {
-  const response = await aggregationClient.request<SettingsResponse>('/v1/settings', {
+  const response = await aggregationClient.request<SettingsResponse>('/settings', {
     method: 'PUT',
     body,
   })

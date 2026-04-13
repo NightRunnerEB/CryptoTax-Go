@@ -85,7 +85,7 @@ interface ListReportsInput {
 }
 
 export async function getTaxProfile(): Promise<TaxProfile> {
-  const response = await taxClient.request<TaxProfileResponse>('/v1/tax/profile', {
+  const response = await taxClient.request<TaxProfileResponse>('/tax/profile', {
     method: 'GET',
   })
 
@@ -93,7 +93,7 @@ export async function getTaxProfile(): Promise<TaxProfile> {
 }
 
 export async function upsertTaxProfile(profile: TaxProfileInput): Promise<TaxProfile> {
-  const response = await taxClient.request<TaxProfileResponse>('/v1/tax/profile', {
+  const response = await taxClient.request<TaxProfileResponse>('/tax/profile', {
     method: 'PUT',
     body: profile,
   })
@@ -102,14 +102,14 @@ export async function upsertTaxProfile(profile: TaxProfileInput): Promise<TaxPro
 }
 
 export async function startTaxReport(params: StartReportParams): Promise<StartReportResponse> {
-  return taxClient.request<StartReportResponse>('/v1/tax/reports:start', {
+  return taxClient.request<StartReportResponse>('/tax/reports:start', {
     method: 'POST',
     body: params,
   })
 }
 
 export async function listTaxReports(input: ListReportsInput): Promise<ListReportsResponse> {
-  return taxClient.request<ListReportsResponse>('/v1/tax/reports', {
+  return taxClient.request<ListReportsResponse>('/tax/reports', {
     method: 'GET',
     query: {
       limit: input.limit,
@@ -119,7 +119,7 @@ export async function listTaxReports(input: ListReportsInput): Promise<ListRepor
 }
 
 export async function getTaxReportStatus(reportId: string): Promise<TaxJob> {
-  const response = await taxClient.request<GetReportStatusResponse>(`/v1/tax/reports/${reportId}`, {
+  const response = await taxClient.request<GetReportStatusResponse>(`/tax/reports/${reportId}`, {
     method: 'GET',
   })
 

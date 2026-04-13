@@ -16,7 +16,7 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/mocks"
 )
 
-func TestTaxServer_UpsertTaxProfile_TenantMismatch(t *testing.T) {
+func TestTaxServer_UpsertTaxProfile_MissingTenantHeader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -26,7 +26,6 @@ func TestTaxServer_UpsertTaxProfile_TenantMismatch(t *testing.T) {
 	)
 
 	req := &taxv1.UpsertTaxProfileRequest{
-		TenantId: uuid.New().String(),
 		Profile: &taxv1.TaxProfileInput{
 			Inn:                "123456789012",
 			LastName:           "Petrov",
@@ -36,7 +35,7 @@ func TestTaxServer_UpsertTaxProfile_TenantMismatch(t *testing.T) {
 			TaxpayerType:       "INDIVIDUAL",
 		},
 	}
-	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerTenantID, uuid.New().String()))
+	ctx := context.Background()
 
 	_, err := srv.UpsertTaxProfile(ctx, req)
 	if err == nil {
@@ -53,6 +52,7 @@ func TestTaxServer_UpsertTaxProfile_Success(t *testing.T) {
 	profileUC := mocks.NewMockTaxProfileUseCase(ctrl)
 	jobUC := mocks.NewMockTaxJobUseCase(ctrl)
 	srv := NewTaxServer(profileUC, jobUC)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerTenantID, tenantID.String()))
 
 	profileUC.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, got domain.TaxProfile) error {
 		if got.TenantID != tenantID {
@@ -80,8 +80,7 @@ func TestTaxServer_UpsertTaxProfile_Success(t *testing.T) {
 		TaxPayerType:       domain.INDIVIDUAL,
 	}, nil).Times(1)
 
-	resp, err := srv.UpsertTaxProfile(context.Background(), &taxv1.UpsertTaxProfileRequest{
-		TenantId: tenantID.String(),
+	resp, err := srv.UpsertTaxProfile(ctx, &taxv1.UpsertTaxProfileRequest{
 		Profile: &taxv1.TaxProfileInput{
 			Inn:                "123456789012",
 			LastName:           "Petrov",
@@ -132,6 +131,7 @@ func TestTaxServer_StartReport_Success(t *testing.T) {
 	jobID := uuid.New()
 	jobUC := mocks.NewMockTaxJobUseCase(ctrl)
 	srv := NewTaxServer(mocks.NewMockTaxProfileUseCase(ctrl), jobUC)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerTenantID, tenantID.String()))
 
 	jobUC.EXPECT().Enqueue(gomock.Any(), tenantID, 2025, domain.TaxPolicy{
 		TreatCryptoCryptoAsDisposal: true,
@@ -142,8 +142,7 @@ func TestTaxServer_StartReport_Success(t *testing.T) {
 		Status: domain.JobQueued,
 	}, nil).Times(1)
 
-	resp, err := srv.StartReport(context.Background(), &taxv1.StartReportRequest{
-		TenantId: tenantID.String(),
+	resp, err := srv.StartReport(ctx, &taxv1.StartReportRequest{
 		Params: &taxv1.StartReportParams{
 			TaxYear: 2025,
 			TaxPolicy: &taxv1.TaxPolicy{
@@ -176,6 +175,7 @@ func TestTaxServer_GetReportStatus_Success(t *testing.T) {
 
 	jobUC := mocks.NewMockTaxJobUseCase(ctrl)
 	srv := NewTaxServer(mocks.NewMockTaxProfileUseCase(ctrl), jobUC)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerTenantID, tenantID.String()))
 
 	jobUC.EXPECT().GetStatus(gomock.Any(), tenantID, jobID).Return(domain.TaxJob{
 		ID:             jobID,
@@ -189,8 +189,7 @@ func TestTaxServer_GetReportStatus_Success(t *testing.T) {
 		AuditZipURL:    &auditURL,
 	}, nil).Times(1)
 
-	resp, err := srv.GetReportStatus(context.Background(), &taxv1.GetReportStatusRequest{
-		TenantId: tenantID.String(),
+	resp, err := srv.GetReportStatus(ctx, &taxv1.GetReportStatusRequest{
 		ReportId: jobID.String(),
 	})
 	if err != nil {
@@ -204,7 +203,7 @@ func TestTaxServer_GetReportStatus_Success(t *testing.T) {
 	}
 }
 
-func TestTaxServer_ListReports_InvalidTenantID(t *testing.T) {
+func TestTaxServer_ListReports_MissingTenantHeader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -213,7 +212,7 @@ func TestTaxServer_ListReports_InvalidTenantID(t *testing.T) {
 		mocks.NewMockTaxJobUseCase(ctrl),
 	)
 
-	_, err := srv.ListReports(context.Background(), &taxv1.ListReportsRequest{TenantId: "bad-uuid"})
+	_, err := srv.ListReports(context.Background(), &taxv1.ListReportsRequest{})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

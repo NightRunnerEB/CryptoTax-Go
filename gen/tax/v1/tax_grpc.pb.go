@@ -32,15 +32,15 @@ const (
 //
 // Tax provides tax profile management and asynchronous tax job APIs.
 type TaxClient interface {
-	// GetTaxProfile returns the tax profile for tenant.
+	// GetTaxProfile returns the tax profile for the authenticated user.
 	GetTaxProfile(ctx context.Context, in *GetTaxProfileRequest, opts ...grpc.CallOption) (*GetTaxProfileResponse, error)
-	// UpsertTaxProfile creates or updates tenant tax profile.
+	// UpsertTaxProfile creates or updates the authenticated user's tax profile.
 	UpsertTaxProfile(ctx context.Context, in *UpsertTaxProfileRequest, opts ...grpc.CallOption) (*UpsertTaxProfileResponse, error)
 	// StartReport enqueues a tax calculation job.
 	StartReport(ctx context.Context, in *StartReportRequest, opts ...grpc.CallOption) (*StartReportResponse, error)
 	// GetReportStatus returns one tax job by report_id.
 	GetReportStatus(ctx context.Context, in *GetReportStatusRequest, opts ...grpc.CallOption) (*GetReportStatusResponse, error)
-	// ListReports returns paginated tax jobs for tenant.
+	// ListReports returns paginated tax jobs for the authenticated user.
 	ListReports(ctx context.Context, in *ListReportsRequest, opts ...grpc.CallOption) (*ListReportsResponse, error)
 }
 
@@ -108,15 +108,15 @@ func (c *taxClient) ListReports(ctx context.Context, in *ListReportsRequest, opt
 //
 // Tax provides tax profile management and asynchronous tax job APIs.
 type TaxServer interface {
-	// GetTaxProfile returns the tax profile for tenant.
+	// GetTaxProfile returns the tax profile for the authenticated user.
 	GetTaxProfile(context.Context, *GetTaxProfileRequest) (*GetTaxProfileResponse, error)
-	// UpsertTaxProfile creates or updates tenant tax profile.
+	// UpsertTaxProfile creates or updates the authenticated user's tax profile.
 	UpsertTaxProfile(context.Context, *UpsertTaxProfileRequest) (*UpsertTaxProfileResponse, error)
 	// StartReport enqueues a tax calculation job.
 	StartReport(context.Context, *StartReportRequest) (*StartReportResponse, error)
 	// GetReportStatus returns one tax job by report_id.
 	GetReportStatus(context.Context, *GetReportStatusRequest) (*GetReportStatusResponse, error)
-	// ListReports returns paginated tax jobs for tenant.
+	// ListReports returns paginated tax jobs for the authenticated user.
 	ListReports(context.Context, *ListReportsRequest) (*ListReportsResponse, error)
 	mustEmbedUnimplementedTaxServer()
 }

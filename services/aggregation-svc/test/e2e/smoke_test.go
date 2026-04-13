@@ -11,10 +11,8 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -102,11 +100,17 @@ func TestSmoke_ListSupportedFiatCurrencies_Success(t *testing.T) {
 	}
 }
 
-func TestSmoke_ListTransactionsByRange_MissingTenantHeader(t *testing.T) {
+func TestSmoke_ListTransactionsByRange_SucceedsWithoutTenantHeader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	aggUC := mocks.NewMockAggregationUseCase(ctrl)
+	tenantID := uuid.New()
+	fromUTC := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	toUTC := time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)
+	aggUC.EXPECT().
+		ListTransactionsByRange(gomock.Any(), tenantID, fromUTC, toUTC, int32(0), int32(0), "").
+		Return(domain.AggregatedTxPage{}, nil)
 	client, cleanup := startTestServer(t, aggUC, nil)
 	defer cleanup()
 
@@ -114,18 +118,11 @@ func TestSmoke_ListTransactionsByRange_MissingTenantHeader(t *testing.T) {
 	defer cancel()
 
 	_, err := client.ListTransactionsByRange(ctx, &aggregationv1.ListTransactionsByRangeRequest{
-		TenantId: uuid.NewString(),
-		FromUtc:  timestamppb.New(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)),
-		ToUtc:    timestamppb.New(time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)),
+		TenantId: tenantID.String(),
+		FromUtc:  timestamppb.New(fromUTC),
+		ToUtc:    timestamppb.New(toUTC),
 	})
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	st, ok := status.FromError(err)
-	if !ok {
-		t.Fatalf("expected grpc status, got %T", err)
-	}
-	if st.Code() != codes.InvalidArgument {
-		t.Fatalf("expected InvalidArgument, got %s", st.Code())
+	if err != nil {
+		t.Fatalf("expected success, got %v", err)
 	}
 }

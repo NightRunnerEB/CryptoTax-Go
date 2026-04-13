@@ -33,14 +33,8 @@ func (s *TaxServer) GetTaxProfile(ctx context.Context, req *taxv1.GetTaxProfileR
 		})
 	}
 
-	tenantID, err := parseUUID(req.GetTenantId())
+	tenantID, err := tenantIDFromHeader(ctx)
 	if err != nil {
-		return nil, apperr.InvalidArgument("invalid tenant_id", err, apperr.FieldViolation{
-			Field:       "tenant_id",
-			Description: "invalid uuid",
-		})
-	}
-	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
 		return nil, err
 	}
 
@@ -62,14 +56,8 @@ func (s *TaxServer) UpsertTaxProfile(ctx context.Context, req *taxv1.UpsertTaxPr
 		})
 	}
 
-	tenantID, err := parseUUID(req.GetTenantId())
+	tenantID, err := tenantIDFromHeader(ctx)
 	if err != nil {
-		return nil, apperr.InvalidArgument("invalid tenant_id", err, apperr.FieldViolation{
-			Field:       "tenant_id",
-			Description: "invalid uuid",
-		})
-	}
-	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
 		return nil, err
 	}
 	if req.GetProfile() == nil {
@@ -116,14 +104,8 @@ func (s *TaxServer) StartReport(ctx context.Context, req *taxv1.StartReportReque
 		})
 	}
 
-	tenantID, err := parseUUID(req.GetTenantId())
+	tenantID, err := tenantIDFromHeader(ctx)
 	if err != nil {
-		return nil, apperr.InvalidArgument("invalid tenant_id", err, apperr.FieldViolation{
-			Field:       "tenant_id",
-			Description: "invalid uuid",
-		})
-	}
-	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
 		return nil, err
 	}
 	if req.GetParams() == nil {
@@ -184,14 +166,8 @@ func (s *TaxServer) GetReportStatus(ctx context.Context, req *taxv1.GetReportSta
 		})
 	}
 
-	tenantID, err := parseUUID(req.GetTenantId())
+	tenantID, err := tenantIDFromHeader(ctx)
 	if err != nil {
-		return nil, apperr.InvalidArgument("invalid tenant_id", err, apperr.FieldViolation{
-			Field:       "tenant_id",
-			Description: "invalid uuid",
-		})
-	}
-	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
 		return nil, err
 	}
 
@@ -221,14 +197,8 @@ func (s *TaxServer) ListReports(ctx context.Context, req *taxv1.ListReportsReque
 		})
 	}
 
-	tenantID, err := parseUUID(req.GetTenantId())
+	tenantID, err := tenantIDFromHeader(ctx)
 	if err != nil {
-		return nil, apperr.InvalidArgument("invalid tenant_id", err, apperr.FieldViolation{
-			Field:       "tenant_id",
-			Description: "invalid uuid",
-		})
-	}
-	if err := requireTenantMatchIfPresent(ctx, tenantID); err != nil {
 		return nil, err
 	}
 
