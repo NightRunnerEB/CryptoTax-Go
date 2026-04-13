@@ -164,7 +164,6 @@ func (s *KZTSource) Update(ctx context.Context) error {
 				haveCarry = true
 				gotReal = true
 				isReal = true
-				source = kztSourceNBRK
 
 				patch[key] = usdRate
 				if err := s.repo.Upsert(ctx, domain.FXRate{

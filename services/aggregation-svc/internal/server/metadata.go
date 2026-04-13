@@ -49,18 +49,3 @@ func tenantIDFromHeader(ctx context.Context) (uuid.UUID, error) {
 
 	return headerTenantUUID, nil
 }
-
-func requireTenantHeaderMatch(ctx context.Context, tenantID uuid.UUID) error {
-	headerTenantUUID, err := tenantIDFromHeader(ctx)
-	if err != nil {
-		return err
-	}
-	if headerTenantUUID != tenantID {
-		return apperr.InvalidArgument("tenant mismatch", nil, apperr.FieldViolation{
-			Field:       "tenant_id",
-			Description: "must match x-tenant-id header",
-		})
-	}
-
-	return nil
-}
