@@ -1165,13 +1165,13 @@ const file_tax_v1_tax_proto_rawDesc = "" +
 	"\x06offset\x18\x03 \x01(\x05R\x06offset\"O\n" +
 	"\x13ListReportsResponse\x12\"\n" +
 	"\x04jobs\x18\x01 \x03(\v2\x0e.tax.v1.TaxJobR\x04jobs\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total2\x95\x05\n" +
-	"\x03Tax\x12y\n" +
-	"\rGetTaxProfile\x12\x1c.tax.v1.GetTaxProfileRequest\x1a\x1d.tax.v1.GetTaxProfileResponse\"+\x82\xd3\xe4\x93\x02%\x12#/v1/tenants/{tenant_id}/tax/profile\x12\x8b\x01\n" +
-	"\x10UpsertTaxProfile\x12\x1f.tax.v1.UpsertTaxProfileRequest\x1a .tax.v1.UpsertTaxProfileResponse\"4\x82\xd3\xe4\x93\x02.:\aprofile\x1a#/v1/tenants/{tenant_id}/tax/profile\x12\x81\x01\n" +
-	"\vStartReport\x12\x1a.tax.v1.StartReportRequest\x1a\x1b.tax.v1.StartReportResponse\"9\x82\xd3\xe4\x93\x023:\x06params\")/v1/tenants/{tenant_id}/tax/reports:start\x12\x8b\x01\n" +
-	"\x0fGetReportStatus\x12\x1e.tax.v1.GetReportStatusRequest\x1a\x1f.tax.v1.GetReportStatusResponse\"7\x82\xd3\xe4\x93\x021\x12//v1/tenants/{tenant_id}/tax/reports/{report_id}\x12s\n" +
-	"\vListReports\x12\x1a.tax.v1.ListReportsRequest\x1a\x1b.tax.v1.ListReportsResponse\"+\x82\xd3\xe4\x93\x02%\x12#/v1/tenants/{tenant_id}/tax/reportsB6Z4github.com/NightRunner/CryptoTax-Go/gen/tax/v1;taxv1b\x06proto3"
+	"\x05total\x18\x02 \x01(\x03R\x05total2\x9f\x04\n" +
+	"\x03Tax\x12b\n" +
+	"\rGetTaxProfile\x12\x1c.tax.v1.GetTaxProfileRequest\x1a\x1d.tax.v1.GetTaxProfileResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/tax/profile\x12t\n" +
+	"\x10UpsertTaxProfile\x12\x1f.tax.v1.UpsertTaxProfileRequest\x1a .tax.v1.UpsertTaxProfileResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\aprofile\x1a\f/tax/profile\x12j\n" +
+	"\vStartReport\x12\x1a.tax.v1.StartReportRequest\x1a\x1b.tax.v1.StartReportResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x06params\"\x12/tax/reports:start\x12t\n" +
+	"\x0fGetReportStatus\x12\x1e.tax.v1.GetReportStatusRequest\x1a\x1f.tax.v1.GetReportStatusResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/tax/reports/{report_id}\x12\\\n" +
+	"\vListReports\x12\x1a.tax.v1.ListReportsRequest\x1a\x1b.tax.v1.ListReportsResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/tax/reportsB6Z4github.com/NightRunner/CryptoTax-Go/gen/tax/v1;taxv1b\x06proto3"
 
 var (
 	file_tax_v1_tax_proto_rawDescOnce sync.Once

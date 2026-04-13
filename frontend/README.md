@@ -46,16 +46,16 @@ The UI depends on these services and contracts:
   - `/auth/refresh`
   - `/auth/logout`
 - `ledger-svc`
-  - `/v1/exchanges/supported`
+  - `/exchanges/supported`
   - `/mexc/csv`
 - `aggregation-svc` (via frontend gateway)
-  - `/v1/fiat-currencies`
-  - `/v1/tenants/{tenant_id}/imports/{import_id}/transactions`
-  - `/v1/tenants/{tenant_id}/settings`
+  - `/fiat-currencies`
+  - `/imports/{import_id}/transactions`
+  - `/settings`
 - `tax-svc` (via frontend gateway)
-  - `/v1/tenants/{tenant_id}/tax/profile`
-  - `/v1/tenants/{tenant_id}/tax/reports:start`
-  - `/v1/tenants/{tenant_id}/tax/reports`
-  - `/v1/tenants/{tenant_id}/tax/reports/{report_id}`
+  - `/tax/profile`
+  - `/tax/reports:start`
+  - `/tax/reports`
+  - `/tax/reports/{report_id}`
 
 Source of truth for frontend contracts: `docs/api/frontend.openapi.yaml`.

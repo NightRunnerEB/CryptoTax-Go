@@ -40,8 +40,8 @@ spec:
         - operation:
             paths:
               - /mexc/csv
-              - /v1/exchanges/supported
-              - /v1/fiat-currencies
-              - /v1/settings
-              - /v1/imports/*
-              - /v1/tax/*
+              - /exchanges/supported
+              - /fiat-currencies
+              - /settings
+              - /imports/*
+              - /tax/*

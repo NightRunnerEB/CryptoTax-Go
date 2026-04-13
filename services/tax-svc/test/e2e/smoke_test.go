@@ -116,7 +116,7 @@ func TestSmoke_StartReport_Success(t *testing.T) {
 	}
 }
 
-func TestSmoke_StartReport_TenantHeaderMismatch(t *testing.T) {
+func TestSmoke_StartReport_MissingTenantHeader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -128,10 +128,8 @@ func TestSmoke_StartReport_TenantHeaderMismatch(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	ctx = metadata.AppendToOutgoingContext(ctx, "x-tenant-id", uuid.New().String())
 
 	_, err := client.StartReport(ctx, &taxv1.StartReportRequest{
-		TenantId: uuid.New().String(),
 		Params: &taxv1.StartReportParams{
 			TaxYear: 2025,
 			TaxPolicy: &taxv1.TaxPolicy{

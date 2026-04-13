@@ -52,13 +52,13 @@ Protected routes must carry a valid bearer token. Example:
 TOKEN="<access-token>"
 
 curl -H "Authorization: Bearer $TOKEN" \
-  http://127.0.0.1:8080/v1/exchanges/supported
+  http://127.0.0.1:8080/exchanges/supported
 
 curl -H "Authorization: Bearer $TOKEN" \
-  http://127.0.0.1:8080/v1/fiat-currencies
+  http://127.0.0.1:8080/fiat-currencies
 
 curl -H "Authorization: Bearer $TOKEN" \
-  http://127.0.0.1:8080/v1/tax/profile
+  http://127.0.0.1:8080/tax/profile
 ```
 
 Runtime behavior:

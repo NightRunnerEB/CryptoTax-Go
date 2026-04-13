@@ -58,7 +58,7 @@ func setupRESTGateway(t *testing.T, profileUC domain.TaxProfileUseCase, jobUC do
 	mux := runtime.NewServeMux(
 		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
 			switch strings.ToLower(key) {
-			case "x-tenant-id", "x-user-id", "x-roles", "x-request-id", "authorization":
+			case "x-tenant-id", "x-user-id", "x-role", "x-request-id", "authorization":
 				return key, true
 			default:
 				return runtime.DefaultHeaderMatcher(key)
@@ -113,7 +113,7 @@ func TestRESTSmoke_StartReport_Success(t *testing.T) {
 	}
 	raw, _ := json.Marshal(body)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/tenants/"+tenantID.String()+"/tax/reports:start", bytes.NewReader(raw))
+	req := httptest.NewRequest(http.MethodPost, "/tax/reports:start", bytes.NewReader(raw))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Tenant-Id", tenantID.String())
 
@@ -139,7 +139,7 @@ func TestRESTSmoke_StartReport_Success(t *testing.T) {
 	}
 }
 
-func TestRESTSmoke_StartReport_TenantMismatch(t *testing.T) {
+func TestRESTSmoke_StartReport_MissingTenantHeader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -149,8 +149,6 @@ func TestRESTSmoke_StartReport_TenantMismatch(t *testing.T) {
 	handler, cleanup := setupRESTGateway(t, profileUC, jobUC)
 	defer cleanup()
 
-	pathTenantID := uuid.New()
-	headerTenantID := uuid.New()
 	body := map[string]any{
 		"taxYear": 2025,
 		"taxPolicy": map[string]any{
@@ -160,9 +158,8 @@ func TestRESTSmoke_StartReport_TenantMismatch(t *testing.T) {
 	}
 	raw, _ := json.Marshal(body)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/tenants/"+pathTenantID.String()+"/tax/reports:start", bytes.NewReader(raw))
+	req := httptest.NewRequest(http.MethodPost, "/tax/reports:start", bytes.NewReader(raw))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-Id", headerTenantID.String())
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -175,7 +172,7 @@ func TestRESTSmoke_StartReport_TenantMismatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read response body failed: %v", err)
 	}
-	if !strings.Contains(string(payload), "tenant mismatch") {
-		t.Fatalf("expected tenant mismatch in body, got: %s", string(payload))
+	if !strings.Contains(string(payload), "missing tenant header") {
+		t.Fatalf("expected missing tenant header in body, got: %s", string(payload))
 	}
 }

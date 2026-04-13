@@ -9,17 +9,17 @@ import "google/protobuf/timestamp.proto";
 
 // Tax provides tax profile management and asynchronous tax job APIs.
 service Tax {
-  // GetTaxProfile returns the tax profile for tenant.
+  // GetTaxProfile returns the tax profile for the authenticated user.
   rpc GetTaxProfile(GetTaxProfileRequest) returns (GetTaxProfileResponse) {
     option (google.api.http) = {
-      get: "/v1/tenants/{tenant_id}/tax/profile"
+      get: "/tax/profile"
     };
   }
 
-  // UpsertTaxProfile creates or updates tenant tax profile.
+  // UpsertTaxProfile creates or updates the authenticated user's tax profile.
   rpc UpsertTaxProfile(UpsertTaxProfileRequest) returns (UpsertTaxProfileResponse) {
     option (google.api.http) = {
-      put: "/v1/tenants/{tenant_id}/tax/profile"
+      put: "/tax/profile"
       body: "profile"
     };
   }
@@ -27,7 +27,7 @@ service Tax {
   // StartReport enqueues a tax calculation job.
   rpc StartReport(StartReportRequest) returns (StartReportResponse) {
     option (google.api.http) = {
-      post: "/v1/tenants/{tenant_id}/tax/reports:start"
+      post: "/tax/reports:start"
       body: "params"
     };
   }
@@ -35,14 +35,14 @@ service Tax {
   // GetReportStatus returns one tax job by report_id.
   rpc GetReportStatus(GetReportStatusRequest) returns (GetReportStatusResponse) {
     option (google.api.http) = {
-      get: "/v1/tenants/{tenant_id}/tax/reports/{report_id}"
+      get: "/tax/reports/{report_id}"
     };
   }
 
-  // ListReports returns paginated tax jobs for tenant.
+  // ListReports returns paginated tax jobs for the authenticated user.
   rpc ListReports(ListReportsRequest) returns (ListReportsResponse) {
     option (google.api.http) = {
-      get: "/v1/tenants/{tenant_id}/tax/reports"
+      get: "/tax/reports"
     };
   }
 }

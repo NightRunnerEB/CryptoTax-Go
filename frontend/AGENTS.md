@@ -20,9 +20,9 @@ This is a desktop-first product demo, not a production web app.
 
 ## Confirmed frontend endpoints
 - Auth (`auth-svc`): `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/verify`
-- Ledger (`ledger-svc`): `/v1/exchanges/supported`, `/mexc/csv`
-- Aggregation (`aggregation-svc`): `/v1/fiat-currencies`, `/v1/tenants/{tenant_id}/imports/{import_id}/transactions`, `/v1/tenants/{tenant_id}/settings` (GET/PUT)
-- Tax (`tax-svc`): `/v1/tenants/{tenant_id}/tax/profile` (GET/PUT), `/v1/tenants/{tenant_id}/tax/reports:start`, `/v1/tenants/{tenant_id}/tax/reports`, `/v1/tenants/{tenant_id}/tax/reports/{report_id}`
+- Ledger (`ledger-svc`): `/exchanges/supported`, `/mexc/csv`
+- Aggregation (`aggregation-svc`): `/fiat-currencies`, `/imports/{import_id}/transactions`, `/settings` (GET/PUT)
+- Tax (`tax-svc`): `/tax/profile` (GET/PUT), `/tax/reports:start`, `/tax/reports`, `/tax/reports/{report_id}`
 
 ## Known contract gaps (do not hide these)
 - No current-user endpoint (`/auth/me`-style route is absent).
@@ -33,7 +33,7 @@ This is a desktop-first product demo, not a production web app.
 - Do not invent endpoints or DTO fields.
 - Use typed API clients per service/domain (`auth`, `ledger`, `aggregation`, `tax`).
 - Send `Authorization: Bearer <access_token>` where required.
-- Pass `tenant_id` only in path/query/body where the API contract requires it; do not trust frontend-supplied identity headers.
+- Do not send client-controlled identity headers or `tenant_id` path parameters for user-facing routes; tenant context is resolved on the backend.
 - Handle and render both error formats:
   - grpc-gateway: `{ code, message, details[] }`
   - rust services: `{ code, message }` or `{ error }`

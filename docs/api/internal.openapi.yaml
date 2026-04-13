@@ -37,9 +37,6 @@ paths:
         - $ref: '#/components/parameters/PaginationLimit'
         - $ref: '#/components/parameters/PaginationOffset'
         - $ref: '#/components/parameters/TargetFiat'
-        - $ref: '#/components/parameters/XTenantId'
-        - $ref: '#/components/parameters/XUserId'
-        - $ref: '#/components/parameters/XRoles'
       responses:
         '200':
           description: Paginated transactions in range
@@ -85,6 +82,26 @@ paths:
           $ref: '#/components/responses/LedgerInternal'
         '503':
           $ref: '#/components/responses/LedgerUnavailable'
+
+  /exchanges/supported:
+    get:
+      tags: [LedgerInternal]
+      operationId: internalLedgerListSupportedExchanges
+      summary: List supported exchanges
+      servers:
+        - url: http://ledger-svc:8086
+          description: In-cluster ledger-svc
+        - url: http://localhost:8086
+          description: Local ledger-svc
+      responses:
+        '200':
+          description: Supported exchange IDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportedExchangesResponse'
+        '500':
+          $ref: '#/components/responses/LedgerInternal'
 
   /auth/register:
     post:
@@ -492,6 +509,16 @@ components:
         message:
           type: string
       required: [code, message]
+    SupportedExchangesResponse:
+      type: object
+      properties:
+        exchanges:
+          type: array
+          items:
+            type: string
+          description: Sorted lowercase exchange identifiers from ledger registry.
+          example: [mexc, okx]
+      required: [exchanges]
     AuthErrorResponse:
       type: object
       properties:

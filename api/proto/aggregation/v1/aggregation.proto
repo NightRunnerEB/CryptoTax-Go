@@ -12,11 +12,11 @@ import "google/protobuf/timestamp.proto";
 // and tenant-level aggregation settings.
 service Aggregation {
   // ListTransactionsByImport returns paginated aggregated transactions
-  // for a specific tenant import.
+  // for a specific authenticated user import.
   rpc ListTransactionsByImport(ListTransactionsByImportRequest)
   returns (ListTransactionsByImportResponse) {
     option (google.api.http) = {
-      get: "/v1/tenants/{tenant_id}/imports/{import_id}/transactions"
+      get: "/imports/{import_id}/transactions"
     };
   }
 
@@ -29,19 +29,19 @@ service Aggregation {
     };
   }
 
-  // GetTenantSettings returns aggregation settings for a tenant.
+  // GetTenantSettings returns aggregation settings for the authenticated user.
   rpc GetTenantSettings(GetTenantSettingsRequest)
   returns (GetTenantSettingsResponse) {
     option (google.api.http) = {
-      get: "/v1/tenants/{tenant_id}/settings"
+      get: "/settings"
     };
   }
 
-  // UpsertTenantSettings creates or updates aggregation settings for a tenant.
+  // UpsertTenantSettings creates or updates aggregation settings for the authenticated user.
   rpc UpsertTenantSettings(UpsertTenantSettingsRequest)
   returns (UpsertTenantSettingsResponse) {
     option (google.api.http) = {
-      put: "/v1/tenants/{tenant_id}/settings"
+      put: "/settings"
       body: "*"
     };
   }
@@ -50,7 +50,7 @@ service Aggregation {
   rpc ListSupportedFiatCurrencies(ListSupportedFiatCurrenciesRequest)
   returns (ListSupportedFiatCurrenciesResponse) {
     option (google.api.http) = {
-      get: "/v1/fiat-currencies"
+      get: "/fiat-currencies"
     };
   }
 }

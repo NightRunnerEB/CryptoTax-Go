@@ -37,20 +37,8 @@ func (s *AggregationServer) ListTransactionsByImport(ctx context.Context, req *a
 			apperr.FieldViolation{Field: "request", Description: "required"},
 		)
 	}
-	if err := requireTenantHeader(ctx); err != nil {
-		return nil, err
-	}
-
-	tenantID, err := parseUUID(req.TenantId)
+	tenantID, err := tenantIDFromHeader(ctx)
 	if err != nil {
-		log.Warn("ListTransactionsByImport: invalid tenant ID", zap.Error(err))
-		return nil, apperr.InvalidArgument(
-			"invalid tenant id",
-			err,
-			apperr.FieldViolation{Field: "tenant_id", Description: "invalid format"},
-		)
-	}
-	if err := requireTenantHeaderMatch(ctx, tenantID); err != nil {
 		return nil, err
 	}
 	importID, err := parseUUID(req.ImportId)
@@ -145,10 +133,6 @@ func (s *AggregationServer) ListTransactionsByRange(ctx context.Context, req *ag
 			apperr.FieldViolation{Field: "request", Description: "required"},
 		)
 	}
-	if err := requireTenantHeader(ctx); err != nil {
-		return nil, err
-	}
-
 	tenantID, err := parseUUID(req.TenantId)
 	if err != nil {
 		log.Warn("ListTransactionsByRange: invalid tenant ID", zap.Error(err))
@@ -157,9 +141,6 @@ func (s *AggregationServer) ListTransactionsByRange(ctx context.Context, req *ag
 			err,
 			apperr.FieldViolation{Field: "tenant_id", Description: "invalid format"},
 		)
-	}
-	if err := requireTenantHeaderMatch(ctx, tenantID); err != nil {
-		return nil, err
 	}
 	if req.GetFromUtc() == nil || req.GetToUtc() == nil {
 		return nil, apperr.InvalidArgument(
@@ -259,20 +240,8 @@ func (s *AggregationServer) GetTenantSettings(ctx context.Context, req *aggregat
 			apperr.FieldViolation{Field: "request", Description: "required"},
 		)
 	}
-	if err := requireTenantHeader(ctx); err != nil {
-		return nil, err
-	}
-
-	tenantID, err := parseUUID(req.TenantId)
+	tenantID, err := tenantIDFromHeader(ctx)
 	if err != nil {
-		log.Warn("GetTenantSettings: invalid tenant ID", zap.Error(err))
-		return nil, apperr.InvalidArgument(
-			"invalid tenant id",
-			err,
-			apperr.FieldViolation{Field: "tenant_id", Description: "invalid format"},
-		)
-	}
-	if err := requireTenantHeaderMatch(ctx, tenantID); err != nil {
 		return nil, err
 	}
 
@@ -302,20 +271,8 @@ func (s *AggregationServer) UpsertTenantSettings(ctx context.Context, req *aggre
 			apperr.FieldViolation{Field: "request", Description: "required"},
 		)
 	}
-	if err := requireTenantHeader(ctx); err != nil {
-		return nil, err
-	}
-
-	tenantID, err := parseUUID(req.TenantId)
+	tenantID, err := tenantIDFromHeader(ctx)
 	if err != nil {
-		log.Warn("UpsertTenantSettings: invalid tenant ID", zap.Error(err))
-		return nil, apperr.InvalidArgument(
-			"invalid tenant id",
-			err,
-			apperr.FieldViolation{Field: "tenant_id", Description: "invalid format"},
-		)
-	}
-	if err := requireTenantHeaderMatch(ctx, tenantID); err != nil {
 		return nil, err
 	}
 

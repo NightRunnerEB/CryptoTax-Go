@@ -12,6 +12,8 @@ spec:
     - name: auth-routes
       match:
         - uri:
+            exact: /.well-known/jwks.json
+        - uri:
             prefix: /auth
       corsPolicy:
         allowOrigins:
@@ -40,7 +42,7 @@ spec:
         - uri:
             exact: /mexc/csv
         - uri:
-            exact: /v1/exchanges/supported
+            exact: /exchanges/supported
       corsPolicy:
         allowOrigins:
           - regex: "^http://localhost:[0-9]+$"
@@ -66,7 +68,7 @@ spec:
     - name: tax-routes
       match:
         - uri:
-            prefix: /v1/tax/
+            prefix: /tax/
       corsPolicy:
         allowOrigins:
           - regex: "^http://localhost:[0-9]+$"
@@ -92,11 +94,11 @@ spec:
     - name: aggregation-routes
       match:
         - uri:
-            exact: /v1/fiat-currencies
+            exact: /fiat-currencies
         - uri:
-            exact: /v1/settings
+            exact: /settings
         - uri:
-            regex: ^/v1/imports/[^/]+/transactions$
+            regex: ^/imports/[^/]+/transactions$
       corsPolicy:
         allowOrigins:
           - regex: "^http://localhost:[0-9]+$"
