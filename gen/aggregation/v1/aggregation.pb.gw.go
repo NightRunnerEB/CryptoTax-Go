@@ -35,56 +35,38 @@ var (
 	_ = metadata.Join
 )
 
-var filter_Aggregation_ListTransactionsByImport_0 = &utilities.DoubleArray{Encoding: map[string]int{"import_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+var filter_Aggregation_ListTransactions_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
-func request_Aggregation_ListTransactionsByImport_0(ctx context.Context, marshaler runtime.Marshaler, client AggregationClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Aggregation_ListTransactions_0(ctx context.Context, marshaler runtime.Marshaler, client AggregationClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq ListTransactionsByImportRequest
+		protoReq ListTransactionsRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
 	}
-	val, ok := pathParams["import_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "import_id")
-	}
-	protoReq.ImportId, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "import_id", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Aggregation_ListTransactionsByImport_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Aggregation_ListTransactions_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	msg, err := client.ListTransactionsByImport(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ListTransactions(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 }
 
-func local_request_Aggregation_ListTransactionsByImport_0(ctx context.Context, marshaler runtime.Marshaler, server AggregationServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Aggregation_ListTransactions_0(ctx context.Context, marshaler runtime.Marshaler, server AggregationServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq ListTransactionsByImportRequest
+		protoReq ListTransactionsRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["import_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "import_id")
-	}
-	protoReq.ImportId, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "import_id", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Aggregation_ListTransactionsByImport_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Aggregation_ListTransactions_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	msg, err := server.ListTransactionsByImport(ctx, &protoReq)
+	msg, err := server.ListTransactions(ctx, &protoReq)
 	return msg, metadata, err
 }
 
@@ -230,25 +212,25 @@ func local_request_Aggregation_ListSupportedFiatCurrencies_0(ctx context.Context
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterAggregationHandlerFromEndpoint instead.
 // GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterAggregationHandlerServer(ctx context.Context, mux *runtime.ServeMux, server AggregationServer) error {
-	mux.Handle(http.MethodGet, pattern_Aggregation_ListTransactionsByImport_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_Aggregation_ListTransactions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/aggregation.v1.Aggregation/ListTransactionsByImport", runtime.WithHTTPPathPattern("/imports/{import_id}/transactions"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/aggregation.v1.Aggregation/ListTransactions", runtime.WithHTTPPathPattern("/transactions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Aggregation_ListTransactionsByImport_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Aggregation_ListTransactions_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		forward_Aggregation_ListTransactionsByImport_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Aggregation_ListTransactions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 	mux.Handle(http.MethodGet, pattern_Aggregation_ListTransactionsByRange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
@@ -370,22 +352,22 @@ func RegisterAggregationHandler(ctx context.Context, mux *runtime.ServeMux, conn
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "AggregationClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterAggregationHandlerClient(ctx context.Context, mux *runtime.ServeMux, client AggregationClient) error {
-	mux.Handle(http.MethodGet, pattern_Aggregation_ListTransactionsByImport_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_Aggregation_ListTransactions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/aggregation.v1.Aggregation/ListTransactionsByImport", runtime.WithHTTPPathPattern("/imports/{import_id}/transactions"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/aggregation.v1.Aggregation/ListTransactions", runtime.WithHTTPPathPattern("/transactions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Aggregation_ListTransactionsByImport_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Aggregation_ListTransactions_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		forward_Aggregation_ListTransactionsByImport_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Aggregation_ListTransactions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 	mux.Handle(http.MethodGet, pattern_Aggregation_ListTransactionsByRange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
@@ -459,7 +441,7 @@ func RegisterAggregationHandlerClient(ctx context.Context, mux *runtime.ServeMux
 }
 
 var (
-	pattern_Aggregation_ListTransactionsByImport_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2}, []string{"imports", "import_id", "transactions"}, ""))
+	pattern_Aggregation_ListTransactions_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"transactions"}, ""))
 	pattern_Aggregation_ListTransactionsByRange_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "users", "user_id", "transactions"}, ""))
 	pattern_Aggregation_GetUserSettings_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"settings"}, ""))
 	pattern_Aggregation_UpsertUserSettings_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"settings"}, ""))
@@ -467,7 +449,7 @@ var (
 )
 
 var (
-	forward_Aggregation_ListTransactionsByImport_0    = runtime.ForwardResponseMessage
+	forward_Aggregation_ListTransactions_0            = runtime.ForwardResponseMessage
 	forward_Aggregation_ListTransactionsByRange_0     = runtime.ForwardResponseMessage
 	forward_Aggregation_GetUserSettings_0             = runtime.ForwardResponseMessage
 	forward_Aggregation_UpsertUserSettings_0          = runtime.ForwardResponseMessage

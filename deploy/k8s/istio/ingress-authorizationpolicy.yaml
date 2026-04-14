@@ -39,6 +39,7 @@ spec:
               - /auth/logout
         - operation:
             paths:
+              - /transactions
               - /mexc/csv
               - /exchanges/supported
               - /fiat-currencies

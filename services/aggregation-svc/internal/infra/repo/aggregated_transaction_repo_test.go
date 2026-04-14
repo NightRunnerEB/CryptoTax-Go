@@ -77,83 +77,111 @@ func TestAggregatedTransactionRepo_UpsertBatch_TrimFingerprintAndPersist(t *test
 	}
 }
 
-func TestAggregatedTransactionRepo_ListByImport_MapsRows(t *testing.T) {
+func TestAggregatedTransactionRepo_List_WithCursorAndFilters(t *testing.T) {
 	t.Parallel()
 
 	userID := uuid.New()
 	importID := uuid.New()
-	txID := uuid.New()
-	createdAt := time.Date(2026, 3, 1, 10, 0, 0, 0, time.UTC)
+	cursorID := uuid.New()
+	dateFrom := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	dateTo := time.Date(2026, 3, 2, 0, 0, 0, 0, time.UTC)
+	cursorTime := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
 
 	store := &fakeStore{
-		countByImportFn: func(_ context.Context, arg db.CountAggregatedTransactionsByImportParams) (int64, error) {
-			if arg.UserID != userID || arg.ImportID != importID {
-				t.Fatalf("unexpected count args: %+v", arg)
+		listFn: func(_ context.Context, arg db.ListAggregatedTransactionsParams) ([]db.AggregatedTransaction, error) {
+			if arg.UserID != userID {
+				t.Fatalf("unexpected user id: %s", arg.UserID)
 			}
-			return 1, nil
-		},
-		listByImportFn: func(_ context.Context, arg db.ListAggregatedTransactionsByImportParams) ([]db.AggregatedTransaction, error) {
-			if arg.Limit != 10 || arg.Offset != 0 {
-				t.Fatalf("unexpected paging: %+v", arg)
+			if !arg.DateFrom.Valid || !arg.DateTo.Valid {
+				t.Fatalf("expected date bounds to be set: %+v", arg)
 			}
-			return []db.AggregatedTransaction{
-				{
-					ID:            txID,
+			if arg.ImportID == nil || *arg.ImportID != importID {
+				t.Fatalf("unexpected import filter: %+v", arg.ImportID)
+			}
+			if arg.Source == nil || *arg.Source != "MEXC" {
+				t.Fatalf("unexpected source filter: %+v", arg.Source)
+			}
+			if arg.Kind == nil || *arg.Kind != "spot" {
+				t.Fatalf("unexpected kind filter: %+v", arg.Kind)
+			}
+			if !arg.HasCursor || !arg.CursorTime.Valid || arg.CursorID != cursorID {
+				t.Fatalf("unexpected cursor args: %+v", arg)
+			}
+			if arg.PageLimit != 31 {
+				t.Fatalf("unexpected page limit: %d", arg.PageLimit)
+			}
+
+			base := time.Date(2026, 3, 1, 11, 0, 0, 0, time.UTC)
+			makeRow := func(id uuid.UUID, t time.Time) db.AggregatedTransaction {
+				return db.AggregatedTransaction{
+					ID:            id,
 					UserID:        userID,
 					ImportID:      importID,
 					Source:        "MEXC",
-					TimeUtc:       pgtype.Timestamptz{Time: createdAt, Valid: true},
-					Kind:          "Spot",
-					InMoney:       []byte(`{"symbol":"BTC","crypto_amount":"0.1","fiat_amount":"100"}`),
-					OutMoney:      nil,
-					FeeMoney:      nil,
-					TxFingerprint: "fp-1",
-					CreatedAt:     pgtype.Timestamptz{Time: createdAt, Valid: true},
+					TimeUtc:       pgtype.Timestamptz{Time: t, Valid: true},
+					Kind:          "spot",
+					TxFingerprint: "fp-" + id.String(),
+					CreatedAt:     pgtype.Timestamptz{Time: t, Valid: true},
+				}
+			}
+			rows := make([]db.AggregatedTransaction, 0, 31)
+			for i := range 31 {
+				rows = append(rows, makeRow(uuid.New(), base.Add(-time.Duration(i)*time.Minute)))
+			}
+			return rows, nil
+		},
+	}
+
+	repo := NewAggregatedTransactionRepo(store)
+	items, hasMore, err := repo.List(
+		context.Background(),
+		userID,
+		domain.ListTransactionsFilter{
+			DateFrom: &dateFrom,
+			DateTo:   &dateTo,
+			ImportID: &importID,
+			Source:   "MEXC",
+			Kind:     "spot",
+		},
+		30,
+		&domain.AggregatedTxCursor{
+			LastTimeUTC: cursorTime,
+			LastID:      cursorID,
+		},
+	)
+	if err != nil {
+		t.Fatalf("List returned error: %v", err)
+	}
+	if !hasMore {
+		t.Fatal("expected hasMore=true")
+	}
+	if len(items) != 30 {
+		t.Fatalf("expected 30 items, got %d", len(items))
+	}
+}
+
+func TestAggregatedTransactionRepo_List_InvalidJSON(t *testing.T) {
+	t.Parallel()
+
+	userID := uuid.New()
+
+	store := &fakeStore{
+		listFn: func(_ context.Context, _ db.ListAggregatedTransactionsParams) ([]db.AggregatedTransaction, error) {
+			return []db.AggregatedTransaction{
+				{
+					ID:       uuid.New(),
+					UserID:   userID,
+					ImportID: uuid.New(),
+					TimeUtc:  pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true},
+					Kind:     "spot",
+					InMoney:  []byte("bad-json"),
 				},
 			}, nil
 		},
 	}
 
 	repo := NewAggregatedTransactionRepo(store)
-	page, err := repo.ListByImport(context.Background(), userID, importID, 10, 0)
-	if err != nil {
-		t.Fatalf("ListByImport returned error: %v", err)
-	}
-	if page.Total != 1 || len(page.Transactions) != 1 {
-		t.Fatalf("unexpected page: %+v", page)
-	}
-	if page.Transactions[0].InMoney == nil || page.Transactions[0].InMoney.FiatAmount == nil {
-		t.Fatalf("expected mapped in_money fiat amount, got: %+v", page.Transactions[0].InMoney)
-	}
-	if *page.Transactions[0].InMoney.FiatAmount != "100" {
-		t.Fatalf("unexpected fiat amount: %s", *page.Transactions[0].InMoney.FiatAmount)
-	}
-}
-
-func TestAggregatedTransactionRepo_ListByImport_InvalidJSON(t *testing.T) {
-	t.Parallel()
-
-	userID := uuid.New()
-	importID := uuid.New()
-
-	store := &fakeStore{
-		countByImportFn: func(_ context.Context, _ db.CountAggregatedTransactionsByImportParams) (int64, error) {
-			return 1, nil
-		},
-		listByImportFn: func(_ context.Context, _ db.ListAggregatedTransactionsByImportParams) ([]db.AggregatedTransaction, error) {
-			return []db.AggregatedTransaction{{
-				ID:       uuid.New(),
-				UserID:   userID,
-				ImportID: importID,
-				TimeUtc:  pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true},
-				Kind:     "Spot",
-				InMoney:  []byte("not-json"),
-			}}, nil
-		},
-	}
-
-	repo := NewAggregatedTransactionRepo(store)
-	_, err := repo.ListByImport(context.Background(), userID, importID, 10, 0)
+	_, _, err := repo.List(context.Background(), userID, domain.ListTransactionsFilter{}, 30, nil)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

@@ -14,9 +14,34 @@ type AggregatedTxPage struct {
 	Total        int64
 }
 
+type AggregatedTxCursor struct {
+	LastTimeUTC time.Time
+	LastID      uuid.UUID
+}
+
+type ListTransactionsFilter struct {
+	DateFrom *time.Time
+	DateTo   *time.Time
+	ImportID *uuid.UUID
+	Source   string
+	Kind     string
+}
+
+type AggregatedTxCursorPage struct {
+	Items         []AggregatedTransaction
+	NextPageToken string
+}
+
 type AggregationUseCase interface {
 	ProcessImport(ctx context.Context, event ImportEvent) error
-	ListTransactionsByImport(ctx context.Context, userID, importID uuid.UUID, limit, offset int32) (AggregatedTxPage, error)
+	ListTransactions(
+		ctx context.Context,
+		userID uuid.UUID,
+		filter ListTransactionsFilter,
+		pageSize int32,
+		pageToken string,
+		targetFiat string,
+	) (AggregatedTxCursorPage, error)
 	ListTransactionsByRange(ctx context.Context, userID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32, targetFiat string) (AggregatedTxPage, error)
 }
 
@@ -28,7 +53,7 @@ type UserSettingsUseCase interface {
 
 type AggregatedTransactionRepo interface {
 	UpsertBatch(ctx context.Context, txs []AggregatedTransaction) error
-	ListByImport(ctx context.Context, userID, importID uuid.UUID, limit, offset int32) (AggregatedTxPage, error)
+	List(ctx context.Context, userID uuid.UUID, filter ListTransactionsFilter, pageSize int32, cursor *AggregatedTxCursor) ([]AggregatedTransaction, bool, error)
 	ListByRange(ctx context.Context, userID uuid.UUID, fromUTC, toUTC time.Time, limit, offset int32) (AggregatedTxPage, error)
 }
 

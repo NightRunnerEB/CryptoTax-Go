@@ -46,6 +46,80 @@ func TestListTransactionsByRange_SucceedsWithoutUserHeader(t *testing.T) {
 	}
 }
 
+func TestListTransactions_Success(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	aggUC := mocks.NewMockAggregationUseCase(ctrl)
+	s := NewAggregationServer(aggUC, nil)
+
+	userID := uuid.New()
+	importID := uuid.New()
+	txID := uuid.New()
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerUserID, userID.String()))
+
+	aggUC.EXPECT().
+		ListTransactions(
+			gomock.Any(),
+			userID,
+			gomock.Any(),
+			int32(30),
+			"",
+			"USD",
+		).
+		DoAndReturn(func(_ context.Context, _ uuid.UUID, filter domain.ListTransactionsFilter, _ int32, _ string, _ string) (domain.AggregatedTxCursorPage, error) {
+			if filter.ImportID == nil || *filter.ImportID != importID {
+				t.Fatalf("unexpected import filter: %+v", filter.ImportID)
+			}
+			return domain.AggregatedTxCursorPage{
+				Items: []domain.AggregatedTransaction{
+					{
+						ID:            txID,
+						UserID:        userID,
+						ImportID:      importID,
+						Source:        "MEXC",
+						TimeUTC:       time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
+						Kind:          "spot",
+						TxFingerprint: "fp-1",
+					},
+				},
+				NextPageToken: "next-token",
+			}, nil
+		})
+
+	resp, err := s.ListTransactions(ctx, &aggregationv1.ListTransactionsRequest{
+		ImportId:   importID.String(),
+		PageSize:   30,
+		TargetFiat: "USD",
+	})
+	if err != nil {
+		t.Fatalf("ListTransactions returned error: %v", err)
+	}
+	if resp.GetNextPageToken() != "next-token" {
+		t.Fatalf("unexpected next_page_token: %s", resp.GetNextPageToken())
+	}
+	if len(resp.GetItems()) != 1 || resp.GetItems()[0].GetTxId() != txID.String() {
+		t.Fatalf("unexpected items: %+v", resp.GetItems())
+	}
+}
+
+func TestListTransactions_InvalidImportID(t *testing.T) {
+	t.Parallel()
+
+	s := NewAggregationServer(nil, nil)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerUserID, uuid.NewString()))
+
+	_, err := s.ListTransactions(ctx, &aggregationv1.ListTransactionsRequest{
+		ImportId: "bad-uuid",
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	assertServerErrorCode(t, err, apperr.ErrInvalidArgument)
+}
+
 func TestListTransactionsByRange_InvalidUserID(t *testing.T) {
 	t.Parallel()
 
@@ -103,53 +177,6 @@ func TestListSupportedFiatCurrencies_Success(t *testing.T) {
 	}
 	if resp.GetCurrencies()[0].GetCode() != "USD" || resp.GetCurrencies()[1].GetCode() != "RUB" {
 		t.Fatalf("unexpected currencies: %+v", resp.GetCurrencies())
-	}
-}
-
-func TestListTransactionsByImport_Success(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	aggUC := mocks.NewMockAggregationUseCase(ctrl)
-	s := NewAggregationServer(aggUC, nil)
-
-	userID := uuid.New()
-	importID := uuid.New()
-	txID := uuid.New()
-	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerUserID, userID.String()))
-
-	aggUC.EXPECT().
-		ListTransactionsByImport(gomock.Any(), userID, importID, int32(10), int32(0)).
-		Return(domain.AggregatedTxPage{
-			Transactions: []domain.AggregatedTransaction{
-				{
-					ID:            txID,
-					UserID:        userID,
-					ImportID:      importID,
-					Source:        "MEXC",
-					TimeUTC:       time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
-					Kind:          "Spot",
-					TxFingerprint: "fp-1",
-				},
-			},
-			Total: 1,
-		}, nil)
-
-	resp, err := s.ListTransactionsByImport(ctx, &aggregationv1.ListTransactionsByImportRequest{
-		ImportId: importID.String(),
-		Limit:    10,
-		Offset:   0,
-	})
-	if err != nil {
-		t.Fatalf("ListTransactionsByImport returned error: %v", err)
-	}
-	if resp.GetTotal() != 1 || len(resp.GetTransactions()) != 1 {
-		t.Fatalf("unexpected response: %+v", resp)
-	}
-	if resp.GetTransactions()[0].GetTxId() != txID.String() {
-		t.Fatalf("unexpected tx id: %s", resp.GetTransactions()[0].GetTxId())
 	}
 }
 

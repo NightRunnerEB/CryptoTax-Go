@@ -9,11 +9,10 @@ import (
 )
 
 type fakeStore struct {
-	countByImportFn         func(ctx context.Context, arg db.CountAggregatedTransactionsByImportParams) (int64, error)
 	countByRangeFn          func(ctx context.Context, arg db.CountAggregatedTransactionsByRangeParams) (int64, error)
 	getImportStateFn        func(ctx context.Context, arg db.GetAggregationImportStateParams) (db.AggregationImportState, error)
 	getUserSettingsFn       func(ctx context.Context, userID uuid.UUID) (db.UserSetting, error)
-	listByImportFn          func(ctx context.Context, arg db.ListAggregatedTransactionsByImportParams) ([]db.AggregatedTransaction, error)
+	listFn                  func(ctx context.Context, arg db.ListAggregatedTransactionsParams) ([]db.AggregatedTransaction, error)
 	listByRangeFn           func(ctx context.Context, arg db.ListAggregatedTransactionsByRangeParams) ([]db.AggregatedTransaction, error)
 	markCompletedFn         func(ctx context.Context, arg db.MarkAggregationImportStateCompletedParams) error
 	markFailedFn            func(ctx context.Context, arg db.MarkAggregationImportStateFailedParams) error
@@ -21,13 +20,6 @@ type fakeStore struct {
 	upsertAggregatedTxFn    func(ctx context.Context, arg db.UpsertAggregatedTransactionParams) error
 	upsertProcessingStateFn func(ctx context.Context, arg db.UpsertAggregationImportStateProcessingParams) error
 	upsertUserSettingsFn    func(ctx context.Context, arg db.UpsertUserSettingsParams) (db.UserSetting, error)
-}
-
-func (f *fakeStore) CountAggregatedTransactionsByImport(ctx context.Context, arg db.CountAggregatedTransactionsByImportParams) (int64, error) {
-	if f.countByImportFn != nil {
-		return f.countByImportFn(ctx, arg)
-	}
-	return 0, nil
 }
 
 func (f *fakeStore) CountAggregatedTransactionsByRange(ctx context.Context, arg db.CountAggregatedTransactionsByRangeParams) (int64, error) {
@@ -51,9 +43,9 @@ func (f *fakeStore) GetUserSettings(ctx context.Context, userID uuid.UUID) (db.U
 	return db.UserSetting{}, nil
 }
 
-func (f *fakeStore) ListAggregatedTransactionsByImport(ctx context.Context, arg db.ListAggregatedTransactionsByImportParams) ([]db.AggregatedTransaction, error) {
-	if f.listByImportFn != nil {
-		return f.listByImportFn(ctx, arg)
+func (f *fakeStore) ListAggregatedTransactions(ctx context.Context, arg db.ListAggregatedTransactionsParams) ([]db.AggregatedTransaction, error) {
+	if f.listFn != nil {
+		return f.listFn(ctx, arg)
 	}
 	return nil, nil
 }

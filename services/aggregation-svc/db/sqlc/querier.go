@@ -11,11 +11,10 @@ import (
 )
 
 type Querier interface {
-	CountAggregatedTransactionsByImport(ctx context.Context, arg CountAggregatedTransactionsByImportParams) (int64, error)
 	CountAggregatedTransactionsByRange(ctx context.Context, arg CountAggregatedTransactionsByRangeParams) (int64, error)
 	GetAggregationImportState(ctx context.Context, arg GetAggregationImportStateParams) (AggregationImportState, error)
 	GetUserSettings(ctx context.Context, userID uuid.UUID) (UserSetting, error)
-	ListAggregatedTransactionsByImport(ctx context.Context, arg ListAggregatedTransactionsByImportParams) ([]AggregatedTransaction, error)
+	ListAggregatedTransactions(ctx context.Context, arg ListAggregatedTransactionsParams) ([]AggregatedTransaction, error)
 	ListAggregatedTransactionsByRange(ctx context.Context, arg ListAggregatedTransactionsByRangeParams) ([]AggregatedTransaction, error)
 	MarkAggregationImportStateCompleted(ctx context.Context, arg MarkAggregationImportStateCompletedParams) error
 	MarkAggregationImportStateFailed(ctx context.Context, arg MarkAggregationImportStateFailedParams) error

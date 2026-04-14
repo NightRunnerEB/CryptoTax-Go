@@ -12,24 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const countAggregatedTransactionsByImport = `-- name: CountAggregatedTransactionsByImport :one
-SELECT count(*)
-FROM aggregated_transactions
-WHERE user_id = $1 AND import_id = $2
-`
-
-type CountAggregatedTransactionsByImportParams struct {
-	UserID   uuid.UUID `json:"userId"`
-	ImportID uuid.UUID `json:"importId"`
-}
-
-func (q *Queries) CountAggregatedTransactionsByImport(ctx context.Context, arg CountAggregatedTransactionsByImportParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countAggregatedTransactionsByImport, arg.UserID, arg.ImportID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const countAggregatedTransactionsByRange = `-- name: CountAggregatedTransactionsByRange :one
 SELECT count(*)
 FROM aggregated_transactions
@@ -51,7 +33,7 @@ func (q *Queries) CountAggregatedTransactionsByRange(ctx context.Context, arg Co
 	return count, err
 }
 
-const listAggregatedTransactionsByImport = `-- name: ListAggregatedTransactionsByImport :many
+const listAggregatedTransactions = `-- name: ListAggregatedTransactions :many
 SELECT
   id,
   user_id,
@@ -72,24 +54,48 @@ SELECT
   created_at,
   updated_at
 FROM aggregated_transactions
-WHERE user_id = $1 AND import_id = $2
-ORDER BY time_utc DESC
-LIMIT $3 OFFSET $4
+WHERE user_id = $1
+  AND ($2::timestamptz IS NULL OR time_utc >= $2::timestamptz)
+  AND ($3::timestamptz IS NULL OR time_utc < $3::timestamptz)
+  AND ($4::uuid IS NULL OR import_id = $4::uuid)
+  AND ($5::text IS NULL OR source = $5::text)
+  AND ($6::text IS NULL OR kind = $6::text)
+  AND (
+    NOT $7::bool
+    OR (
+      time_utc < $8::timestamptz
+      OR (time_utc = $8::timestamptz AND id < $9::uuid)
+    )
+  )
+ORDER BY time_utc DESC, id DESC
+LIMIT $10
 `
 
-type ListAggregatedTransactionsByImportParams struct {
-	UserID   uuid.UUID `json:"userId"`
-	ImportID uuid.UUID `json:"importId"`
-	Limit    int32     `json:"limit"`
-	Offset   int32     `json:"offset"`
+type ListAggregatedTransactionsParams struct {
+	UserID     uuid.UUID          `json:"userId"`
+	DateFrom   pgtype.Timestamptz `json:"dateFrom"`
+	DateTo     pgtype.Timestamptz `json:"dateTo"`
+	ImportID   *uuid.UUID         `json:"importId"`
+	Source     *string            `json:"source"`
+	Kind       *string            `json:"kind"`
+	HasCursor  bool               `json:"hasCursor"`
+	CursorTime pgtype.Timestamptz `json:"cursorTime"`
+	CursorID   uuid.UUID          `json:"cursorId"`
+	PageLimit  int32              `json:"pageLimit"`
 }
 
-func (q *Queries) ListAggregatedTransactionsByImport(ctx context.Context, arg ListAggregatedTransactionsByImportParams) ([]AggregatedTransaction, error) {
-	rows, err := q.db.Query(ctx, listAggregatedTransactionsByImport,
+func (q *Queries) ListAggregatedTransactions(ctx context.Context, arg ListAggregatedTransactionsParams) ([]AggregatedTransaction, error) {
+	rows, err := q.db.Query(ctx, listAggregatedTransactions,
 		arg.UserID,
+		arg.DateFrom,
+		arg.DateTo,
 		arg.ImportID,
-		arg.Limit,
-		arg.Offset,
+		arg.Source,
+		arg.Kind,
+		arg.HasCursor,
+		arg.CursorTime,
+		arg.CursorID,
+		arg.PageLimit,
 	)
 	if err != nil {
 		return nil, err

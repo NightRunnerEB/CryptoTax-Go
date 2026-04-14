@@ -11,12 +11,12 @@ import "google/protobuf/timestamp.proto";
 // Aggregation provides read-model APIs for aggregated transactions
 // and user-level aggregation settings.
 service Aggregation {
-  // ListTransactionsByImport returns paginated aggregated transactions
-  // for a specific authenticated user import.
-  rpc ListTransactionsByImport(ListTransactionsByImportRequest)
-  returns (ListTransactionsByImportResponse) {
+  // ListTransactions returns aggregated transactions for the authenticated user
+  // with cursor-based pagination and optional server-side filters.
+  rpc ListTransactions(ListTransactionsRequest)
+  returns (ListTransactionsResponse) {
     option (google.api.http) = {
-      get: "/imports/{import_id}/transactions"
+      get: "/transactions"
     };
   }
 
@@ -74,16 +74,28 @@ message AggregatedTx {
   string                    tx_fingerprint  = 17;
 }
 
-message ListTransactionsByImportRequest {
-  string user_id = 1;
-  string import_id = 2;
-  int32  limit     = 3;
-  int32  offset    = 4;
+message ListTransactionsRequest {
+  // Optional lower time bound (inclusive), UTC.
+  google.protobuf.Timestamp date_from = 1;
+  // Optional upper time bound (exclusive), UTC.
+  google.protobuf.Timestamp date_to = 2;
+  // Optional import filter.
+  string import_id = 3;
+  // Optional source filter.
+  string source = 4;
+  // Optional transaction kind filter.
+  string kind = 5;
+  // Cursor-based page size.
+  int32 page_size = 6;
+  // Cursor token from previous page.
+  string page_token = 7;
+  // Optional fiat override for on-the-fly revaluation.
+  string target_fiat = 8;
 }
 
-message ListTransactionsByImportResponse {
-  repeated AggregatedTx transactions = 1;
-  int64                 total        = 2;
+message ListTransactionsResponse {
+  repeated AggregatedTx items = 1;
+  string next_page_token = 2;
 }
 
 message ListTransactionsByRangeRequest {

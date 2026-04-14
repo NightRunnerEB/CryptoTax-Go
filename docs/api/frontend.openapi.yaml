@@ -258,22 +258,27 @@ paths:
         '500':
           $ref: '#/components/responses/GrpcInternal'
 
-  /imports/{import_id}/transactions:
+  /transactions:
     get:
       tags: [Aggregation]
-      operationId: listTransactionsByImport
-      summary: List aggregated transactions by import
+      operationId: listTransactions
+      summary: List aggregated transactions (cursor-based)
       parameters:
-        - $ref: '#/components/parameters/ImportIdPath'
-        - $ref: '#/components/parameters/PaginationLimit'
-        - $ref: '#/components/parameters/PaginationOffset'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageToken'
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+        - $ref: '#/components/parameters/ImportIdQuery'
+        - $ref: '#/components/parameters/SourceQuery'
+        - $ref: '#/components/parameters/KindQuery'
+        - $ref: '#/components/parameters/TargetFiat'
       responses:
         '200':
-          description: Paginated transactions
+          description: Cursor-based list response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListTransactionsByImportResponse'
+                $ref: '#/components/schemas/ListTransactionsResponse'
         '400':
           $ref: '#/components/responses/GrpcInvalidArgument'
         '500':
@@ -462,6 +467,63 @@ components:
         type: integer
         format: int32
         minimum: 0
+    PageSize:
+      name: page_size
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+    PageToken:
+      name: page_token
+      in: query
+      required: false
+      schema:
+        type: string
+    DateFrom:
+      name: date_from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: Inclusive UTC lower bound.
+    DateTo:
+      name: date_to
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: Exclusive UTC upper bound.
+    ImportIdQuery:
+      name: import_id
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+    SourceQuery:
+      name: source
+      in: query
+      required: false
+      schema:
+        type: string
+    KindQuery:
+      name: kind
+      in: query
+      required: false
+      schema:
+        type: string
+    TargetFiat:
+      name: target_fiat
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Optional fiat override for on-the-fly revaluation (e.g. RUB, USD, KZT).
   responses:
     Error:
       description: Generic grpc-gateway error response.
@@ -932,17 +994,16 @@ components:
         - note
         - derivativeKind
         - txFingerprint
-    ListTransactionsByImportResponse:
+    ListTransactionsResponse:
       type: object
       properties:
-        transactions:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/AggregatedTx'
-        total:
-          type: integer
-          format: int64
-      required: [transactions, total]
+        nextPageToken:
+          type: string
+      required: [items]
 
     UserSettings:
       type: object

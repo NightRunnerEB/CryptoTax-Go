@@ -43,19 +43,19 @@ func (m *MockAggregationUseCase) EXPECT() *MockAggregationUseCaseMockRecorder {
 	return m.recorder
 }
 
-// ListTransactionsByImport mocks base method.
-func (m *MockAggregationUseCase) ListTransactionsByImport(ctx context.Context, userID, importID uuid.UUID, limit, offset int32) (domain.AggregatedTxPage, error) {
+// ListTransactions mocks base method.
+func (m *MockAggregationUseCase) ListTransactions(ctx context.Context, userID uuid.UUID, filter domain.ListTransactionsFilter, pageSize int32, pageToken, targetFiat string) (domain.AggregatedTxCursorPage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTransactionsByImport", ctx, userID, importID, limit, offset)
-	ret0, _ := ret[0].(domain.AggregatedTxPage)
+	ret := m.ctrl.Call(m, "ListTransactions", ctx, userID, filter, pageSize, pageToken, targetFiat)
+	ret0, _ := ret[0].(domain.AggregatedTxCursorPage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListTransactionsByImport indicates an expected call of ListTransactionsByImport.
-func (mr *MockAggregationUseCaseMockRecorder) ListTransactionsByImport(ctx, userID, importID, limit, offset any) *gomock.Call {
+// ListTransactions indicates an expected call of ListTransactions.
+func (mr *MockAggregationUseCaseMockRecorder) ListTransactions(ctx, userID, filter, pageSize, pageToken, targetFiat any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTransactionsByImport", reflect.TypeOf((*MockAggregationUseCase)(nil).ListTransactionsByImport), ctx, userID, importID, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTransactions", reflect.TypeOf((*MockAggregationUseCase)(nil).ListTransactions), ctx, userID, filter, pageSize, pageToken, targetFiat)
 }
 
 // ListTransactionsByRange mocks base method.

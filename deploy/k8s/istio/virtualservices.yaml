@@ -94,6 +94,8 @@ spec:
     - name: aggregation-routes
       match:
         - uri:
+            exact: /transactions
+        - uri:
             exact: /fiat-currencies
         - uri:
             exact: /settings

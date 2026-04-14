@@ -188,30 +188,42 @@ func (x *AggregatedTx) GetTxFingerprint() string {
 	return ""
 }
 
-type ListTransactionsByImportRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ImportId      string                 `protobuf:"bytes,2,opt,name=import_id,json=importId,proto3" json:"import_id,omitempty"`
-	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
-	Offset        int32                  `protobuf:"varint,4,opt,name=offset,proto3" json:"offset,omitempty"`
+type ListTransactionsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Optional lower time bound (inclusive), UTC.
+	DateFrom *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=date_from,json=dateFrom,proto3" json:"date_from,omitempty"`
+	// Optional upper time bound (exclusive), UTC.
+	DateTo *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=date_to,json=dateTo,proto3" json:"date_to,omitempty"`
+	// Optional import filter.
+	ImportId string `protobuf:"bytes,3,opt,name=import_id,json=importId,proto3" json:"import_id,omitempty"`
+	// Optional source filter.
+	Source string `protobuf:"bytes,4,opt,name=source,proto3" json:"source,omitempty"`
+	// Optional transaction kind filter.
+	Kind string `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
+	// Cursor-based page size.
+	PageSize int32 `protobuf:"varint,6,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// Cursor token from previous page.
+	PageToken string `protobuf:"bytes,7,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Optional fiat override for on-the-fly revaluation.
+	TargetFiat    string `protobuf:"bytes,8,opt,name=target_fiat,json=targetFiat,proto3" json:"target_fiat,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListTransactionsByImportRequest) Reset() {
-	*x = ListTransactionsByImportRequest{}
+func (x *ListTransactionsRequest) Reset() {
+	*x = ListTransactionsRequest{}
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListTransactionsByImportRequest) String() string {
+func (x *ListTransactionsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListTransactionsByImportRequest) ProtoMessage() {}
+func (*ListTransactionsRequest) ProtoMessage() {}
 
-func (x *ListTransactionsByImportRequest) ProtoReflect() protoreflect.Message {
+func (x *ListTransactionsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -223,61 +235,89 @@ func (x *ListTransactionsByImportRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListTransactionsByImportRequest.ProtoReflect.Descriptor instead.
-func (*ListTransactionsByImportRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListTransactionsRequest.ProtoReflect.Descriptor instead.
+func (*ListTransactionsRequest) Descriptor() ([]byte, []int) {
 	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ListTransactionsByImportRequest) GetUserId() string {
+func (x *ListTransactionsRequest) GetDateFrom() *timestamppb.Timestamp {
 	if x != nil {
-		return x.UserId
+		return x.DateFrom
 	}
-	return ""
+	return nil
 }
 
-func (x *ListTransactionsByImportRequest) GetImportId() string {
+func (x *ListTransactionsRequest) GetDateTo() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DateTo
+	}
+	return nil
+}
+
+func (x *ListTransactionsRequest) GetImportId() string {
 	if x != nil {
 		return x.ImportId
 	}
 	return ""
 }
 
-func (x *ListTransactionsByImportRequest) GetLimit() int32 {
+func (x *ListTransactionsRequest) GetSource() string {
 	if x != nil {
-		return x.Limit
+		return x.Source
+	}
+	return ""
+}
+
+func (x *ListTransactionsRequest) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *ListTransactionsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
 	}
 	return 0
 }
 
-func (x *ListTransactionsByImportRequest) GetOffset() int32 {
+func (x *ListTransactionsRequest) GetPageToken() string {
 	if x != nil {
-		return x.Offset
+		return x.PageToken
 	}
-	return 0
+	return ""
 }
 
-type ListTransactionsByImportResponse struct {
+func (x *ListTransactionsRequest) GetTargetFiat() string {
+	if x != nil {
+		return x.TargetFiat
+	}
+	return ""
+}
+
+type ListTransactionsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Transactions  []*AggregatedTx        `protobuf:"bytes,1,rep,name=transactions,proto3" json:"transactions,omitempty"`
-	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	Items         []*AggregatedTx        `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListTransactionsByImportResponse) Reset() {
-	*x = ListTransactionsByImportResponse{}
+func (x *ListTransactionsResponse) Reset() {
+	*x = ListTransactionsResponse{}
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListTransactionsByImportResponse) String() string {
+func (x *ListTransactionsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListTransactionsByImportResponse) ProtoMessage() {}
+func (*ListTransactionsResponse) ProtoMessage() {}
 
-func (x *ListTransactionsByImportResponse) ProtoReflect() protoreflect.Message {
+func (x *ListTransactionsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_aggregation_v1_aggregation_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -289,23 +329,23 @@ func (x *ListTransactionsByImportResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListTransactionsByImportResponse.ProtoReflect.Descriptor instead.
-func (*ListTransactionsByImportResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListTransactionsResponse.ProtoReflect.Descriptor instead.
+func (*ListTransactionsResponse) Descriptor() ([]byte, []int) {
 	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ListTransactionsByImportResponse) GetTransactions() []*AggregatedTx {
+func (x *ListTransactionsResponse) GetItems() []*AggregatedTx {
 	if x != nil {
-		return x.Transactions
+		return x.Items
 	}
 	return nil
 }
 
-func (x *ListTransactionsByImportResponse) GetTotal() int64 {
+func (x *ListTransactionsResponse) GetNextPageToken() string {
 	if x != nil {
-		return x.Total
+		return x.NextPageToken
 	}
-	return 0
+	return ""
 }
 
 type ListTransactionsByRangeRequest struct {
@@ -859,15 +899,21 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"\b_tx_hashB\x12\n" +
 	"\x10_contract_symbolB\x0e\n" +
 	"\f_position_idB\v\n" +
-	"\t_order_id\"\x85\x01\n" +
-	"\x1fListTransactionsByImportRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
-	"\timport_id\x18\x02 \x01(\tR\bimportId\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x04 \x01(\x05R\x06offset\"z\n" +
-	" ListTransactionsByImportResponse\x12@\n" +
-	"\ftransactions\x18\x01 \x03(\v2\x1c.aggregation.v1.AggregatedTxR\ftransactions\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\"\xf2\x01\n" +
+	"\t_order_id\"\xad\x02\n" +
+	"\x17ListTransactionsRequest\x127\n" +
+	"\tdate_from\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\bdateFrom\x123\n" +
+	"\adate_to\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x06dateTo\x12\x1b\n" +
+	"\timport_id\x18\x03 \x01(\tR\bimportId\x12\x16\n" +
+	"\x06source\x18\x04 \x01(\tR\x06source\x12\x12\n" +
+	"\x04kind\x18\x05 \x01(\tR\x04kind\x12\x1b\n" +
+	"\tpage_size\x18\x06 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\a \x01(\tR\tpageToken\x12\x1f\n" +
+	"\vtarget_fiat\x18\b \x01(\tR\n" +
+	"targetFiat\"v\n" +
+	"\x18ListTransactionsResponse\x122\n" +
+	"\x05items\x18\x01 \x03(\v2\x1c.aggregation.v1.AggregatedTxR\x05items\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xf2\x01\n" +
 	"\x1eListTransactionsByRangeRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x125\n" +
 	"\bfrom_utc\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\afromUtc\x121\n" +
@@ -900,9 +946,9 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"#ListSupportedFiatCurrenciesResponse\x12E\n" +
 	"\n" +
 	"currencies\x18\x01 \x03(\v2%.aggregation.v1.SupportedFiatCurrencyR\n" +
-	"currencies2\xfd\x05\n" +
-	"\vAggregation\x12\xa8\x01\n" +
-	"\x18ListTransactionsByImport\x12/.aggregation.v1.ListTransactionsByImportRequest\x1a0.aggregation.v1.ListTransactionsByImportResponse\")\x82\xd3\xe4\x93\x02#\x12!/imports/{import_id}/transactions\x12\xa4\x01\n" +
+	"currencies2\xd0\x05\n" +
+	"\vAggregation\x12|\n" +
+	"\x10ListTransactions\x12'.aggregation.v1.ListTransactionsRequest\x1a(.aggregation.v1.ListTransactionsResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\x12\r/transactions\x12\xa4\x01\n" +
 	"\x17ListTransactionsByRange\x12..aggregation.v1.ListTransactionsByRangeRequest\x1a/.aggregation.v1.ListTransactionsByRangeResponse\"(\x82\xd3\xe4\x93\x02\"\x12 /v1/users/{user_id}/transactions\x12u\n" +
 	"\x0fGetUserSettings\x12&.aggregation.v1.GetUserSettingsRequest\x1a'.aggregation.v1.GetUserSettingsResponse\"\x11\x82\xd3\xe4\x93\x02\v\x12\t/settings\x12\x81\x01\n" +
 	"\x12UpsertUserSettings\x12).aggregation.v1.UpsertUserSettingsRequest\x1a*.aggregation.v1.UpsertUserSettingsResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\x1a\t/settings\x12\xa0\x01\n" +
@@ -923,8 +969,8 @@ func file_aggregation_v1_aggregation_proto_rawDescGZIP() []byte {
 var file_aggregation_v1_aggregation_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_aggregation_v1_aggregation_proto_goTypes = []any{
 	(*AggregatedTx)(nil),                        // 0: aggregation.v1.AggregatedTx
-	(*ListTransactionsByImportRequest)(nil),     // 1: aggregation.v1.ListTransactionsByImportRequest
-	(*ListTransactionsByImportResponse)(nil),    // 2: aggregation.v1.ListTransactionsByImportResponse
+	(*ListTransactionsRequest)(nil),             // 1: aggregation.v1.ListTransactionsRequest
+	(*ListTransactionsResponse)(nil),            // 2: aggregation.v1.ListTransactionsResponse
 	(*ListTransactionsByRangeRequest)(nil),      // 3: aggregation.v1.ListTransactionsByRangeRequest
 	(*ListTransactionsByRangeResponse)(nil),     // 4: aggregation.v1.ListTransactionsByRangeResponse
 	(*UserSettings)(nil),                        // 5: aggregation.v1.UserSettings
@@ -943,28 +989,30 @@ var file_aggregation_v1_aggregation_proto_depIdxs = []int32{
 	14, // 1: aggregation.v1.AggregatedTx.in_money:type_name -> google.protobuf.Struct
 	14, // 2: aggregation.v1.AggregatedTx.out_money:type_name -> google.protobuf.Struct
 	14, // 3: aggregation.v1.AggregatedTx.fee_money:type_name -> google.protobuf.Struct
-	0,  // 4: aggregation.v1.ListTransactionsByImportResponse.transactions:type_name -> aggregation.v1.AggregatedTx
-	13, // 5: aggregation.v1.ListTransactionsByRangeRequest.from_utc:type_name -> google.protobuf.Timestamp
-	13, // 6: aggregation.v1.ListTransactionsByRangeRequest.to_utc:type_name -> google.protobuf.Timestamp
-	0,  // 7: aggregation.v1.ListTransactionsByRangeResponse.transactions:type_name -> aggregation.v1.AggregatedTx
-	5,  // 8: aggregation.v1.GetUserSettingsResponse.settings:type_name -> aggregation.v1.UserSettings
-	5,  // 9: aggregation.v1.UpsertUserSettingsResponse.settings:type_name -> aggregation.v1.UserSettings
-	10, // 10: aggregation.v1.ListSupportedFiatCurrenciesResponse.currencies:type_name -> aggregation.v1.SupportedFiatCurrency
-	1,  // 11: aggregation.v1.Aggregation.ListTransactionsByImport:input_type -> aggregation.v1.ListTransactionsByImportRequest
-	3,  // 12: aggregation.v1.Aggregation.ListTransactionsByRange:input_type -> aggregation.v1.ListTransactionsByRangeRequest
-	6,  // 13: aggregation.v1.Aggregation.GetUserSettings:input_type -> aggregation.v1.GetUserSettingsRequest
-	8,  // 14: aggregation.v1.Aggregation.UpsertUserSettings:input_type -> aggregation.v1.UpsertUserSettingsRequest
-	11, // 15: aggregation.v1.Aggregation.ListSupportedFiatCurrencies:input_type -> aggregation.v1.ListSupportedFiatCurrenciesRequest
-	2,  // 16: aggregation.v1.Aggregation.ListTransactionsByImport:output_type -> aggregation.v1.ListTransactionsByImportResponse
-	4,  // 17: aggregation.v1.Aggregation.ListTransactionsByRange:output_type -> aggregation.v1.ListTransactionsByRangeResponse
-	7,  // 18: aggregation.v1.Aggregation.GetUserSettings:output_type -> aggregation.v1.GetUserSettingsResponse
-	9,  // 19: aggregation.v1.Aggregation.UpsertUserSettings:output_type -> aggregation.v1.UpsertUserSettingsResponse
-	12, // 20: aggregation.v1.Aggregation.ListSupportedFiatCurrencies:output_type -> aggregation.v1.ListSupportedFiatCurrenciesResponse
-	16, // [16:21] is the sub-list for method output_type
-	11, // [11:16] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	13, // 4: aggregation.v1.ListTransactionsRequest.date_from:type_name -> google.protobuf.Timestamp
+	13, // 5: aggregation.v1.ListTransactionsRequest.date_to:type_name -> google.protobuf.Timestamp
+	0,  // 6: aggregation.v1.ListTransactionsResponse.items:type_name -> aggregation.v1.AggregatedTx
+	13, // 7: aggregation.v1.ListTransactionsByRangeRequest.from_utc:type_name -> google.protobuf.Timestamp
+	13, // 8: aggregation.v1.ListTransactionsByRangeRequest.to_utc:type_name -> google.protobuf.Timestamp
+	0,  // 9: aggregation.v1.ListTransactionsByRangeResponse.transactions:type_name -> aggregation.v1.AggregatedTx
+	5,  // 10: aggregation.v1.GetUserSettingsResponse.settings:type_name -> aggregation.v1.UserSettings
+	5,  // 11: aggregation.v1.UpsertUserSettingsResponse.settings:type_name -> aggregation.v1.UserSettings
+	10, // 12: aggregation.v1.ListSupportedFiatCurrenciesResponse.currencies:type_name -> aggregation.v1.SupportedFiatCurrency
+	1,  // 13: aggregation.v1.Aggregation.ListTransactions:input_type -> aggregation.v1.ListTransactionsRequest
+	3,  // 14: aggregation.v1.Aggregation.ListTransactionsByRange:input_type -> aggregation.v1.ListTransactionsByRangeRequest
+	6,  // 15: aggregation.v1.Aggregation.GetUserSettings:input_type -> aggregation.v1.GetUserSettingsRequest
+	8,  // 16: aggregation.v1.Aggregation.UpsertUserSettings:input_type -> aggregation.v1.UpsertUserSettingsRequest
+	11, // 17: aggregation.v1.Aggregation.ListSupportedFiatCurrencies:input_type -> aggregation.v1.ListSupportedFiatCurrenciesRequest
+	2,  // 18: aggregation.v1.Aggregation.ListTransactions:output_type -> aggregation.v1.ListTransactionsResponse
+	4,  // 19: aggregation.v1.Aggregation.ListTransactionsByRange:output_type -> aggregation.v1.ListTransactionsByRangeResponse
+	7,  // 20: aggregation.v1.Aggregation.GetUserSettings:output_type -> aggregation.v1.GetUserSettingsResponse
+	9,  // 21: aggregation.v1.Aggregation.UpsertUserSettings:output_type -> aggregation.v1.UpsertUserSettingsResponse
+	12, // 22: aggregation.v1.Aggregation.ListSupportedFiatCurrencies:output_type -> aggregation.v1.ListSupportedFiatCurrenciesResponse
+	18, // [18:23] is the sub-list for method output_type
+	13, // [13:18] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_aggregation_v1_aggregation_proto_init() }

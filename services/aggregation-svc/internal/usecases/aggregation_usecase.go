@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -23,6 +25,8 @@ import (
 const (
 	defaultImportSource = "ledger"
 	defaultPageLimit    = 100
+	defaultCursorPage   = 30
+	maxCursorPage       = 100
 )
 
 type aggregationUC struct {
@@ -222,35 +226,164 @@ func (u *aggregationUC) ProcessImport(ctx context.Context, event domain.ImportEv
 	return nil
 }
 
-func (u *aggregationUC) ListTransactionsByImport(ctx context.Context, userID, importID uuid.UUID, limit, offset int32) (domain.AggregatedTxPage, error) {
+func (u *aggregationUC) ListTransactions(
+	ctx context.Context,
+	userID uuid.UUID,
+	filter domain.ListTransactionsFilter,
+	pageSize int32,
+	pageToken string,
+	targetFiat string,
+) (domain.AggregatedTxCursorPage, error) {
 	if u.txRepo == nil {
-		return domain.AggregatedTxPage{}, apperr.Internal("aggregated transaction repo is not configured", nil, nil)
+		return domain.AggregatedTxCursorPage{}, apperr.Internal("aggregated transaction repo is not configured", nil, nil)
 	}
-	if userID == uuid.Nil || importID == uuid.Nil {
-		return domain.AggregatedTxPage{}, apperr.InvalidArgument(
-			"invalid request",
+	if userID == uuid.Nil {
+		return domain.AggregatedTxCursorPage{}, apperr.InvalidArgument(
+			"invalid user id",
 			nil,
-			apperr.FieldViolation{
-				Field:       "user_id/import_id",
-				Description: "required",
-			},
+			apperr.FieldViolation{Field: "user_id", Description: "required"},
 		)
 	}
-	if limit <= 0 {
-		limit = defaultPageLimit
-	}
-	if offset < 0 {
-		return domain.AggregatedTxPage{}, apperr.InvalidArgument(
-			"invalid offset",
+	if filter.DateFrom != nil && filter.DateTo != nil && !filter.DateFrom.Before(*filter.DateTo) {
+		return domain.AggregatedTxCursorPage{}, apperr.InvalidArgument(
+			"invalid range",
 			nil,
-			apperr.FieldViolation{
-				Field:       "offset",
-				Description: "must be non-negative",
-			},
+			apperr.FieldViolation{Field: "date_from/date_to", Description: "date_from must be before date_to"},
 		)
 	}
 
-	return u.txRepo.ListByImport(ctx, userID, importID, limit, offset)
+	cursor, err := decodePageToken(pageToken)
+	if err != nil {
+		return domain.AggregatedTxCursorPage{}, err
+	}
+
+	normalizedPageSize := normalizeCursorPageSize(pageSize)
+	targetFiat = strings.ToUpper(strings.TrimSpace(targetFiat))
+	if targetFiat != "" && !isSupportedFiatCurrency(targetFiat) {
+		return domain.AggregatedTxCursorPage{}, apperr.InvalidArgument(
+			"invalid target fiat",
+			nil,
+			apperr.FieldViolation{Field: "target_fiat", Description: "unsupported value"},
+		)
+	}
+
+	filter.Source = strings.TrimSpace(filter.Source)
+	filter.Kind = strings.TrimSpace(filter.Kind)
+
+	items, hasMore, err := u.txRepo.List(ctx, userID, filter, normalizedPageSize, cursor)
+	if err != nil {
+		return domain.AggregatedTxCursorPage{}, err
+	}
+
+	if targetFiat != "" {
+		revalued, err := u.revaluateTransactionsToTargetFiat(ctx, userID, targetFiat, items)
+		if err != nil {
+			return domain.AggregatedTxCursorPage{}, err
+		}
+		items = revalued
+	}
+	if err := ensureTransactionsReadyForTax(items); err != nil {
+		return domain.AggregatedTxCursorPage{}, err
+	}
+
+	nextPageToken := ""
+	if hasMore && len(items) > 0 {
+		nextPageToken, err = encodePageToken(domain.AggregatedTxCursor{
+			LastTimeUTC: items[len(items)-1].TimeUTC.UTC(),
+			LastID:      items[len(items)-1].ID,
+		})
+		if err != nil {
+			return domain.AggregatedTxCursorPage{}, apperr.Internal("encode page token failed", err, nil)
+		}
+	}
+
+	return domain.AggregatedTxCursorPage{
+		Items:         items,
+		NextPageToken: nextPageToken,
+	}, nil
+}
+
+type txPageToken struct {
+	LastTimeUTC string `json:"last_time_utc"`
+	LastID      string `json:"last_id"`
+}
+
+func normalizeCursorPageSize(pageSize int32) int32 {
+	if pageSize <= 0 {
+		return defaultCursorPage
+	}
+	if pageSize > maxCursorPage {
+		return maxCursorPage
+	}
+	return pageSize
+}
+
+func decodePageToken(raw string) (*domain.AggregatedTxCursor, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return nil, nil
+	}
+
+	decoded, err := base64.RawURLEncoding.DecodeString(trimmed)
+	if err != nil {
+		decoded, err = base64.StdEncoding.DecodeString(trimmed)
+		if err != nil {
+			return nil, apperr.InvalidArgument(
+				"invalid page token",
+				err,
+				apperr.FieldViolation{Field: "page_token", Description: "invalid base64 payload"},
+			)
+		}
+	}
+
+	var token txPageToken
+	if err := json.Unmarshal(decoded, &token); err != nil {
+		return nil, apperr.InvalidArgument(
+			"invalid page token",
+			err,
+			apperr.FieldViolation{Field: "page_token", Description: "invalid json payload"},
+		)
+	}
+	if strings.TrimSpace(token.LastTimeUTC) == "" || strings.TrimSpace(token.LastID) == "" {
+		return nil, apperr.InvalidArgument(
+			"invalid page token",
+			nil,
+			apperr.FieldViolation{Field: "page_token", Description: "missing required cursor fields"},
+		)
+	}
+
+	lastTimeUTC, err := time.Parse(time.RFC3339Nano, token.LastTimeUTC)
+	if err != nil {
+		return nil, apperr.InvalidArgument(
+			"invalid page token",
+			err,
+			apperr.FieldViolation{Field: "page_token.last_time_utc", Description: "invalid RFC3339 timestamp"},
+		)
+	}
+	lastID, err := uuid.Parse(token.LastID)
+	if err != nil {
+		return nil, apperr.InvalidArgument(
+			"invalid page token",
+			err,
+			apperr.FieldViolation{Field: "page_token.last_id", Description: "invalid UUID"},
+		)
+	}
+
+	return &domain.AggregatedTxCursor{
+		LastTimeUTC: lastTimeUTC.UTC(),
+		LastID:      lastID,
+	}, nil
+}
+
+func encodePageToken(cursor domain.AggregatedTxCursor) (string, error) {
+	raw, err := json.Marshal(txPageToken{
+		LastTimeUTC: cursor.LastTimeUTC.UTC().Format(time.RFC3339Nano),
+		LastID:      cursor.LastID.String(),
+	})
+	if err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(raw), nil
 }
 
 func (u *aggregationUC) ListTransactionsByRange(

@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -28,7 +29,10 @@ func NewAggregationServer(aggregationUC domain.AggregationUseCase, settingsUC do
 	}
 }
 
-func (s *AggregationServer) ListTransactionsByImport(ctx context.Context, req *aggregationv1.ListTransactionsByImportRequest) (*aggregationv1.ListTransactionsByImportResponse, error) {
+func (s *AggregationServer) ListTransactions(
+	ctx context.Context,
+	req *aggregationv1.ListTransactionsRequest,
+) (*aggregationv1.ListTransactionsResponse, error) {
 	log := logger.FromContext(ctx)
 	if req == nil {
 		return nil, apperr.InvalidArgument(
@@ -37,90 +41,74 @@ func (s *AggregationServer) ListTransactionsByImport(ctx context.Context, req *a
 			apperr.FieldViolation{Field: "request", Description: "required"},
 		)
 	}
+
 	userID, err := userIDFromHeader(ctx)
 	if err != nil {
 		return nil, err
 	}
-	importID, err := parseUUID(req.ImportId)
-	if err != nil {
-		log.Warn("ListTransactionsByImport: invalid import ID", zap.Error(err))
-		return nil, apperr.InvalidArgument(
-			"invalid import id",
-			err,
-			apperr.FieldViolation{Field: "import_id", Description: "invalid format"},
-		)
+
+	var importID *uuid.UUID
+	if rawImportID := req.GetImportId(); rawImportID != "" {
+		parsedImportID, err := parseUUID(rawImportID)
+		if err != nil {
+			return nil, apperr.InvalidArgument(
+				"invalid import id",
+				err,
+				apperr.FieldViolation{Field: "import_id", Description: "invalid format"},
+			)
+		}
+		importID = &parsedImportID
 	}
 
+	var dateFrom *time.Time
+	if req.GetDateFrom() != nil {
+		value := req.GetDateFrom().AsTime().UTC()
+		dateFrom = &value
+	}
+	var dateTo *time.Time
+	if req.GetDateTo() != nil {
+		value := req.GetDateTo().AsTime().UTC()
+		dateTo = &value
+	}
 	if s.aggregationUC == nil {
 		return nil, apperr.Internal("aggregation usecase is not configured", nil, map[string]string{
-			"user_id":   userID.String(),
-			"import_id": importID.String(),
+			"user_id": userID.String(),
 		})
 	}
 
-	page, err := s.aggregationUC.ListTransactionsByImport(ctx, userID, importID, req.GetLimit(), req.GetOffset())
+	page, err := s.aggregationUC.ListTransactions(
+		ctx,
+		userID,
+		domain.ListTransactionsFilter{
+			DateFrom: dateFrom,
+			DateTo:   dateTo,
+			ImportID: importID,
+			Source:   req.GetSource(),
+			Kind:     req.GetKind(),
+		},
+		req.GetPageSize(),
+		req.GetPageToken(),
+		req.GetTargetFiat(),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	items := make([]*aggregationv1.AggregatedTx, 0, len(page.Transactions))
-	for idx, tx := range page.Transactions {
-		inMoney, err := toProtoMoneyLeg(tx.InMoney)
-		if err != nil {
-			return nil, apperr.Internal("failed to map transaction leg", err, map[string]string{
-				"field": "in_money",
-				"tx_id": tx.ID.String(),
-				"idx":   strconv.Itoa(idx),
-			})
-		}
-		outMoney, err := toProtoMoneyLeg(tx.OutMoney)
-		if err != nil {
-			return nil, apperr.Internal("failed to map transaction leg", err, map[string]string{
-				"field": "out_money",
-				"tx_id": tx.ID.String(),
-				"idx":   strconv.Itoa(idx),
-			})
-		}
-		feeMoney, err := toProtoMoneyLeg(tx.FeeMoney)
-		if err != nil {
-			return nil, apperr.Internal("failed to map transaction leg", err, map[string]string{
-				"field": "fee_money",
-				"tx_id": tx.ID.String(),
-				"idx":   strconv.Itoa(idx),
-			})
-		}
-
-		items = append(items, &aggregationv1.AggregatedTx{
-			TxId:           tx.ID.String(),
-			UserId:         tx.UserID.String(),
-			Source:         tx.Source,
-			ImportId:       tx.ImportID.String(),
-			TimeUtc:        timestamppb.New(tx.TimeUTC),
-			Kind:           tx.Kind,
-			InMoney:        inMoney,
-			OutMoney:       outMoney,
-			FeeMoney:       feeMoney,
-			TxHash:         tx.TxHash,
-			Note:           optionalString(tx.Note),
-			ContractSymbol: tx.ContractSymbol,
-			DerivativeKind: optionalString(tx.DerivativeKind),
-			PositionId:     tx.PositionID,
-			OrderId:        tx.OrderID,
-			TxFingerprint:  tx.TxFingerprint,
-		})
+	items, err := toProtoTransactions(page.Items)
+	if err != nil {
+		return nil, err
 	}
 
 	log.Info(
-		"ListTransactionsByImport: success",
+		"ListTransactions: success",
 		zap.String("user_id", userID.String()),
-		zap.String("import_id", importID.String()),
 		zap.Int("count", len(items)),
-		zap.Int64("total", page.Total),
+		zap.Bool("has_next", page.NextPageToken != ""),
 	)
 
-	return &aggregationv1.ListTransactionsByImportResponse{
-		Transactions: items,
-		Total:        page.Total,
+	return &aggregationv1.ListTransactionsResponse{
+		Items:         items,
+		NextPageToken: page.NextPageToken,
 	}, nil
 }
 
@@ -178,51 +166,9 @@ func (s *AggregationServer) ListTransactionsByRange(ctx context.Context, req *ag
 		return nil, err
 	}
 
-	items := make([]*aggregationv1.AggregatedTx, 0, len(page.Transactions))
-	for idx, tx := range page.Transactions {
-		inMoney, err := toProtoMoneyLeg(tx.InMoney)
-		if err != nil {
-			return nil, apperr.Internal("failed to map transaction leg", err, map[string]string{
-				"field": "in_money",
-				"tx_id": tx.ID.String(),
-				"idx":   strconv.Itoa(idx),
-			})
-		}
-		outMoney, err := toProtoMoneyLeg(tx.OutMoney)
-		if err != nil {
-			return nil, apperr.Internal("failed to map transaction leg", err, map[string]string{
-				"field": "out_money",
-				"tx_id": tx.ID.String(),
-				"idx":   strconv.Itoa(idx),
-			})
-		}
-		feeMoney, err := toProtoMoneyLeg(tx.FeeMoney)
-		if err != nil {
-			return nil, apperr.Internal("failed to map transaction leg", err, map[string]string{
-				"field": "fee_money",
-				"tx_id": tx.ID.String(),
-				"idx":   strconv.Itoa(idx),
-			})
-		}
-
-		items = append(items, &aggregationv1.AggregatedTx{
-			TxId:           tx.ID.String(),
-			UserId:         tx.UserID.String(),
-			Source:         tx.Source,
-			ImportId:       tx.ImportID.String(),
-			TimeUtc:        timestamppb.New(tx.TimeUTC),
-			Kind:           tx.Kind,
-			InMoney:        inMoney,
-			OutMoney:       outMoney,
-			FeeMoney:       feeMoney,
-			TxHash:         tx.TxHash,
-			Note:           optionalString(tx.Note),
-			ContractSymbol: tx.ContractSymbol,
-			DerivativeKind: optionalString(tx.DerivativeKind),
-			PositionId:     tx.PositionID,
-			OrderId:        tx.OrderID,
-			TxFingerprint:  tx.TxFingerprint,
-		})
+	items, err := toProtoTransactions(page.Transactions)
+	if err != nil {
+		return nil, err
 	}
 
 	return &aggregationv1.ListTransactionsByRangeResponse{
@@ -390,4 +336,54 @@ func optionalString(value *string) string {
 		return ""
 	}
 	return *value
+}
+
+func toProtoTransactions(txs []domain.AggregatedTransaction) ([]*aggregationv1.AggregatedTx, error) {
+	items := make([]*aggregationv1.AggregatedTx, 0, len(txs))
+	for idx, tx := range txs {
+		inMoney, err := toProtoMoneyLeg(tx.InMoney)
+		if err != nil {
+			return nil, apperr.Internal("failed to map transaction leg", err, map[string]string{
+				"field": "in_money",
+				"tx_id": tx.ID.String(),
+				"idx":   strconv.Itoa(idx),
+			})
+		}
+		outMoney, err := toProtoMoneyLeg(tx.OutMoney)
+		if err != nil {
+			return nil, apperr.Internal("failed to map transaction leg", err, map[string]string{
+				"field": "out_money",
+				"tx_id": tx.ID.String(),
+				"idx":   strconv.Itoa(idx),
+			})
+		}
+		feeMoney, err := toProtoMoneyLeg(tx.FeeMoney)
+		if err != nil {
+			return nil, apperr.Internal("failed to map transaction leg", err, map[string]string{
+				"field": "fee_money",
+				"tx_id": tx.ID.String(),
+				"idx":   strconv.Itoa(idx),
+			})
+		}
+
+		items = append(items, &aggregationv1.AggregatedTx{
+			TxId:           tx.ID.String(),
+			UserId:         tx.UserID.String(),
+			Source:         tx.Source,
+			ImportId:       tx.ImportID.String(),
+			TimeUtc:        timestamppb.New(tx.TimeUTC),
+			Kind:           tx.Kind,
+			InMoney:        inMoney,
+			OutMoney:       outMoney,
+			FeeMoney:       feeMoney,
+			TxHash:         tx.TxHash,
+			Note:           optionalString(tx.Note),
+			ContractSymbol: tx.ContractSymbol,
+			DerivativeKind: optionalString(tx.DerivativeKind),
+			PositionId:     tx.PositionID,
+			OrderId:        tx.OrderID,
+			TxFingerprint:  tx.TxFingerprint,
+		})
+	}
+	return items, nil
 }

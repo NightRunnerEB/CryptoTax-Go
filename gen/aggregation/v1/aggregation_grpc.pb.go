@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Aggregation_ListTransactionsByImport_FullMethodName    = "/aggregation.v1.Aggregation/ListTransactionsByImport"
+	Aggregation_ListTransactions_FullMethodName            = "/aggregation.v1.Aggregation/ListTransactions"
 	Aggregation_ListTransactionsByRange_FullMethodName     = "/aggregation.v1.Aggregation/ListTransactionsByRange"
 	Aggregation_GetUserSettings_FullMethodName             = "/aggregation.v1.Aggregation/GetUserSettings"
 	Aggregation_UpsertUserSettings_FullMethodName          = "/aggregation.v1.Aggregation/UpsertUserSettings"
@@ -33,9 +33,9 @@ const (
 // Aggregation provides read-model APIs for aggregated transactions
 // and user-level aggregation settings.
 type AggregationClient interface {
-	// ListTransactionsByImport returns paginated aggregated transactions
-	// for a specific authenticated user import.
-	ListTransactionsByImport(ctx context.Context, in *ListTransactionsByImportRequest, opts ...grpc.CallOption) (*ListTransactionsByImportResponse, error)
+	// ListTransactions returns aggregated transactions for the authenticated user
+	// with cursor-based pagination and optional server-side filters.
+	ListTransactions(ctx context.Context, in *ListTransactionsRequest, opts ...grpc.CallOption) (*ListTransactionsResponse, error)
 	// ListTransactionsByRange returns paginated aggregated transactions
 	// for a specific user and UTC time range [from_utc, to_utc).
 	ListTransactionsByRange(ctx context.Context, in *ListTransactionsByRangeRequest, opts ...grpc.CallOption) (*ListTransactionsByRangeResponse, error)
@@ -55,10 +55,10 @@ func NewAggregationClient(cc grpc.ClientConnInterface) AggregationClient {
 	return &aggregationClient{cc}
 }
 
-func (c *aggregationClient) ListTransactionsByImport(ctx context.Context, in *ListTransactionsByImportRequest, opts ...grpc.CallOption) (*ListTransactionsByImportResponse, error) {
+func (c *aggregationClient) ListTransactions(ctx context.Context, in *ListTransactionsRequest, opts ...grpc.CallOption) (*ListTransactionsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListTransactionsByImportResponse)
-	err := c.cc.Invoke(ctx, Aggregation_ListTransactionsByImport_FullMethodName, in, out, cOpts...)
+	out := new(ListTransactionsResponse)
+	err := c.cc.Invoke(ctx, Aggregation_ListTransactions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,9 +112,9 @@ func (c *aggregationClient) ListSupportedFiatCurrencies(ctx context.Context, in 
 // Aggregation provides read-model APIs for aggregated transactions
 // and user-level aggregation settings.
 type AggregationServer interface {
-	// ListTransactionsByImport returns paginated aggregated transactions
-	// for a specific authenticated user import.
-	ListTransactionsByImport(context.Context, *ListTransactionsByImportRequest) (*ListTransactionsByImportResponse, error)
+	// ListTransactions returns aggregated transactions for the authenticated user
+	// with cursor-based pagination and optional server-side filters.
+	ListTransactions(context.Context, *ListTransactionsRequest) (*ListTransactionsResponse, error)
 	// ListTransactionsByRange returns paginated aggregated transactions
 	// for a specific user and UTC time range [from_utc, to_utc).
 	ListTransactionsByRange(context.Context, *ListTransactionsByRangeRequest) (*ListTransactionsByRangeResponse, error)
@@ -134,8 +134,8 @@ type AggregationServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAggregationServer struct{}
 
-func (UnimplementedAggregationServer) ListTransactionsByImport(context.Context, *ListTransactionsByImportRequest) (*ListTransactionsByImportResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListTransactionsByImport not implemented")
+func (UnimplementedAggregationServer) ListTransactions(context.Context, *ListTransactionsRequest) (*ListTransactionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTransactions not implemented")
 }
 func (UnimplementedAggregationServer) ListTransactionsByRange(context.Context, *ListTransactionsByRangeRequest) (*ListTransactionsByRangeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTransactionsByRange not implemented")
@@ -170,20 +170,20 @@ func RegisterAggregationServer(s grpc.ServiceRegistrar, srv AggregationServer) {
 	s.RegisterService(&Aggregation_ServiceDesc, srv)
 }
 
-func _Aggregation_ListTransactionsByImport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListTransactionsByImportRequest)
+func _Aggregation_ListTransactions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTransactionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AggregationServer).ListTransactionsByImport(ctx, in)
+		return srv.(AggregationServer).ListTransactions(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Aggregation_ListTransactionsByImport_FullMethodName,
+		FullMethod: Aggregation_ListTransactions_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AggregationServer).ListTransactionsByImport(ctx, req.(*ListTransactionsByImportRequest))
+		return srv.(AggregationServer).ListTransactions(ctx, req.(*ListTransactionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -268,8 +268,8 @@ var Aggregation_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AggregationServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ListTransactionsByImport",
-			Handler:    _Aggregation_ListTransactionsByImport_Handler,
+			MethodName: "ListTransactions",
+			Handler:    _Aggregation_ListTransactions_Handler,
 		},
 		{
 			MethodName: "ListTransactionsByRange",

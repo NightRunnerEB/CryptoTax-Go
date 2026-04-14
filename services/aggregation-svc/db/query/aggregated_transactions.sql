@@ -63,36 +63,6 @@ SET
   updated_at = now()
 WHERE user_id = $2 AND tx_fingerprint = $16;
 
--- name: ListAggregatedTransactionsByImport :many
-SELECT
-  id,
-  user_id,
-  source,
-  import_id,
-  time_utc,
-  kind,
-  in_money,
-  out_money,
-  fee_money,
-  contract_symbol,
-  derivative_kind,
-  position_id,
-  order_id,
-  tx_hash,
-  note,
-  tx_fingerprint,
-  created_at,
-  updated_at
-FROM aggregated_transactions
-WHERE user_id = $1 AND import_id = $2
-ORDER BY time_utc DESC
-LIMIT $3 OFFSET $4;
-
--- name: CountAggregatedTransactionsByImport :one
-SELECT count(*)
-FROM aggregated_transactions
-WHERE user_id = $1 AND import_id = $2;
-
 -- name: ListAggregatedTransactionsByRange :many
 SELECT
   id,
@@ -119,6 +89,43 @@ WHERE user_id = $1
   AND time_utc < $3
 ORDER BY time_utc ASC
 LIMIT $4 OFFSET $5;
+
+-- name: ListAggregatedTransactions :many
+SELECT
+  id,
+  user_id,
+  source,
+  import_id,
+  time_utc,
+  kind,
+  in_money,
+  out_money,
+  fee_money,
+  contract_symbol,
+  derivative_kind,
+  position_id,
+  order_id,
+  tx_hash,
+  note,
+  tx_fingerprint,
+  created_at,
+  updated_at
+FROM aggregated_transactions
+WHERE user_id = sqlc.arg(user_id)
+  AND (sqlc.narg(date_from)::timestamptz IS NULL OR time_utc >= sqlc.narg(date_from)::timestamptz)
+  AND (sqlc.narg(date_to)::timestamptz IS NULL OR time_utc < sqlc.narg(date_to)::timestamptz)
+  AND (sqlc.narg(import_id)::uuid IS NULL OR import_id = sqlc.narg(import_id)::uuid)
+  AND (sqlc.narg(source)::text IS NULL OR source = sqlc.narg(source)::text)
+  AND (sqlc.narg(kind)::text IS NULL OR kind = sqlc.narg(kind)::text)
+  AND (
+    NOT sqlc.arg(has_cursor)::bool
+    OR (
+      time_utc < sqlc.arg(cursor_time)::timestamptz
+      OR (time_utc = sqlc.arg(cursor_time)::timestamptz AND id < sqlc.arg(cursor_id)::uuid)
+    )
+  )
+ORDER BY time_utc DESC, id DESC
+LIMIT sqlc.arg(page_limit);
 
 -- name: CountAggregatedTransactionsByRange :one
 SELECT count(*)

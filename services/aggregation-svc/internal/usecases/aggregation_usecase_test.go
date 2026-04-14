@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -352,6 +353,95 @@ func TestListTransactionsByRange_RevaluationIncomplete_ReturnsDataNotReady(t *te
 		t.Fatal("expected error, got nil")
 	}
 	assertAppErrorCode(t, err, apperr.ErrDataNotReady)
+}
+
+func TestListTransactions_InvalidPageToken(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	txRepo := mocks.NewMockAggregatedTransactionRepo(ctrl)
+	uc := NewAggregationUC(txRepo, nil, nil, nil, nil, nil, 100, 0)
+
+	_, err := uc.ListTransactions(
+		context.Background(),
+		uuid.New(),
+		domain.ListTransactionsFilter{},
+		30,
+		"not-a-token",
+		"",
+	)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	assertAppErrorCode(t, err, apperr.ErrInvalidArgument)
+}
+
+func TestListTransactions_SuccessWithNextToken(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	txRepo := mocks.NewMockAggregatedTransactionRepo(ctrl)
+	uc := NewAggregationUC(txRepo, nil, nil, nil, nil, nil, 100, 0)
+
+	userID := uuid.New()
+	importID := uuid.New()
+	lastTxID := uuid.New()
+	now := time.Date(2026, 4, 14, 10, 0, 0, 0, time.UTC)
+
+	txRepo.EXPECT().
+		List(gomock.Any(), userID, gomock.Any(), int32(30), gomock.Nil()).
+		DoAndReturn(func(_ context.Context, _ uuid.UUID, _ domain.ListTransactionsFilter, _ int32, _ *domain.AggregatedTxCursor) ([]domain.AggregatedTransaction, bool, error) {
+			return []domain.AggregatedTransaction{
+				{
+					ID:            uuid.New(),
+					UserID:        userID,
+					ImportID:      importID,
+					Source:        "MEXC",
+					Kind:          "spot",
+					TimeUTC:       now,
+					TxFingerprint: "fp-1",
+				},
+				{
+					ID:            lastTxID,
+					UserID:        userID,
+					ImportID:      importID,
+					Source:        "MEXC",
+					Kind:          "spot",
+					TimeUTC:       now.Add(-time.Minute),
+					TxFingerprint: "fp-2",
+				},
+			}, true, nil
+		})
+
+	page, err := uc.ListTransactions(
+		context.Background(),
+		userID,
+		domain.ListTransactionsFilter{},
+		30,
+		"",
+		"",
+	)
+	if err != nil {
+		t.Fatalf("ListTransactions returned error: %v", err)
+	}
+	if len(page.Items) != 2 {
+		t.Fatalf("unexpected items count: %d", len(page.Items))
+	}
+	if strings.TrimSpace(page.NextPageToken) == "" {
+		t.Fatal("expected next page token")
+	}
+
+	cursor, err := decodePageToken(page.NextPageToken)
+	if err != nil {
+		t.Fatalf("decodePageToken returned error: %v", err)
+	}
+	if cursor == nil || cursor.LastID != lastTxID {
+		t.Fatalf("unexpected cursor: %+v", cursor)
+	}
 }
 
 func assertAppErrorCode(t *testing.T, err error, expected apperr.ErrorCode) {

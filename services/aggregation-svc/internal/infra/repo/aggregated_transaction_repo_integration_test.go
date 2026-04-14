@@ -48,12 +48,21 @@ func TestAggregatedTransactionRepoIntegration_UpsertAndList(t *testing.T) {
 		t.Fatalf("UpsertBatch returned error: %v", err)
 	}
 
-	pageByImport, err := repo.ListByImport(ctx, userID, importID, 50, 0)
+	items, hasMore, err := repo.List(
+		ctx,
+		userID,
+		domain.ListTransactionsFilter{ImportID: &importID},
+		50,
+		nil,
+	)
 	if err != nil {
-		t.Fatalf("ListByImport returned error: %v", err)
+		t.Fatalf("List returned error: %v", err)
 	}
-	if pageByImport.Total != 2 || len(pageByImport.Transactions) != 2 {
-		t.Fatalf("unexpected page by import: %+v", pageByImport)
+	if hasMore {
+		t.Fatal("expected hasMore=false")
+	}
+	if len(items) != 2 {
+		t.Fatalf("unexpected items count: %d", len(items))
 	}
 
 	pageByRange, err := repo.ListByRange(ctx, userID, t1.Add(-time.Hour), t2.Add(time.Hour), 50, 0)
