@@ -47,9 +47,9 @@ export interface AggregatedTransaction {
   txFingerprint: string
 }
 
-export interface ListTransactionsByImportResponse {
-  transactions: AggregatedTransaction[]
-  total: number
+export interface ListTransactionsResponse {
+  items: AggregatedTransaction[]
+  nextPageToken: string
 }
 
 export interface UserSettings {
@@ -66,10 +66,15 @@ interface SettingsResponse {
   settings: UserSettings
 }
 
-interface ListTransactionsByImportInput {
-  importId: string
-  limit?: number
-  offset?: number
+interface ListTransactionsInput {
+  pageSize?: number
+  pageToken?: string
+  dateFrom?: string
+  dateTo?: string
+  importId?: string
+  source?: string
+  kind?: string
+  targetFiat?: string
 }
 
 export async function listSupportedFiatCurrencies(): Promise<SupportedFiatCurrency[]> {
@@ -80,14 +85,20 @@ export async function listSupportedFiatCurrencies(): Promise<SupportedFiatCurren
   return response.currencies
 }
 
-export async function listTransactionsByImport(input: ListTransactionsByImportInput): Promise<ListTransactionsByImportResponse> {
-  return aggregationClient.request<ListTransactionsByImportResponse>(
-    `/imports/${input.importId}/transactions`,
+export async function listTransactions(input: ListTransactionsInput): Promise<ListTransactionsResponse> {
+  return aggregationClient.request<ListTransactionsResponse>(
+    '/transactions',
     {
       method: 'GET',
       query: {
-        limit: input.limit,
-        offset: input.offset,
+        page_size: input.pageSize,
+        page_token: input.pageToken,
+        date_from: input.dateFrom,
+        date_to: input.dateTo,
+        import_id: input.importId,
+        source: input.source,
+        kind: input.kind,
+        target_fiat: input.targetFiat,
       },
     },
   )

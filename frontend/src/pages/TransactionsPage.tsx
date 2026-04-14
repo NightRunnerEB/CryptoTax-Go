@@ -1,9 +1,8 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import type { FormEvent } from 'react'
 import {
   getUserSettings,
   listSupportedFiatCurrencies,
-  listTransactionsByImport,
+  listTransactions,
   upsertUserSettings,
   type AggregatedTransaction,
   type MoneyLeg,
@@ -28,14 +27,28 @@ const UTC_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-GB', {
   hour12: false,
 })
 
-const DEFAULT_LIMIT = 50
+const DEFAULT_PAGE_SIZE = 30
 
-type SortMode = 'time_desc' | 'time_asc'
+interface TransactionsFilters {
+  fromDate: string
+  toDate: string
+  source: string
+  kind: string
+  importId: string
+}
 
 interface MoneyLegDetailsProps {
   title: string
   leg: MoneyLeg | undefined
   displayFiatCode: string | null
+}
+
+const DEFAULT_FILTERS: TransactionsFilters = {
+  fromDate: '',
+  toDate: '',
+  source: 'all',
+  kind: 'all',
+  importId: '',
 }
 
 function formatUtcTimestamp(value: string): string {
@@ -45,12 +58,6 @@ function formatUtcTimestamp(value: string): string {
   }
 
   return `${UTC_DATE_TIME_FORMATTER.format(date)} UTC`
-}
-
-function parseTimestamp(value: string): number {
-  const date = new Date(value)
-  const ms = date.getTime()
-  return Number.isNaN(ms) ? 0 : ms
 }
 
 function truncateMiddle(value: string | undefined, head = 8, tail = 6): string {
@@ -82,6 +89,56 @@ function formatMoneyLegSummary(leg: MoneyLeg | undefined, displayFiatCode: strin
   }
 
   return basePart
+}
+
+function toUtcRange(filters: TransactionsFilters): { dateFrom?: string; dateTo?: string } {
+  const dateFrom = filters.fromDate
+    ? new Date(`${filters.fromDate}T00:00:00.000Z`).toISOString()
+    : undefined
+
+  const dateTo = filters.toDate
+    ? new Date(`${filters.toDate}T00:00:00.000Z`)
+    : undefined
+  if (dateTo) {
+    dateTo.setUTCDate(dateTo.getUTCDate() + 1)
+  }
+
+  return {
+    dateFrom,
+    dateTo: dateTo?.toISOString(),
+  }
+}
+
+function filtersEqual(left: TransactionsFilters, right: TransactionsFilters): boolean {
+  return (
+    left.fromDate === right.fromDate &&
+    left.toDate === right.toDate &&
+    left.source === right.source &&
+    left.kind === right.kind &&
+    left.importId === right.importId
+  )
+}
+
+function countActiveFilters(filters: TransactionsFilters): number {
+  let count = 0
+
+  if (filters.fromDate) {
+    count += 1
+  }
+  if (filters.toDate) {
+    count += 1
+  }
+  if (filters.importId.trim() !== '') {
+    count += 1
+  }
+  if (filters.source !== 'all') {
+    count += 1
+  }
+  if (filters.kind !== 'all') {
+    count += 1
+  }
+
+  return count
 }
 
 function MoneyLegDetails({ title, leg, displayFiatCode }: MoneyLegDetailsProps) {
@@ -116,13 +173,23 @@ function MoneyLegDetails({ title, leg, displayFiatCode }: MoneyLegDetailsProps) 
   )
 }
 
+function FilterIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+      <path
+        d="M2 3.25h12l-4.7 5.18v3.25L6.7 12.9V8.43L2 3.25Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 export function TransactionsPage() {
   const { session } = useAuth()
   const notifications = useNotifications()
-
-  const [importId, setImportId] = useState('')
-  const [limit, setLimit] = useState(DEFAULT_LIMIT)
-  const [offset, setOffset] = useState(0)
 
   const [supportedFiat, setSupportedFiat] = useState<SupportedFiatCurrency[]>([])
   const [activeUserFiat, setActiveUserFiat] = useState<string | null>(null)
@@ -131,15 +198,16 @@ export function TransactionsPage() {
   const [isFiatUpdating, setIsFiatUpdating] = useState(false)
   const [fiatError, setFiatError] = useState<string | null>(null)
 
+  const [draftFilters, setDraftFilters] = useState<TransactionsFilters>(DEFAULT_FILTERS)
+  const [appliedFilters, setAppliedFilters] = useState<TransactionsFilters>(DEFAULT_FILTERS)
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
+
   const [transactions, setTransactions] = useState<AggregatedTransaction[]>([])
-  const [total, setTotal] = useState(0)
-  const [hasSearched, setHasSearched] = useState(false)
+  const [page, setPage] = useState(0)
+  const [pageTokens, setPageTokens] = useState<string[]>([''])
+  const [nextPageToken, setNextPageToken] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const [sourceFilter, setSourceFilter] = useState('all')
-  const [fiatFilter, setFiatFilter] = useState('')
-  const [sortMode, setSortMode] = useState<SortMode>('time_desc')
   const [expandedTxIds, setExpandedTxIds] = useState<Set<string>>(new Set())
 
   const loadFiatContext = useCallback(async (): Promise<void> => {
@@ -159,13 +227,11 @@ export function TransactionsPage() {
       setSupportedFiat(currencies)
       setActiveUserFiat(userSettings.fiatCurrency)
       setActiveUserTimezone(userSettings.timezone)
-      setFiatFilter(userSettings.fiatCurrency)
     } catch (loadError) {
       setFiatError(toErrorMessage(loadError, 'Failed to load fiat currency context.'))
       setSupportedFiat([])
       setActiveUserFiat(null)
       setActiveUserTimezone(null)
-      setFiatFilter('')
     } finally {
       setIsFiatLoading(false)
     }
@@ -176,95 +242,100 @@ export function TransactionsPage() {
   }, [loadFiatContext])
 
   const fetchTransactions = useCallback(
-    async (nextOffset: number): Promise<void> => {
-      if (!session) {
+    async (pageToken: string, pageIndex: number): Promise<void> => {
+      if (!session || !activeUserFiat) {
         return
       }
 
-      setHasSearched(true)
       setIsLoading(true)
       setError(null)
 
       try {
-        const response = await listTransactionsByImport({
-          importId,
-          limit,
-          offset: nextOffset,
+        const { dateFrom, dateTo } = toUtcRange(appliedFilters)
+        const normalizedImportId = appliedFilters.importId.trim()
+        const normalizedSource = appliedFilters.source === 'all' ? undefined : appliedFilters.source
+        const normalizedKind = appliedFilters.kind === 'all' ? undefined : appliedFilters.kind
+
+        const response = await listTransactions({
+          pageSize: DEFAULT_PAGE_SIZE,
+          pageToken,
+          dateFrom,
+          dateTo,
+          importId: normalizedImportId === '' ? undefined : normalizedImportId,
+          source: normalizedSource,
+          kind: normalizedKind,
+          targetFiat: activeUserFiat,
         })
 
-        setOffset(nextOffset)
-        setTransactions(response.transactions)
-        setTotal(response.total)
+        setTransactions(response.items)
+        setNextPageToken(response.nextPageToken ?? '')
+        setPage(pageIndex)
         setExpandedTxIds(new Set())
       } catch (fetchError) {
         setError(toErrorMessage(fetchError, 'Failed to load transactions.'))
         setTransactions([])
-        setTotal(0)
+        setNextPageToken('')
+        setPage(0)
       } finally {
         setIsLoading(false)
       }
     },
-    [session, importId, limit],
+    [session, activeUserFiat, appliedFilters],
   )
 
-  const handleSearchSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
-    event.preventDefault()
-    await fetchTransactions(0)
-  }
+  useEffect(() => {
+    if (!session || isFiatLoading || fiatError || !activeUserFiat) {
+      return
+    }
+
+    setPageTokens([''])
+    void fetchTransactions('', 0)
+  }, [session, isFiatLoading, fiatError, activeUserFiat, appliedFilters, fetchTransactions])
 
   const handleReload = async (): Promise<void> => {
-    await fetchTransactions(offset)
+    const currentToken = pageTokens[page] ?? ''
+    await fetchTransactions(currentToken, page)
   }
 
   const handlePrevPage = async (): Promise<void> => {
-    const nextOffset = Math.max(0, offset - limit)
-    await fetchTransactions(nextOffset)
+    if (page === 0) {
+      return
+    }
+    const prevPage = page - 1
+    const token = pageTokens[prevPage] ?? ''
+    await fetchTransactions(token, prevPage)
   }
 
   const handleNextPage = async (): Promise<void> => {
-    const nextOffset = offset + limit
-    if (nextOffset >= total) {
+    if (nextPageToken === '') {
       return
     }
-    await fetchTransactions(nextOffset)
+    const nextPage = page + 1
+    setPageTokens((prev) => {
+      const next = [...prev]
+      next[nextPage] = nextPageToken
+      return next
+    })
+    await fetchTransactions(nextPageToken, nextPage)
   }
 
-  const sourceOptions = useMemo(() => {
-    const set = new Set<string>()
-    transactions.forEach((tx) => {
-      if (tx.source.trim() !== '') {
-        set.add(tx.source)
-      }
+  const handleApplyFilters = (): void => {
+    setAppliedFilters({
+      fromDate: draftFilters.fromDate,
+      toDate: draftFilters.toDate,
+      source: draftFilters.source,
+      kind: draftFilters.kind,
+      importId: draftFilters.importId.trim(),
     })
-    return Array.from(set).sort((a, b) => a.localeCompare(b))
-  }, [transactions])
+  }
 
-  const filteredTransactions = useMemo(() => {
-    let result = [...transactions]
-
-    if (sourceFilter !== 'all') {
-      result = result.filter((tx) => tx.source === sourceFilter)
-    }
-
-    result.sort((a, b) => {
-      const left = parseTimestamp(a.timeUtc)
-      const right = parseTimestamp(b.timeUtc)
-      return sortMode === 'time_desc' ? right - left : left - right
-    })
-
-    return result
-  }, [transactions, sourceFilter, sortMode])
-
-  const displayFiatCode = useMemo(() => {
-    if (fiatFilter) {
-      return fiatFilter
-    }
-    return activeUserFiat
-  }, [fiatFilter, activeUserFiat])
+  const handleResetFilters = (): void => {
+    setDraftFilters(DEFAULT_FILTERS)
+    setAppliedFilters(DEFAULT_FILTERS)
+  }
 
   const handleFiatChange = useCallback(
     async (nextFiatCode: string): Promise<void> => {
-      setFiatFilter(nextFiatCode)
       setError(null)
 
       if (!session || !activeUserTimezone || nextFiatCode.trim() === '' || nextFiatCode === activeUserFiat) {
@@ -280,21 +351,15 @@ export function TransactionsPage() {
 
         setActiveUserFiat(updatedSettings.fiatCurrency)
         setActiveUserTimezone(updatedSettings.timezone)
-        setFiatFilter(updatedSettings.fiatCurrency)
         notifications.success('User currency updated', `Default fiat currency: ${updatedSettings.fiatCurrency}`)
-
-        if (hasSearched && importId.trim() !== '') {
-          await fetchTransactions(0)
-        }
       } catch (updateError) {
         setError(toErrorMessage(updateError, 'Failed to update user currency.'))
-        setFiatFilter(activeUserFiat ?? '')
         notifications.error('Failed to update user currency', toErrorMessage(updateError))
       } finally {
         setIsFiatUpdating(false)
       }
     },
-    [session, activeUserTimezone, activeUserFiat, notifications, hasSearched, importId, fetchTransactions],
+    [session, activeUserTimezone, activeUserFiat, notifications],
   )
 
   const toggleExpanded = (txId: string): void => {
@@ -309,54 +374,65 @@ export function TransactionsPage() {
     })
   }
 
+  const sourceOptions = useMemo(() => {
+    const set = new Set<string>()
+    transactions.forEach((tx) => {
+      if (tx.source.trim() !== '') {
+        set.add(tx.source)
+      }
+    })
+    return Array.from(set).sort((left, right) => left.localeCompare(right))
+  }, [transactions])
+
+  const kindOptions = useMemo(() => {
+    const set = new Set<string>()
+    transactions.forEach((tx) => {
+      if (tx.kind.trim() !== '') {
+        set.add(tx.kind)
+      }
+    })
+    return Array.from(set).sort((left, right) => left.localeCompare(right))
+  }, [transactions])
+
+  const activeFilterCount = useMemo(() => countActiveFilters(appliedFilters), [appliedFilters])
+  const displayFiatCode = activeUserFiat
+  const filtersDirty = !filtersEqual(draftFilters, appliedFilters)
+
   return (
     <section className="stack-lg">
       <PageHeader
         title="Transactions"
-        description="Review aggregated transactions for an import in a dense accounting-friendly table."
+        description="Latest aggregated transactions in your current valuation fiat, with optional filters on demand."
       />
 
+      {fiatError ? <ErrorState message={fiatError} actionLabel="Retry" onAction={() => void loadFiatContext()} /> : null}
+      {error ? <ErrorState message={error} actionLabel="Retry" onAction={() => void handleReload()} /> : null}
+
       <article className="card">
-        <form onSubmit={handleSearchSubmit} className="form-grid two-columns">
-          <label className="column-full">
-            Import ID (UUID)
-            <input
-              required
-              value={importId}
-              onChange={(event) => setImportId(event.target.value)}
-              placeholder="00000000-0000-0000-0000-000000000000"
-            />
-          </label>
+        <div className="transactions-toolbar">
+          <div className="actions-row">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setIsFilterPanelOpen((prev) => !prev)}
+              aria-expanded={isFilterPanelOpen}
+              aria-controls="transactions-filter-panel"
+            >
+              <FilterIcon />
+              {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : 'Filters'}
+            </button>
 
-          <label>
-            Page size
-            <input
-              type="number"
-              min={1}
-              max={200}
-              value={limit}
-              onChange={(event) => setLimit(Math.min(200, Math.max(1, Number(event.target.value) || DEFAULT_LIMIT)))}
-            />
-          </label>
+            <button type="button" className="btn-secondary" onClick={() => void handleReload()} disabled={isLoading}>
+              Refresh
+            </button>
+          </div>
 
-          <label>
-            Source filter
-            <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} disabled={isLoading}>
-              <option value="all">All sources</option>
-              {sourceOptions.map((source) => (
-                <option key={source} value={source}>
-                  {source}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Fiat display currency
+          <label className="toolbar-field">
+            Fiat currency
             <select
-              value={fiatFilter}
+              value={activeUserFiat ?? ''}
               onChange={(event) => void handleFiatChange(event.target.value)}
-              disabled={isLoading || isFiatLoading || isFiatUpdating}
+              disabled={isLoading || isFiatLoading || isFiatUpdating || supportedFiat.length === 0}
             >
               {supportedFiat.map((fiat) => (
                 <option key={fiat.code} value={fiat.code}>
@@ -365,66 +441,114 @@ export function TransactionsPage() {
               ))}
             </select>
           </label>
+        </div>
 
-          <label>
-            Sort
-            <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)} disabled={isLoading}>
-              <option value="time_desc">TimeUTC: newest first</option>
-              <option value="time_asc">TimeUTC: oldest first</option>
-            </select>
-          </label>
+        {isFilterPanelOpen ? (
+          <div id="transactions-filter-panel" className="transactions-filter-panel">
+            <div className="form-grid two-columns">
+              <label>
+                From date (UTC)
+                <input
+                  type="date"
+                  value={draftFilters.fromDate}
+                  onChange={(event) => setDraftFilters((prev) => ({ ...prev, fromDate: event.target.value }))}
+                />
+              </label>
 
-          <div className="column-full actions-row">
-            <button type="submit" className="btn-primary" disabled={isLoading || importId.trim() === ''}>
-              {isLoading ? 'Loading...' : 'Load transactions'}
-            </button>
-            {hasSearched ? (
-              <button type="button" className="btn-secondary" onClick={() => void handleReload()} disabled={isLoading}>
-                Reload
+              <label>
+                To date (UTC)
+                <input
+                  type="date"
+                  value={draftFilters.toDate}
+                  onChange={(event) => setDraftFilters((prev) => ({ ...prev, toDate: event.target.value }))}
+                />
+              </label>
+
+              <label>
+                Exchange
+                <select
+                  value={draftFilters.source}
+                  onChange={(event) => setDraftFilters((prev) => ({ ...prev, source: event.target.value }))}
+                >
+                  <option value="all">All exchanges</option>
+                  {sourceOptions.map((source) => (
+                    <option key={source} value={source}>
+                      {source}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Kind
+                <select
+                  value={draftFilters.kind}
+                  onChange={(event) => setDraftFilters((prev) => ({ ...prev, kind: event.target.value }))}
+                >
+                  <option value="all">All kinds</option>
+                  {kindOptions.map((kind) => (
+                    <option key={kind} value={kind}>
+                      {kind}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Import ID
+                <input
+                  value={draftFilters.importId}
+                  onChange={(event) => setDraftFilters((prev) => ({ ...prev, importId: event.target.value }))}
+                  placeholder="Optional UUID"
+                />
+              </label>
+            </div>
+
+            <div className="actions-row">
+              <button type="button" className="btn-primary" onClick={handleApplyFilters} disabled={isLoading || !filtersDirty}>
+                Apply filters
               </button>
-            ) : null}
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleResetFilters}
+                disabled={isLoading || (activeFilterCount === 0 && !filtersDirty)}
+              >
+                Reset
+              </button>
+            </div>
           </div>
-        </form>
+        ) : null}
 
         <p className="hint-text">
-          Server-side pagination is used (`limit`/`offset`). Sorting and source filter are applied on the current page.
+          Default view loads the latest transactions automatically. Pagination shows {DEFAULT_PAGE_SIZE} rows per page.
         </p>
-        {activeUserFiat ? (
-          <p className="hint-text">
-            User valuation currency: {activeUserFiat}. Changing fiat updates user settings via `upsertUserSettings`.
-          </p>
-        ) : null}
+        {displayFiatCode ? <p className="hint-text">User valuation currency: {displayFiatCode}.</p> : null}
+        <p className="hint-text">Filters are applied server-side with cursor pagination.</p>
       </article>
 
-      {isFiatLoading ? <LoadingState label="Loading supported fiat currencies..." /> : null}
-      {fiatError ? <ErrorState message={fiatError} actionLabel="Retry" onAction={() => void loadFiatContext()} /> : null}
-
+      {isFiatLoading && !activeUserFiat ? <LoadingState label="Loading fiat currency context..." /> : null}
       {isLoading ? <LoadingState label="Fetching aggregated transactions..." /> : null}
-      {error ? <ErrorState message={error} actionLabel="Retry" onAction={() => void handleReload()} /> : null}
 
-      {!isLoading && !error && !hasSearched ? (
-        <EmptyState title="Search pending" description="Enter Import ID and load transactions." />
+      {!isLoading && !error && transactions.length === 0 ? (
+        <EmptyState title="No transactions found" description="Try adjusting the optional filters or load more recent imports." />
       ) : null}
 
-      {!isLoading && !error && hasSearched && filteredTransactions.length === 0 ? (
-        <EmptyState title="No transactions found" description="Try changing Import ID, pagination, or filters." />
-      ) : null}
-
-      {!isLoading && !error && filteredTransactions.length > 0 ? (
+      {!isLoading && !error && transactions.length > 0 ? (
         <article className="card">
           <div className="table-toolbar">
             <p className="table-summary">
-              Total (server): {total} | Current page offset: {offset} | Displayed rows: {filteredTransactions.length}
+              Page: {page + 1} | Displayed rows: {transactions.length}
             </p>
             <div className="pagination-controls">
-              <button type="button" className="btn-secondary" onClick={() => void handlePrevPage()} disabled={isLoading || offset === 0}>
+              <button type="button" className="btn-secondary" onClick={() => void handlePrevPage()} disabled={isLoading || page === 0}>
                 Previous
               </button>
               <button
                 type="button"
                 className="btn-secondary"
                 onClick={() => void handleNextPage()}
-                disabled={isLoading || offset + limit >= total}
+                disabled={isLoading || nextPageToken === ''}
               >
                 Next
               </button>
@@ -447,7 +571,7 @@ export function TransactionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredTransactions.map((tx) => {
+                {transactions.map((tx) => {
                   const expanded = expandedTxIds.has(tx.txId)
 
                   return (
