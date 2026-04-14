@@ -26,6 +26,7 @@ const DEFAULT_LIMIT = 20
 const PAGE_SIZE_OPTIONS = [20, 50, 100] as const
 const JURISDICTION_OPTIONS = ['RU', 'KZ'] as const
 const COST_BASIS_OPTIONS: Array<TaxPolicy['costBasisMethod']> = ['FIFO', 'LIFO', 'AVG']
+const STATUS_POLL_INTERVAL_MS = 5_000
 
 type JurisdictionOption = (typeof JURISDICTION_OPTIONS)[number]
 
@@ -98,6 +99,23 @@ function statusLabel(status: string): string {
   return normalized.toUpperCase()
 }
 
+function resolveArtifactUrl(value?: string): string | null {
+  if (!value || value.trim() === '') {
+    return null
+  }
+
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return null
+    }
+
+    return url.toString()
+  } catch {
+    return null
+  }
+}
+
 export function ReportsPage() {
   const { session } = useAuth()
   const notifications = useNotifications()
@@ -121,12 +139,14 @@ export function ReportsPage() {
   const [createForm, setCreateForm] = useState<CreateReportFormState>(INITIAL_CREATE_FORM)
 
   const loadList = useCallback(
-    async (nextOffset: number): Promise<void> => {
+    async (nextOffset: number, options?: { silent?: boolean }): Promise<void> => {
       if (!session) {
         return
       }
 
-      setIsLoadingList(true)
+      if (!options?.silent) {
+        setIsLoadingList(true)
+      }
       setListError(null)
 
       try {
@@ -138,7 +158,9 @@ export function ReportsPage() {
       } catch (error) {
         setListError(toErrorMessage(error, 'Unable to load tax reports.'))
       } finally {
-        setIsLoadingList(false)
+        if (!options?.silent) {
+          setIsLoadingList(false)
+        }
       }
     },
     [session, limit],
@@ -149,7 +171,7 @@ export function ReportsPage() {
   }, [loadList])
 
   const loadDetails = useCallback(
-    async (reportId: string, force = false): Promise<void> => {
+    async (reportId: string, force = false, options?: { silent?: boolean; notifyOnError?: boolean }): Promise<void> => {
       if (!session) {
         return
       }
@@ -158,10 +180,12 @@ export function ReportsPage() {
         return
       }
 
-      setDetailsLoadingByReportId((prev) => ({
-        ...prev,
-        [reportId]: true,
-      }))
+      if (!options?.silent) {
+        setDetailsLoadingByReportId((prev) => ({
+          ...prev,
+          [reportId]: true,
+        }))
+      }
 
       setDetailsErrorByReportId((prev) => {
         const next = { ...prev }
@@ -183,16 +207,41 @@ export function ReportsPage() {
           [reportId]: message,
         }))
 
-        notifications.error('Unable to load report details', message)
+        if (options?.notifyOnError ?? true) {
+          notifications.error('Unable to load report details', message)
+        }
       } finally {
-        setDetailsLoadingByReportId((prev) => ({
-          ...prev,
-          [reportId]: false,
-        }))
+        if (!options?.silent) {
+          setDetailsLoadingByReportId((prev) => ({
+            ...prev,
+            [reportId]: false,
+          }))
+        }
       }
     },
     [session, detailsByReportId, notifications],
   )
+
+  useEffect(() => {
+    if (!session) {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      void loadList(offset, { silent: true })
+
+      expandedReportIds.forEach((reportId) => {
+        void loadDetails(reportId, true, {
+          silent: true,
+          notifyOnError: false,
+        })
+      })
+    }, STATUS_POLL_INTERVAL_MS)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [session, loadList, loadDetails, offset, expandedReportIds])
 
   const toggleExpanded = (reportId: string): void => {
     let shouldLoadDetails = false
@@ -355,6 +404,10 @@ export function ReportsPage() {
                   const details = detailsByReportId[job.reportId] ?? job
                   const detailsLoading = detailsLoadingByReportId[job.reportId] ?? false
                   const detailsError = detailsErrorByReportId[job.reportId] ?? null
+                  const auditZipUrl = resolveArtifactUrl(job.auditZipUrl)
+                  const reportUrl = resolveArtifactUrl(job.reportUrl)
+                  const detailsAuditZipUrl = resolveArtifactUrl(details.auditZipUrl)
+                  const detailsReportUrl = resolveArtifactUrl(details.reportUrl)
 
                   return (
                     <Fragment key={job.reportId}>
@@ -377,8 +430,8 @@ export function ReportsPage() {
                         </td>
                         <td>{formatUtcTimestamp(job.createdAt)}</td>
                         <td>
-                          {job.auditZipUrl ? (
-                            <a className="report-link" href={job.auditZipUrl} target="_blank" rel="noreferrer">
+                          {auditZipUrl ? (
+                            <a className="report-link" href={auditZipUrl} target="_blank" rel="noreferrer">
                               Download ZIP
                             </a>
                           ) : (
@@ -386,8 +439,8 @@ export function ReportsPage() {
                           )}
                         </td>
                         <td>
-                          {job.reportUrl ? (
-                            <a className="report-link" href={job.reportUrl} target="_blank" rel="noreferrer">
+                          {reportUrl ? (
+                            <a className="report-link" href={reportUrl} target="_blank" rel="noreferrer">
                               Open report
                             </a>
                           ) : (
@@ -463,22 +516,22 @@ export function ReportsPage() {
                                   <dl className="report-kv">
                                     <dt>AuditZipURL</dt>
                                     <dd>
-                                      {details.auditZipUrl ? (
-                                        <a className="report-link" href={details.auditZipUrl} target="_blank" rel="noreferrer">
-                                          {truncateMiddle(details.auditZipUrl, 18, 14)}
+                                      {detailsAuditZipUrl ? (
+                                        <a className="report-link" href={detailsAuditZipUrl} target="_blank" rel="noreferrer">
+                                          {truncateMiddle(detailsAuditZipUrl, 18, 14)}
                                         </a>
                                       ) : (
-                                        '—'
+                                        'Unavailable'
                                       )}
                                     </dd>
                                     <dt>ReportURL</dt>
                                     <dd>
-                                      {details.reportUrl ? (
-                                        <a className="report-link" href={details.reportUrl} target="_blank" rel="noreferrer">
-                                          {truncateMiddle(details.reportUrl, 18, 14)}
+                                      {detailsReportUrl ? (
+                                        <a className="report-link" href={detailsReportUrl} target="_blank" rel="noreferrer">
+                                          {truncateMiddle(detailsReportUrl, 18, 14)}
                                         </a>
                                       ) : (
-                                        '—'
+                                        'Unavailable'
                                       )}
                                     </dd>
                                   </dl>
