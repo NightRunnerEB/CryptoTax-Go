@@ -28,6 +28,7 @@ func New(ctx context.Context, cfg Config, opts ...Option) (*Client, error) {
 	cfg.AccessKey = strings.TrimSpace(cfg.AccessKey)
 	cfg.SecretKey = strings.TrimSpace(cfg.SecretKey)
 	cfg.Bucket = strings.TrimSpace(cfg.Bucket)
+	cfg.Region = strings.TrimSpace(cfg.Region)
 
 	if cfg.Endpoint == "" {
 		return nil, fmt.Errorf("minio.New: %w: endpoint is required", ErrInvalidConfig)
@@ -50,6 +51,7 @@ func New(ctx context.Context, cfg Config, opts ...Option) (*Client, error) {
 	client, err := minioapi.New(cfg.Endpoint, &minioapi.Options{
 		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
 		Secure: cfg.UseSSL,
+		Region: cfg.Region,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("minio.New: %w", err)
@@ -59,6 +61,9 @@ func New(ctx context.Context, cfg Config, opts ...Option) (*Client, error) {
 		client: client,
 		bucket: cfg.Bucket,
 		opts:   settings,
+	}
+	if settings.skipBucketCheck {
+		return out, nil
 	}
 
 	exists, err := out.bucketExists(ctx)

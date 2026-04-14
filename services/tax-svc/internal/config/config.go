@@ -70,6 +70,7 @@ type (
 
 	MinIOConfig struct {
 		Endpoint       string        `yaml:"endpoint" env:"MINIO_ENDPOINT" env-required:"true"`
+		PublicBaseURL  string        `yaml:"public_base_url" env:"MINIO_PUBLIC_BASE_URL"`
 		AccessKey      string        `env:"MINIO_ACCESS_KEY" env-required:"true"`
 		SecretKey      string        `env:"MINIO_SECRET_KEY" env-required:"true"`
 		Bucket         string        `yaml:"bucket"`

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"net/url"
 	"strings"
 	"time"
 
@@ -15,9 +16,10 @@ import (
 )
 
 type MinIOStorage struct {
-	client     *miniopkg.Client
-	PresignTTL time.Duration
-	log        *zap.Logger
+	client        *miniopkg.Client
+	presignClient *miniopkg.Client
+	PresignTTL    time.Duration
+	log           *zap.Logger
 }
 
 func NewMinIOStorage(ctx context.Context, cfg config.MinIOConfig) (*MinIOStorage, error) {
@@ -26,6 +28,14 @@ func NewMinIOStorage(ctx context.Context, cfg config.MinIOConfig) (*MinIOStorage
 		zap.String("endpoint", cfg.Endpoint),
 		zap.String("bucket", cfg.Bucket),
 	)
+
+	publicURL, err := parsePublicBaseURL(cfg.PublicBaseURL)
+	if err != nil {
+		return nil, err
+	}
+	if publicURL != nil {
+		log = log.With(zap.String("public_base_url", publicURL.String()))
+	}
 
 	client, err := miniopkg.New(
 		ctx,
@@ -43,6 +53,28 @@ func NewMinIOStorage(ctx context.Context, cfg config.MinIOConfig) (*MinIOStorage
 		return nil, mapInitError(err)
 	}
 
+	var presignClient *miniopkg.Client
+	if publicURL != nil {
+		publicUseSSL := strings.EqualFold(publicURL.Scheme, "https")
+		presignClient, err = miniopkg.New(
+			ctx,
+			miniopkg.Config{
+				Endpoint:  publicURL.Host,
+				AccessKey: cfg.AccessKey,
+				SecretKey: cfg.SecretKey,
+				Bucket:    cfg.Bucket,
+				UseSSL:    publicUseSSL,
+				Region:    "us-east-1",
+			},
+			miniopkg.WithRequestTimeout(cfg.RequestTimeout),
+			miniopkg.WithRetry(cfg.RetryMax, cfg.RetryBaseDelay, cfg.RetryMaxDelay),
+			miniopkg.WithSkipBucketCheck(),
+		)
+		if err != nil {
+			return nil, mapInitError(err)
+		}
+	}
+
 	log.Info("minio storage initialized",
 		zap.Duration("request_timeout", cfg.RequestTimeout),
 		zap.Int("retry_max", cfg.RetryMax),
@@ -51,9 +83,10 @@ func NewMinIOStorage(ctx context.Context, cfg config.MinIOConfig) (*MinIOStorage
 	)
 
 	return &MinIOStorage{
-		client:     client,
-		PresignTTL: cfg.PresignTTL,
-		log:        log,
+		client:        client,
+		presignClient: presignClient,
+		PresignTTL:    cfg.PresignTTL,
+		log:           log,
 	}, nil
 }
 
@@ -100,7 +133,12 @@ func (s *MinIOStorage) PresignGet(ctx context.Context, objectKey string) (string
 		})
 	}
 
-	url, err := s.client.PresignGet(ctx, objectKey, s.PresignTTL)
+	presignClient := s.client
+	if s.presignClient != nil {
+		presignClient = s.presignClient
+	}
+
+	url, err := presignClient.PresignGet(ctx, objectKey, s.PresignTTL)
 	if err != nil {
 		return "", mapRuntimeError("presign failed", objectKey, err)
 	}
@@ -128,6 +166,28 @@ func mapRuntimeError(msg, objectKey string, err error) error {
 	return apperr.StorageUnavailable(msg, err, map[string]string{
 		"object_key": objectKey,
 	})
+}
+
+func parsePublicBaseURL(raw string) (*url.URL, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return nil, nil
+	}
+
+	parsed, err := url.Parse(trimmed)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return nil, apperr.InvalidArgument("invalid minio public base url", err, apperr.FieldViolation{
+			Field:       "minio.public_base_url",
+			Description: "must be absolute URL (scheme + host)",
+		})
+	}
+	if parsed.Path != "" && parsed.Path != "/" {
+		return nil, apperr.InvalidArgument("invalid minio public base url", nil, apperr.FieldViolation{
+			Field:       "minio.public_base_url",
+			Description: "path is not supported for presigned URLs",
+		})
+	}
+	return parsed, nil
 }
 
 var _ domain.ObjectStorage = (*MinIOStorage)(nil)

@@ -15,13 +15,15 @@ type Config struct {
 	SecretKey string
 	Bucket    string
 	UseSSL    bool
+	Region    string
 }
 
 type options struct {
-	requestTimeout time.Duration
-	retryMax       int
-	retryBaseDelay time.Duration
-	retryMaxDelay  time.Duration
+	requestTimeout  time.Duration
+	retryMax        int
+	retryBaseDelay  time.Duration
+	retryMaxDelay   time.Duration
+	skipBucketCheck bool
 }
 
 func defaultOptions() options {
@@ -57,5 +59,11 @@ func WithRetry(max int, baseDelay, maxDelay time.Duration) Option {
 		if o.retryMaxDelay < o.retryBaseDelay {
 			o.retryMaxDelay = o.retryBaseDelay
 		}
+	}
+}
+
+func WithSkipBucketCheck() Option {
+	return func(o *options) {
+		o.skipBucketCheck = true
 	}
 }
