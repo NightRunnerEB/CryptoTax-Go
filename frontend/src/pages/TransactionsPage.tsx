@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { ChevronDown, ChevronRight, Filter, LoaderCircle, X } from 'lucide-react'
 import {
   getUserSettings,
   listSupportedFiatCurrencies,
@@ -9,11 +10,7 @@ import {
   type SupportedFiatCurrency,
 } from '../api/aggregationService'
 import { useAuth } from '../auth/AuthContext'
-import { PageHeader } from '../components/layout/PageHeader'
 import { useNotifications } from '../components/notifications/NotificationProvider'
-import { EmptyState } from '../components/states/EmptyState'
-import { ErrorState } from '../components/states/ErrorState'
-import { LoadingState } from '../components/states/LoadingState'
 import { toErrorMessage } from '../utils/errors'
 
 const UTC_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-GB', {
@@ -37,17 +34,11 @@ interface TransactionsFilters {
   importId: string
 }
 
-interface MoneyLegDetailsProps {
-  title: string
-  leg: MoneyLeg | undefined
-  displayFiatCode: string | null
-}
-
 const DEFAULT_FILTERS: TransactionsFilters = {
   fromDate: '',
   toDate: '',
-  source: 'all',
-  kind: 'all',
+  source: '',
+  kind: '',
   importId: '',
 }
 
@@ -60,45 +51,10 @@ function formatUtcTimestamp(value: string): string {
   return `${UTC_DATE_TIME_FORMATTER.format(date)} UTC`
 }
 
-function truncateMiddle(value: string | undefined, head = 8, tail = 6): string {
-  if (!value) {
-    return '—'
-  }
-
-  if (value.length <= head + tail + 3) {
-    return value
-  }
-
-  return `${value.slice(0, head)}...${value.slice(-tail)}`
-}
-
-function formatMoneyLegSummary(leg: MoneyLeg | undefined, displayFiatCode: string | null): string {
-  if (!leg) {
-    return '—'
-  }
-
-  const basePart = `${leg.symbol} ${leg.crypto_amount}`
-
-  if (leg.fiat_amount) {
-    const fiatPart = displayFiatCode ? `${leg.fiat_amount} ${displayFiatCode}` : leg.fiat_amount
-    return `${basePart} | ${fiatPart}`
-  }
-
-  if (leg.error?.code) {
-    return `${basePart} | ${leg.error.code}`
-  }
-
-  return basePart
-}
-
 function toUtcRange(filters: TransactionsFilters): { dateFrom?: string; dateTo?: string } {
-  const dateFrom = filters.fromDate
-    ? new Date(`${filters.fromDate}T00:00:00.000Z`).toISOString()
-    : undefined
+  const dateFrom = filters.fromDate ? new Date(`${filters.fromDate}T00:00:00.000Z`).toISOString() : undefined
 
-  const dateTo = filters.toDate
-    ? new Date(`${filters.toDate}T00:00:00.000Z`)
-    : undefined
+  const dateTo = filters.toDate ? new Date(`${filters.toDate}T00:00:00.000Z`) : undefined
   if (dateTo) {
     dateTo.setUTCDate(dateTo.getUTCDate() + 1)
   }
@@ -109,82 +65,53 @@ function toUtcRange(filters: TransactionsFilters): { dateFrom?: string; dateTo?:
   }
 }
 
-function filtersEqual(left: TransactionsFilters, right: TransactionsFilters): boolean {
-  return (
-    left.fromDate === right.fromDate &&
-    left.toDate === right.toDate &&
-    left.source === right.source &&
-    left.kind === right.kind &&
-    left.importId === right.importId
-  )
-}
-
 function countActiveFilters(filters: TransactionsFilters): number {
   let count = 0
-
-  if (filters.fromDate) {
-    count += 1
-  }
-  if (filters.toDate) {
-    count += 1
-  }
-  if (filters.importId.trim() !== '') {
-    count += 1
-  }
-  if (filters.source !== 'all') {
-    count += 1
-  }
-  if (filters.kind !== 'all') {
-    count += 1
-  }
-
+  if (filters.fromDate !== '') count += 1
+  if (filters.toDate !== '') count += 1
+  if (filters.source !== '') count += 1
+  if (filters.kind !== '') count += 1
+  if (filters.importId.trim() !== '') count += 1
   return count
 }
 
-function MoneyLegDetails({ title, leg, displayFiatCode }: MoneyLegDetailsProps) {
+function kindBadgeClass(kind: string): string {
+  switch (kind.trim().toUpperCase()) {
+    case 'TRADE':
+    case 'SELL':
+    case 'BUY':
+      return 'bg-[var(--status-running-bg)] text-[var(--status-running)]'
+    case 'DEPOSIT':
+    case 'INCOME':
+    case 'REWARD':
+      return 'bg-[var(--status-success-bg)] text-[var(--status-success)]'
+    default:
+      return 'bg-[var(--status-queued-bg)] text-[var(--status-queued)]'
+  }
+}
+
+function renderLeg(leg: MoneyLeg | undefined, displayFiatCode: string | null, tone: 'default' | 'muted' = 'default') {
+  if (!leg) {
+    return null
+  }
+
   return (
-    <section className="money-leg-card">
-      <h4>{title}</h4>
-      {!leg ? (
-        <p>—</p>
-      ) : (
-        <div className="money-leg-grid">
-          <p>
-            <strong>Symbol:</strong> {leg.symbol}
-          </p>
-          <p>
-            <strong>Crypto:</strong> {leg.crypto_amount}
-          </p>
-          <p>
-            <strong>Fiat:</strong> {leg.fiat_amount ? `${leg.fiat_amount}${displayFiatCode ? ` ${displayFiatCode}` : ''}` : '—'}
-          </p>
-          <p>
-            <strong>Error code:</strong> {leg.error?.code ?? '—'}
-          </p>
-          {leg.error?.candidates && leg.error.candidates.length > 0 ? (
-            <p className="column-full">
-              <strong>Error candidates:</strong>{' '}
-              {leg.error.candidates.map((candidate) => `${candidate.coin_id} (${candidate.name})`).join(', ')}
-            </p>
-          ) : null}
-        </div>
-      )}
-    </section>
+    <div className={tone === 'muted' ? 'text-muted-foreground' : 'text-foreground'}>
+      <span className="font-mono">{leg.crypto_amount}</span>
+      <span className="ml-1 text-muted-foreground">{leg.symbol}</span>
+      {leg.fiat_amount ? <span className="ml-2 text-muted-foreground">| {leg.fiat_amount}{displayFiatCode ? ` ${displayFiatCode}` : ''}</span> : null}
+      {!leg.fiat_amount && leg.error?.code ? <span className="ml-2 text-muted-foreground">| {leg.error.code}</span> : null}
+    </div>
   )
 }
 
-function FilterIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-      <path
-        d="M2 3.25h12l-4.7 5.18v3.25L6.7 12.9V8.43L2 3.25Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+function resolveValuation(tx: AggregatedTransaction, displayFiatCode: string | null): string {
+  const leg = tx.inMoney ?? tx.outMoney ?? tx.feeMoney
+  if (!leg?.fiat_amount) {
+    return '—'
+  }
+
+  return displayFiatCode ? `${leg.fiat_amount} ${displayFiatCode}` : leg.fiat_amount
 }
 
 export function TransactionsPage() {
@@ -198,9 +125,8 @@ export function TransactionsPage() {
   const [isFiatUpdating, setIsFiatUpdating] = useState(false)
   const [fiatError, setFiatError] = useState<string | null>(null)
 
-  const [draftFilters, setDraftFilters] = useState<TransactionsFilters>(DEFAULT_FILTERS)
-  const [appliedFilters, setAppliedFilters] = useState<TransactionsFilters>(DEFAULT_FILTERS)
-  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState<TransactionsFilters>(DEFAULT_FILTERS)
 
   const [transactions, setTransactions] = useState<AggregatedTransaction[]>([])
   const [page, setPage] = useState(0)
@@ -208,7 +134,7 @@ export function TransactionsPage() {
   const [nextPageToken, setNextPageToken] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [expandedTxIds, setExpandedTxIds] = useState<Set<string>>(new Set())
+  const [expandedRow, setExpandedRow] = useState<string | null>(null)
 
   const loadFiatContext = useCallback(async (): Promise<void> => {
     if (!session) {
@@ -219,11 +145,7 @@ export function TransactionsPage() {
     setFiatError(null)
 
     try {
-      const [currencies, userSettings] = await Promise.all([
-        listSupportedFiatCurrencies(),
-        getUserSettings(),
-      ])
-
+      const [currencies, userSettings] = await Promise.all([listSupportedFiatCurrencies(), getUserSettings()])
       setSupportedFiat(currencies)
       setActiveUserFiat(userSettings.fiatCurrency)
       setActiveUserTimezone(userSettings.timezone)
@@ -251,26 +173,22 @@ export function TransactionsPage() {
       setError(null)
 
       try {
-        const { dateFrom, dateTo } = toUtcRange(appliedFilters)
-        const normalizedImportId = appliedFilters.importId.trim()
-        const normalizedSource = appliedFilters.source === 'all' ? undefined : appliedFilters.source
-        const normalizedKind = appliedFilters.kind === 'all' ? undefined : appliedFilters.kind
-
+        const { dateFrom, dateTo } = toUtcRange(filters)
         const response = await listTransactions({
           pageSize: DEFAULT_PAGE_SIZE,
           pageToken,
           dateFrom,
           dateTo,
-          importId: normalizedImportId === '' ? undefined : normalizedImportId,
-          source: normalizedSource,
-          kind: normalizedKind,
+          importId: filters.importId.trim() === '' ? undefined : filters.importId.trim(),
+          source: filters.source === '' ? undefined : filters.source,
+          kind: filters.kind === '' ? undefined : filters.kind,
           targetFiat: activeUserFiat,
         })
 
         setTransactions(response.items)
         setNextPageToken(response.nextPageToken ?? '')
         setPage(pageIndex)
-        setExpandedTxIds(new Set())
+        setExpandedRow(null)
       } catch (fetchError) {
         setError(toErrorMessage(fetchError, 'Failed to load transactions.'))
         setTransactions([])
@@ -280,7 +198,7 @@ export function TransactionsPage() {
         setIsLoading(false)
       }
     },
-    [session, activeUserFiat, appliedFilters],
+    [session, activeUserFiat, filters],
   )
 
   useEffect(() => {
@@ -290,17 +208,13 @@ export function TransactionsPage() {
 
     setPageTokens([''])
     void fetchTransactions('', 0)
-  }, [session, isFiatLoading, fiatError, activeUserFiat, appliedFilters, fetchTransactions])
-
-  const handleReload = async (): Promise<void> => {
-    const currentToken = pageTokens[page] ?? ''
-    await fetchTransactions(currentToken, page)
-  }
+  }, [session, isFiatLoading, fiatError, activeUserFiat, filters, fetchTransactions])
 
   const handlePrevPage = async (): Promise<void> => {
     if (page === 0) {
       return
     }
+
     const prevPage = page - 1
     const token = pageTokens[prevPage] ?? ''
     await fetchTransactions(token, prevPage)
@@ -310,6 +224,7 @@ export function TransactionsPage() {
     if (nextPageToken === '') {
       return
     }
+
     const nextPage = page + 1
     setPageTokens((prev) => {
       const next = [...prev]
@@ -319,19 +234,20 @@ export function TransactionsPage() {
     await fetchTransactions(nextPageToken, nextPage)
   }
 
-  const handleApplyFilters = (): void => {
-    setAppliedFilters({
-      fromDate: draftFilters.fromDate,
-      toDate: draftFilters.toDate,
-      source: draftFilters.source,
-      kind: draftFilters.kind,
-      importId: draftFilters.importId.trim(),
-    })
-  }
+  const handleGotoPage = async (pageIndex: number): Promise<void> => {
+    if (pageIndex === page) {
+      return
+    }
 
-  const handleResetFilters = (): void => {
-    setDraftFilters(DEFAULT_FILTERS)
-    setAppliedFilters(DEFAULT_FILTERS)
+    if (pageIndex < pageTokens.length) {
+      const token = pageTokens[pageIndex] ?? ''
+      await fetchTransactions(token, pageIndex)
+      return
+    }
+
+    if (pageIndex === page + 1 && nextPageToken !== '') {
+      await handleNextPage()
+    }
   }
 
   const handleFiatChange = useCallback(
@@ -353,26 +269,15 @@ export function TransactionsPage() {
         setActiveUserTimezone(updatedSettings.timezone)
         notifications.success('User currency updated', `Default fiat currency: ${updatedSettings.fiatCurrency}`)
       } catch (updateError) {
-        setError(toErrorMessage(updateError, 'Failed to update user currency.'))
-        notifications.error('Failed to update user currency', toErrorMessage(updateError))
+        const message = toErrorMessage(updateError, 'Failed to update user currency.')
+        setError(message)
+        notifications.error('Failed to update user currency', message)
       } finally {
         setIsFiatUpdating(false)
       }
     },
     [session, activeUserTimezone, activeUserFiat, notifications],
   )
-
-  const toggleExpanded = (txId: string): void => {
-    setExpandedTxIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(txId)) {
-        next.delete(txId)
-      } else {
-        next.add(txId)
-      }
-      return next
-    })
-  }
 
   const sourceOptions = useMemo(() => {
     const set = new Set<string>()
@@ -394,249 +299,307 @@ export function TransactionsPage() {
     return Array.from(set).sort((left, right) => left.localeCompare(right))
   }, [transactions])
 
-  const activeFilterCount = useMemo(() => countActiveFilters(appliedFilters), [appliedFilters])
-  const displayFiatCode = activeUserFiat
-  const filtersDirty = !filtersEqual(draftFilters, appliedFilters)
+  const activeFilterCount = useMemo(() => countActiveFilters(filters), [filters])
+  const visiblePageIndices = useMemo(() => pageTokens.map((_, index) => index), [pageTokens])
+  const showNextPageButton = nextPageToken !== '' && page === pageTokens.length - 1
 
   return (
-    <section className="stack-lg">
-      <PageHeader
-        title="Transactions"
-        description="Latest aggregated transactions in your current valuation fiat, with optional filters on demand."
-      />
+    <div className="max-w-[1400px]">
+      <div className="mb-8 flex items-start justify-between">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-foreground">Transactions</h2>
+          <p className="text-muted-foreground text-sm">Review and analyze normalized transaction data across all exchanges</p>
+        </div>
+      </div>
 
-      {fiatError ? <ErrorState message={fiatError} actionLabel="Retry" onAction={() => void loadFiatContext()} /> : null}
-      {error ? <ErrorState message={error} actionLabel="Retry" onAction={() => void handleReload()} /> : null}
+      {fiatError ? (
+        <div className="bg-surface rounded-xl border border-[var(--status-failed)]/30 p-5 mb-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
+          <p className="text-sm text-[var(--status-failed)]">{fiatError}</p>
+        </div>
+      ) : null}
 
-      <article className="card">
-        <div className="transactions-toolbar">
-          <div className="actions-row">
+      {error ? (
+        <div className="bg-surface rounded-xl border border-[var(--status-failed)]/30 p-5 mb-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
+          <p className="text-sm text-[var(--status-failed)]">{error}</p>
+        </div>
+      ) : null}
+
+      <div className="bg-surface rounded-lg border border-border p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowFilters((prev) => !prev)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+              showFilters || activeFilterCount > 0
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-foreground hover:bg-muted/80'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            Filters
+            {activeFilterCount > 0 ? (
+              <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary-foreground/20 rounded-full">{activeFilterCount}</span>
+            ) : null}
+          </button>
+
+          {activeFilterCount > 0 ? (
             <button
               type="button"
-              className="btn-secondary"
-              onClick={() => setIsFilterPanelOpen((prev) => !prev)}
-              aria-expanded={isFilterPanelOpen}
-              aria-controls="transactions-filter-panel"
+              onClick={() => setFilters(DEFAULT_FILTERS)}
+              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
             >
-              <FilterIcon />
-              {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : 'Filters'}
+              <X className="w-3 h-3" />
+              Clear filters
             </button>
-
-            <button type="button" className="btn-secondary" onClick={() => void handleReload()} disabled={isLoading}>
-              Refresh
-            </button>
-          </div>
-
-          <label className="toolbar-field">
-            Fiat currency
-            <select
-              value={activeUserFiat ?? ''}
-              onChange={(event) => void handleFiatChange(event.target.value)}
-              disabled={isLoading || isFiatLoading || isFiatUpdating || supportedFiat.length === 0}
-            >
-              {supportedFiat.map((fiat) => (
-                <option key={fiat.code} value={fiat.code}>
-                  {fiat.code} · {fiat.displayName}
-                </option>
-              ))}
-            </select>
-          </label>
+          ) : null}
         </div>
 
-        {isFilterPanelOpen ? (
-          <div id="transactions-filter-panel" className="transactions-filter-panel">
-            <div className="form-grid two-columns">
-              <label>
-                From date (UTC)
-                <input
-                  type="date"
-                  value={draftFilters.fromDate}
-                  onChange={(event) => setDraftFilters((prev) => ({ ...prev, fromDate: event.target.value }))}
-                />
-              </label>
+        <div className="flex items-center gap-3">
+          <label className="text-sm text-muted-foreground">Valuation:</label>
+          <select
+            value={activeUserFiat ?? ''}
+            onChange={(event) => void handleFiatChange(event.target.value)}
+            disabled={isLoading || isFiatLoading || isFiatUpdating || supportedFiat.length === 0}
+            className="px-3 py-1.5 bg-input-background border border-input-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          >
+            {supportedFiat.map((fiat) => (
+              <option key={fiat.code} value={fiat.code}>
+                {fiat.code}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
-              <label>
-                To date (UTC)
-                <input
-                  type="date"
-                  value={draftFilters.toDate}
-                  onChange={(event) => setDraftFilters((prev) => ({ ...prev, toDate: event.target.value }))}
-                />
-              </label>
-
-              <label>
-                Exchange
-                <select
-                  value={draftFilters.source}
-                  onChange={(event) => setDraftFilters((prev) => ({ ...prev, source: event.target.value }))}
-                >
-                  <option value="all">All exchanges</option>
-                  {sourceOptions.map((source) => (
-                    <option key={source} value={source}>
-                      {source}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Kind
-                <select
-                  value={draftFilters.kind}
-                  onChange={(event) => setDraftFilters((prev) => ({ ...prev, kind: event.target.value }))}
-                >
-                  <option value="all">All kinds</option>
-                  {kindOptions.map((kind) => (
-                    <option key={kind} value={kind}>
-                      {kind}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Import ID
-                <input
-                  value={draftFilters.importId}
-                  onChange={(event) => setDraftFilters((prev) => ({ ...prev, importId: event.target.value }))}
-                  placeholder="Optional UUID"
-                />
-              </label>
+      {showFilters ? (
+        <div className="bg-surface rounded-lg border border-border p-6 mb-6 space-y-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1.5">Date From</label>
+              <input
+                type="date"
+                value={filters.fromDate}
+                onChange={(event) => setFilters((prev) => ({ ...prev, fromDate: event.target.value }))}
+                className="w-full px-3 py-2 bg-input-background border border-input-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
             </div>
-
-            <div className="actions-row">
-              <button type="button" className="btn-primary" onClick={handleApplyFilters} disabled={isLoading || !filtersDirty}>
-                Apply filters
-              </button>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={handleResetFilters}
-                disabled={isLoading || (activeFilterCount === 0 && !filtersDirty)}
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1.5">Date To</label>
+              <input
+                type="date"
+                value={filters.toDate}
+                onChange={(event) => setFilters((prev) => ({ ...prev, toDate: event.target.value }))}
+                className="w-full px-3 py-2 bg-input-background border border-input-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1.5">Exchange</label>
+              <select
+                value={filters.source}
+                onChange={(event) => setFilters((prev) => ({ ...prev, source: event.target.value }))}
+                className="w-full px-3 py-2 bg-input-background border border-input-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                Reset
-              </button>
+                <option value="">All</option>
+                {sourceOptions.map((source) => (
+                  <option key={source} value={source}>
+                    {source}
+                  </option>
+                ))}
+              </select>
             </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1.5">Transaction Kind</label>
+              <select
+                value={filters.kind}
+                onChange={(event) => setFilters((prev) => ({ ...prev, kind: event.target.value }))}
+                className="w-full px-3 py-2 bg-input-background border border-input-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">All</option>
+                {kindOptions.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {kind}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1.5">Import ID</label>
+              <input
+                type="text"
+                value={filters.importId}
+                onChange={(event) => setFilters((prev) => ({ ...prev, importId: event.target.value }))}
+                placeholder="imp_..."
+                className="w-full px-3 py-2 bg-input-background border border-input-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isFiatLoading && !activeUserFiat ? (
+        <div className="bg-surface rounded-xl border border-border p-8 mb-6 flex items-center justify-center gap-3" style={{ boxShadow: 'var(--shadow-sm)' }}>
+          <LoaderCircle className="w-5 h-5 animate-spin text-primary" />
+          <span className="text-sm text-muted-foreground">Loading fiat currency context...</span>
+        </div>
+      ) : null}
+
+      <div className="bg-surface rounded-xl border border-border overflow-hidden" style={{ boxShadow: 'var(--shadow-md)' }}>
+        {isLoading && transactions.length === 0 ? (
+          <div className="px-6 py-8 flex items-center justify-center gap-3">
+            <LoaderCircle className="w-5 h-5 animate-spin text-primary" />
+            <span className="text-sm text-muted-foreground">Fetching aggregated transactions...</span>
           </div>
         ) : null}
 
-        <p className="hint-text">
-          Default view loads the latest transactions automatically. Pagination shows {DEFAULT_PAGE_SIZE} rows per page.
-        </p>
-        {displayFiatCode ? <p className="hint-text">User valuation currency: {displayFiatCode}.</p> : null}
-        <p className="hint-text">Filters are applied server-side with cursor pagination.</p>
-      </article>
-
-      {isFiatLoading && !activeUserFiat ? <LoadingState label="Loading fiat currency context..." /> : null}
-      {isLoading ? <LoadingState label="Fetching aggregated transactions..." /> : null}
-
-      {!isLoading && !error && transactions.length === 0 ? (
-        <EmptyState title="No transactions found" description="Try adjusting the optional filters or load more recent imports." />
-      ) : null}
-
-      {!isLoading && !error && transactions.length > 0 ? (
-        <article className="card">
-          <div className="table-toolbar">
-            <p className="table-summary">
-              Page: {page + 1} | Displayed rows: {transactions.length}
-            </p>
-            <div className="pagination-controls">
-              <button type="button" className="btn-secondary" onClick={() => void handlePrevPage()} disabled={isLoading || page === 0}>
-                Previous
-              </button>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => void handleNextPage()}
-                disabled={isLoading || nextPageToken === ''}
-              >
-                Next
-              </button>
-            </div>
+        {!isLoading && transactions.length === 0 ? (
+          <div className="px-6 py-12 text-center">
+            <p className="text-muted-foreground">No transactions found</p>
+            <p className="text-sm text-muted-foreground mt-1">Try adjusting the optional filters or load more recent imports.</p>
           </div>
+        ) : null}
 
-          <div className="table-wrapper">
-            <table className="data-table tx-table">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>TimeUTC</th>
-                  <th>Source</th>
-                  <th>Kind</th>
-                  <th>InMoney</th>
-                  <th>OutMoney</th>
-                  <th>FeeMoney</th>
-                  <th>ContractSymbol</th>
-                  <th>TxHash</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((tx) => {
-                  const expanded = expandedTxIds.has(tx.txId)
-
-                  return (
+        {transactions.length > 0 ? (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px]">
+                <thead className="bg-surface-secondary border-b border-border">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider w-10"></th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Timestamp</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Exchange</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Kind</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">In</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Out</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fee</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Valuation ({activeUserFiat ?? '—'})</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {transactions.map((tx) => (
                     <Fragment key={tx.txId}>
-                      <tr>
-                        <td>
-                          <button
-                            type="button"
-                            className="btn-link expand-toggle"
-                            onClick={() => toggleExpanded(tx.txId)}
-                            aria-expanded={expanded}
-                            aria-label={expanded ? 'Collapse row details' : 'Expand row details'}
-                          >
-                            {expanded ? '−' : '+'}
-                          </button>
+                      <tr className="hover:bg-surface-secondary transition-colors cursor-pointer" onClick={() => setExpandedRow(expandedRow === tx.txId ? null : tx.txId)}>
+                        <td className="px-4 py-3">
+                          {expandedRow === tx.txId ? (
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          )}
                         </td>
-                        <td>{formatUtcTimestamp(tx.timeUtc)}</td>
-                        <td>{tx.source || '—'}</td>
-                        <td>{tx.kind || '—'}</td>
-                        <td>{formatMoneyLegSummary(tx.inMoney, displayFiatCode)}</td>
-                        <td>{formatMoneyLegSummary(tx.outMoney, displayFiatCode)}</td>
-                        <td>{formatMoneyLegSummary(tx.feeMoney, displayFiatCode)}</td>
-                        <td>{tx.contractSymbol || '—'}</td>
-                        <td className="mono-text">{truncateMiddle(tx.txHash)}</td>
+                        <td className="px-4 py-3 text-sm text-foreground font-mono">{formatUtcTimestamp(tx.timeUtc)}</td>
+                        <td className="px-4 py-3 text-sm text-foreground">{tx.source}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${kindBadgeClass(tx.kind)}`}>
+                            {tx.kind}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">{renderLeg(tx.inMoney, activeUserFiat)}</td>
+                        <td className="px-4 py-3 text-sm">{renderLeg(tx.outMoney, activeUserFiat)}</td>
+                        <td className="px-4 py-3 text-sm">{renderLeg(tx.feeMoney, activeUserFiat, 'muted')}</td>
+                        <td className="px-4 py-3 text-sm text-right font-mono text-foreground">{resolveValuation(tx, activeUserFiat)}</td>
                       </tr>
-                      {expanded ? (
-                        <tr className="tx-details-row">
-                          <td colSpan={9}>
-                            <div className="tx-details-panel">
-                              <dl className="tx-details-grid">
-                                <dt>ID</dt>
-                                <dd className="mono-text">{tx.txId}</dd>
-                                <dt>ImportID</dt>
-                                <dd className="mono-text">{tx.importId}</dd>
-                                <dt>DerivativeKind</dt>
-                                <dd>{tx.derivativeKind || '—'}</dd>
-                                <dt>PositionID</dt>
-                                <dd className="mono-text">{tx.positionId || '—'}</dd>
-                                <dt>OrderID</dt>
-                                <dd className="mono-text">{tx.orderId || '—'}</dd>
-                                <dt>Note</dt>
-                                <dd>{tx.note || '—'}</dd>
-                                <dt>TxFingerprint</dt>
-                                <dd className="mono-text">{tx.txFingerprint}</dd>
-                                <dt>Full TxHash</dt>
-                                <dd className="mono-text">{tx.txHash || '—'}</dd>
-                              </dl>
 
-                              <div className="tx-money-details">
-                                <MoneyLegDetails title="InMoney" leg={tx.inMoney} displayFiatCode={displayFiatCode} />
-                                <MoneyLegDetails title="OutMoney" leg={tx.outMoney} displayFiatCode={displayFiatCode} />
-                                <MoneyLegDetails title="FeeMoney" leg={tx.feeMoney} displayFiatCode={displayFiatCode} />
+                      {expandedRow === tx.txId ? (
+                        <tr>
+                          <td colSpan={8} className="px-4 py-4 bg-surface-secondary/50">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              {tx.txHash ? (
+                                <div>
+                                  <span className="text-muted-foreground">TX Hash:</span>
+                                  <p className="font-mono text-xs text-foreground mt-1 break-all">{tx.txHash}</p>
+                                </div>
+                              ) : null}
+                              <div>
+                                <span className="text-muted-foreground">Fingerprint:</span>
+                                <p className="font-mono text-xs text-foreground mt-1 break-all">{tx.txFingerprint}</p>
                               </div>
+                              <div>
+                                <span className="text-muted-foreground">Import ID:</span>
+                                <p className="font-mono text-xs text-foreground mt-1 break-all">{tx.importId}</p>
+                              </div>
+                              {tx.positionId ? (
+                                <div>
+                                  <span className="text-muted-foreground">Position ID:</span>
+                                  <p className="font-mono text-xs text-foreground mt-1 break-all">{tx.positionId}</p>
+                                </div>
+                              ) : null}
+                              {tx.orderId ? (
+                                <div>
+                                  <span className="text-muted-foreground">Order ID:</span>
+                                  <p className="font-mono text-xs text-foreground mt-1 break-all">{tx.orderId}</p>
+                                </div>
+                              ) : null}
+                              {tx.contractSymbol ? (
+                                <div>
+                                  <span className="text-muted-foreground">Contract Symbol:</span>
+                                  <p className="font-mono text-xs text-foreground mt-1 break-all">{tx.contractSymbol}</p>
+                                </div>
+                              ) : null}
+                              {tx.note ? (
+                                <div className="col-span-2">
+                                  <span className="text-muted-foreground">Notes:</span>
+                                  <p className="text-foreground mt-1">{tx.note}</p>
+                                </div>
+                              ) : null}
                             </div>
                           </td>
                         </tr>
                       ) : null}
                     </Fragment>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </article>
-      ) : null}
-    </section>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="border-t border-border px-6 py-4 flex items-center justify-between bg-surface-secondary/30 gap-4 flex-wrap">
+              <div className="text-sm text-muted-foreground">
+                Showing <span className="font-medium text-foreground">{transactions.length}</span> transactions on page{' '}
+                <span className="font-medium text-foreground">{page + 1}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handlePrevPage()}
+                  disabled={page === 0 || isLoading}
+                  className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {visiblePageIndices.map((pageIndex) => (
+                    <button
+                      key={pageIndex}
+                      type="button"
+                      onClick={() => void handleGotoPage(pageIndex)}
+                      className={`w-8 h-8 text-sm rounded-lg transition-colors ${
+                        page === pageIndex ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                      }`}
+                    >
+                      {pageIndex + 1}
+                    </button>
+                  ))}
+                  {showNextPageButton ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleNextPage()}
+                      className="w-8 h-8 text-sm rounded-lg transition-colors hover:bg-muted"
+                    >
+                      {page + 2}
+                    </button>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleNextPage()}
+                  disabled={nextPageToken === '' || isLoading}
+                  className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
   )
 }
