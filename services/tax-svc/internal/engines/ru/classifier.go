@@ -127,6 +127,10 @@ func (e *Engine) applyTransaction(
 		return e.handleSpot(result, inventory, userID, method, policy, tx, inLeg, hasIn, outLeg, hasOut, feeLeg, hasFee)
 	case domain.Swap:
 		return e.handleSwap(result, inventory, userID, method, policy, tx, inLeg, hasIn, outLeg, hasOut, feeLeg, hasFee)
+	case domain.P2PBuy:
+		return e.handleP2PBuy(result, inventory, userID, method, tx, inLeg, hasIn, outLeg, hasOut, feeLeg, hasFee)
+	case domain.P2PSell:
+		return e.handleP2PSell(result, inventory, userID, method, tx, inLeg, hasIn, outLeg, hasOut, feeLeg, hasFee)
 	case domain.DepositCrypto:
 		return addMovement(result, userID, tx, events.MovementIn, inLeg, hasIn)
 	case domain.WithdrawalCrypto:
@@ -259,6 +263,66 @@ func (e *Engine) handleSwap(
 	cost := inLeg.fiat
 	addLot(result, inventory, userID, tx, inLeg.symbol, inLeg.qty, cost)
 
+	if hasFee {
+		if err := addExpense(result, inventory, method, userID, tx, feeLeg, events.ExpenseTradeFee); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (e *Engine) handleP2PBuy(
+	result *engines.BuildResult,
+	inventory map[string][]int,
+	userID uuid.UUID,
+	method domain.CostBasisMethod,
+	tx domain.AggregatedTransaction,
+	inLeg parsedLeg,
+	hasIn bool,
+	outLeg parsedLeg,
+	hasOut bool,
+	feeLeg parsedLeg,
+	hasFee bool,
+) error {
+	if !hasIn || !hasOut {
+		return invalidShape(tx, "p2p buy requires both in_money and out_money")
+	}
+	if !isFiatLike(outLeg.symbol) || isFiatLike(inLeg.symbol) {
+		return invalidShape(tx, "p2p buy must be fiat-to-crypto")
+	}
+
+	addLot(result, inventory, userID, tx, inLeg.symbol, inLeg.qty, inLeg.fiat)
+	if hasFee {
+		if err := addExpense(result, inventory, method, userID, tx, feeLeg, events.ExpenseTradeFee); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (e *Engine) handleP2PSell(
+	result *engines.BuildResult,
+	inventory map[string][]int,
+	userID uuid.UUID,
+	method domain.CostBasisMethod,
+	tx domain.AggregatedTransaction,
+	inLeg parsedLeg,
+	hasIn bool,
+	outLeg parsedLeg,
+	hasOut bool,
+	feeLeg parsedLeg,
+	hasFee bool,
+) error {
+	if !hasIn || !hasOut {
+		return invalidShape(tx, "p2p sell requires both in_money and out_money")
+	}
+	if !isFiatLike(inLeg.symbol) || isFiatLike(outLeg.symbol) {
+		return invalidShape(tx, "p2p sell must be crypto-to-fiat")
+	}
+
+	if err := addRealization(result, inventory, method, userID, tx, outLeg, true, inLeg.fiat, events.RealizationP2PSell); err != nil {
+		return err
+	}
 	if hasFee {
 		if err := addExpense(result, inventory, method, userID, tx, feeLeg, events.ExpenseTradeFee); err != nil {
 			return err

@@ -36,6 +36,7 @@ type RealizationKind string
 
 const (
 	RealizationSellFiat RealizationKind = "SELL_FIAT"
+	RealizationP2PSell  RealizationKind = "P2P_SELL"
 	RealizationSwapOut  RealizationKind = "SWAP_OUT"
 	RealizationSpend    RealizationKind = "SPEND"
 	RealizationGift     RealizationKind = "GIFT_OUT"

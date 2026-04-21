@@ -70,6 +70,77 @@ func TestEngineBuild_SpotSell_ConsumesFIFOAndKeepsRemainder(t *testing.T) {
 	}
 }
 
+func TestEngineBuild_P2PBuy_CreatesLotWithoutRealization(t *testing.T) {
+	engine := New()
+	userID := uuid.New()
+	tx := txWithLegs(uuid.New(), userID, time.Now().UTC(), domain.P2PBuy,
+		leg("BTC", "0.1", "300000"),
+		leg("RUB", "300000", "300000"),
+		nil,
+	)
+
+	result, err := engine.Build(context.Background(), userID, domain.TaxPolicy{
+		Jurisdiction:                domain.JurisdictionRU,
+		CostBasisMethod:             domain.FIFO,
+		TreatCryptoCryptoAsDisposal: true,
+	}, []domain.AggregatedTransaction{tx})
+	if err != nil {
+		t.Fatalf("Build() unexpected error: %v", err)
+	}
+
+	if len(result.RealizationEvents) != 0 {
+		t.Fatalf("realization events length mismatch: got %d want 0", len(result.RealizationEvents))
+	}
+	if len(result.Lots) != 1 {
+		t.Fatalf("lots length mismatch: got %d want 1", len(result.Lots))
+	}
+	if result.Lots[0].Asset != "BTC" {
+		t.Fatalf("lot asset mismatch: got %s want BTC", result.Lots[0].Asset)
+	}
+	if !result.Lots[0].CostFiat.Equal(dec("300000")) {
+		t.Fatalf("lot cost mismatch: got %s want 300000", result.Lots[0].CostFiat)
+	}
+}
+
+func TestEngineBuild_P2PSell_CreatesP2PRealization(t *testing.T) {
+	engine := New()
+	userID := uuid.New()
+	now := time.Now().UTC()
+
+	buyTx := txWithLegs(uuid.New(), userID, now, domain.Spot,
+		leg("BTC", "1", "1000000"),
+		leg("RUB", "1000000", "1000000"),
+		nil,
+	)
+	sellTx := txWithLegs(uuid.New(), userID, now.Add(time.Minute), domain.P2PSell,
+		leg("RUB", "600000", "600000"),
+		leg("BTC", "0.4", "600000"),
+		nil,
+	)
+
+	result, err := engine.Build(context.Background(), userID, domain.TaxPolicy{
+		Jurisdiction:                domain.JurisdictionRU,
+		CostBasisMethod:             domain.FIFO,
+		TreatCryptoCryptoAsDisposal: true,
+	}, []domain.AggregatedTransaction{buyTx, sellTx})
+	if err != nil {
+		t.Fatalf("Build() unexpected error: %v", err)
+	}
+
+	if len(result.RealizationEvents) != 1 {
+		t.Fatalf("realization events length mismatch: got %d want 1", len(result.RealizationEvents))
+	}
+	if result.RealizationEvents[0].Kind != events.RealizationP2PSell {
+		t.Fatalf("realization kind mismatch: got %s want %s", result.RealizationEvents[0].Kind, events.RealizationP2PSell)
+	}
+	if !result.RealizationEvents[0].ProceedsFiat.Equal(dec("600000")) {
+		t.Fatalf("proceeds mismatch: got %s want 600000", result.RealizationEvents[0].ProceedsFiat)
+	}
+	if !result.RealizationEvents[0].CostBasisFiat.Equal(dec("400000")) {
+		t.Fatalf("cost basis mismatch: got %s want 400000", result.RealizationEvents[0].CostBasisFiat)
+	}
+}
+
 func TestEngineBuild_SwapPolicyFalse_ReturnsNotImplemented(t *testing.T) {
 	engine := New()
 	userID := uuid.New()

@@ -27,6 +27,8 @@ type Kind string
 const (
 	Spot             Kind = "Spot"
 	Swap             Kind = "Swap"
+	P2PBuy           Kind = "P2PBuy"
+	P2PSell          Kind = "P2PSell"
 	DepositCrypto    Kind = "DepositCrypto"
 	WithdrawalCrypto Kind = "WithdrawalCrypto"
 	DepositFiat      Kind = "DepositFiat"
