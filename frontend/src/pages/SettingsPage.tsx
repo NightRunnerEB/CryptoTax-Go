@@ -559,8 +559,8 @@ export function SettingsPage() {
       <div className="mt-6 p-4 bg-[var(--status-running-bg)] border border-[var(--status-running)] rounded-lg flex items-start gap-3">
         <AlertCircle className="w-5 h-5 text-[var(--status-running)] flex-shrink-0 mt-0.5" />
         <div>
-          <h4 className="text-sm font-medium text-foreground mb-1">Profile Used for Tax Calculations</h4>
-          <p className="text-sm text-muted-foreground">
+          <h4 className="text-sm font-medium mb-1" style={{ color: '#111111' }}>Profile Used for Tax Calculations</h4>
+          <p className="text-sm" style={{ color: '#111111' }}>
             Changes to your tax profile will be captured in the policy snapshot when you create new tax reports.
             Existing reports will continue to use the profile settings from when they were created.
           </p>

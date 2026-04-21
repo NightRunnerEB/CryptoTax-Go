@@ -100,14 +100,11 @@ export function AppShell() {
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors">
               <Menu className="w-5 h-5 text-foreground" />
             </button>
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-sm text-muted-foreground hidden sm:inline">Live sync enabled</span>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="text-sm hidden md:block">
-              <span className="text-muted-foreground">Signed in as</span>
-              <span className="ml-2 text-foreground font-medium">{session?.user.email ?? '—'}</span>
+              <span className="text-foreground font-medium">{session?.user.email ?? '—'}</span>
             </div>
             <button
               onClick={() => void handleLogout()}

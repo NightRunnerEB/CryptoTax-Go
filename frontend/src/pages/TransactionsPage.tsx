@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { ChevronDown, ChevronRight, Filter, LoaderCircle, X } from 'lucide-react'
 import {
   getUserSettings,
@@ -75,22 +75,29 @@ function countActiveFilters(filters: TransactionsFilters): number {
   return count
 }
 
-function kindBadgeClass(kind: string): string {
-  switch (kind.trim().toUpperCase()) {
-    case 'TRADE':
-    case 'SELL':
-    case 'BUY':
-      return 'bg-[var(--status-running-bg)] text-[var(--status-running)]'
-    case 'DEPOSIT':
-    case 'INCOME':
-    case 'REWARD':
-      return 'bg-[var(--status-success-bg)] text-[var(--status-success)]'
-    default:
-      return 'bg-[var(--status-queued-bg)] text-[var(--status-queued)]'
+const KIND_BADGE_PALETTE: Array<{ background: string; color: string }> = [
+  { background: 'rgba(59, 130, 246, 0.18)', color: '#93c5fd' },
+  { background: 'rgba(16, 185, 129, 0.18)', color: '#86efac' },
+  { background: 'rgba(245, 158, 11, 0.18)', color: '#fcd34d' },
+  { background: 'rgba(168, 85, 247, 0.18)', color: '#d8b4fe' },
+  { background: 'rgba(244, 114, 182, 0.18)', color: '#f9a8d4' },
+  { background: 'rgba(34, 197, 94, 0.18)', color: '#bbf7d0' },
+  { background: 'rgba(239, 68, 68, 0.18)', color: '#fca5a5' },
+  { background: 'rgba(20, 184, 166, 0.18)', color: '#99f6e4' },
+]
+
+function kindBadgeStyle(kind: string): CSSProperties {
+  const normalized = kind.trim().toUpperCase()
+  const hash = Array.from(normalized).reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const palette = KIND_BADGE_PALETTE[hash % KIND_BADGE_PALETTE.length]
+
+  return {
+    backgroundColor: palette.background,
+    color: palette.color,
   }
 }
 
-function renderLeg(leg: MoneyLeg | undefined, displayFiatCode: string | null, tone: 'default' | 'muted' = 'default') {
+function renderLeg(leg: MoneyLeg | undefined, tone: 'default' | 'muted' = 'default') {
   if (!leg) {
     return null
   }
@@ -99,7 +106,6 @@ function renderLeg(leg: MoneyLeg | undefined, displayFiatCode: string | null, to
     <div className={tone === 'muted' ? 'text-muted-foreground' : 'text-foreground'}>
       <span className="font-mono">{leg.crypto_amount}</span>
       <span className="ml-1 text-muted-foreground">{leg.symbol}</span>
-      {leg.fiat_amount ? <span className="ml-2 text-muted-foreground">| {leg.fiat_amount}{displayFiatCode ? ` ${displayFiatCode}` : ''}</span> : null}
       {!leg.fiat_amount && leg.error?.code ? <span className="ml-2 text-muted-foreground">| {leg.error.code}</span> : null}
     </div>
   )
@@ -488,13 +494,13 @@ export function TransactionsPage() {
                         <td className="px-4 py-3 text-sm text-foreground font-mono">{formatUtcTimestamp(tx.timeUtc)}</td>
                         <td className="px-4 py-3 text-sm text-foreground">{tx.source}</td>
                         <td className="px-4 py-3">
-                          <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${kindBadgeClass(tx.kind)}`}>
+                          <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full" style={kindBadgeStyle(tx.kind)}>
                             {tx.kind}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm">{renderLeg(tx.inMoney, activeUserFiat)}</td>
-                        <td className="px-4 py-3 text-sm">{renderLeg(tx.outMoney, activeUserFiat)}</td>
-                        <td className="px-4 py-3 text-sm">{renderLeg(tx.feeMoney, activeUserFiat, 'muted')}</td>
+                        <td className="px-4 py-3 text-sm">{renderLeg(tx.inMoney)}</td>
+                        <td className="px-4 py-3 text-sm">{renderLeg(tx.outMoney)}</td>
+                        <td className="px-4 py-3 text-sm">{renderLeg(tx.feeMoney, 'muted')}</td>
                         <td className="px-4 py-3 text-sm text-right font-mono text-foreground">{resolveValuation(tx, activeUserFiat)}</td>
                       </tr>
 
