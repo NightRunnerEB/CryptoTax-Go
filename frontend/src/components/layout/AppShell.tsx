@@ -1,63 +1,23 @@
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { FileBarChart, FileUp, LogOut, Menu, Moon, Receipt, Settings, Sun, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { useNotifications } from '../notifications/NotificationProvider'
-
-interface NavItem {
-  to: string
-  label: string
-  subtitle: string
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { to: '/imports', label: 'CSV Imports', subtitle: 'Ledger upload' },
-  { to: '/transactions', label: 'Transactions', subtitle: 'Aggregated records' },
-  { to: '/reports', label: 'Tax Reports', subtitle: 'Calculation jobs' },
-  { to: '/settings', label: 'Settings', subtitle: 'Tax profile' },
-]
-
-const PAGE_META: Record<string, { title: string; description: string }> = {
-  '/imports': {
-    title: 'CSV Imports',
-    description: 'Upload exchange statements and trigger parsing.',
-  },
-  '/transactions': {
-    title: 'Transactions',
-    description: 'Review aggregated transaction data by import identifier.',
-  },
-  '/reports': {
-    title: 'Tax Reports',
-    description: 'Start and monitor asynchronous tax report jobs.',
-  },
-  '/settings': {
-    title: 'Settings',
-    description: 'Maintain tax profile details used by tax calculations.',
-  },
-}
-
-function resolveMeta(pathname: string): { title: string; description: string } {
-  const exact = PAGE_META[pathname]
-  if (exact) {
-    return exact
-  }
-
-  const fallback = Object.entries(PAGE_META).find(([prefix]) => pathname.startsWith(prefix))
-  if (fallback) {
-    return fallback[1]
-  }
-
-  return {
-    title: 'Workspace',
-    description: 'Demo workflow for CryptoTax backend services.',
-  }
-}
+import { useTheme } from '../theme/ThemeProvider'
 
 export function AppShell() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { theme, toggleTheme } = useTheme()
   const { session, logout } = useAuth()
   const notifications = useNotifications()
   const navigate = useNavigate()
-  const location = useLocation()
 
-  const pageMeta = resolveMeta(location.pathname)
+  const navItems = [
+    { to: '/imports', label: 'CSV Imports', icon: FileUp, end: true },
+    { to: '/transactions', label: 'Transactions', icon: Receipt },
+    { to: '/reports', label: 'Tax Reports', icon: FileBarChart },
+    { to: '/settings', label: 'Settings', icon: Settings },
+  ]
 
   const handleLogout = async (): Promise<void> => {
     await logout()
@@ -66,47 +26,108 @@ export function AppShell() {
   }
 
   return (
-    <div className="shell">
-      <header className="shell-header">
-        <div>
-          <p className="shell-brand">CryptoTax</p>
-          <p className="shell-caption">Backend workflow demo</p>
+    <div className="min-h-screen bg-background flex">
+      <aside className="w-64 bg-surface border-r border-border flex-col fixed h-full z-20 hidden lg:flex">
+        <div className="p-6 border-b border-border">
+          <h1 className="text-foreground">CryptoTax</h1>
         </div>
-        <div className="shell-header-right">
-          <div className="shell-user-block">
-            <p>{session?.user.email}</p>
-            <p className="shell-muted">{session?.user.status ?? '—'}</p>
-          </div>
-          <button type="button" className="btn-secondary" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-      </header>
 
-      <div className="shell-body">
-        <aside className="shell-sidebar" aria-label="Primary navigation">
-          <nav>
-            <ul>
-              {NAV_ITEMS.map((item) => (
-                <li key={item.to}>
-                  <NavLink to={item.to} className={({ isActive }) => `nav-link${isActive ? ' nav-link-active' : ''}`}>
-                    <span>{item.label}</span>
-                    <small>{item.subtitle}</small>
+        <nav className="flex-1 p-4 space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`
+                }
+              >
+                <Icon className="w-5 h-5" />
+                <span className="font-medium text-sm">{item.label}</span>
+              </NavLink>
+            )
+          })}
+        </nav>
+      </aside>
+
+      {sidebarOpen ? (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
+          <aside className="w-64 bg-surface border-r border-border flex flex-col fixed h-full z-40 lg:hidden">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <h1 className="text-foreground">CryptoTax</h1>
+              <button onClick={() => setSidebarOpen(false)}>
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <nav className="flex-1 p-4 space-y-1">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    onClick={() => setSidebarOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`
+                    }
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-medium text-sm">{item.label}</span>
                   </NavLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
+                )
+              })}
+            </nav>
+          </aside>
+        </>
+      ) : null}
 
-        <main className="shell-main">
-          <section className="page-title-bar">
-            <h1>{pageMeta.title}</h1>
-            <p>{pageMeta.description}</p>
-          </section>
-          <section className="page-content">
-            <Outlet />
-          </section>
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+        <header className="h-16 bg-surface border-b border-border flex items-center justify-between px-4 lg:px-8 sticky top-0 z-10">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors">
+              <Menu className="w-5 h-5 text-foreground" />
+            </button>
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-sm text-muted-foreground hidden sm:inline">Live sync enabled</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="text-sm hidden md:block">
+              <span className="text-muted-foreground">Signed in as</span>
+              <span className="ml-2 text-foreground font-medium">{session?.user.email ?? '—'}</span>
+            </div>
+            <button
+              onClick={() => void handleLogout()}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+            <button
+              className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              onClick={toggleTheme}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              <span className="hidden sm:inline">Toggle Theme</span>
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+          <Outlet />
         </main>
       </div>
     </div>

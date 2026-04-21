@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './ProtectedRoute'
 import { AppShell } from '../components/layout/AppShell'
-import { ImportsPage } from '../pages/ImportsPage'
+import { CSVImports } from '../pages/CSVImports'
 import { LoginPage } from '../pages/LoginPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { RegisterPage } from '../pages/RegisterPage'
@@ -18,7 +18,7 @@ export function AppRouter() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route path="/" element={<Navigate to="/imports" replace />} />
-          <Route path="/imports" element={<ImportsPage />} />
+          <Route path="/imports" element={<CSVImports />} />
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
