@@ -14,35 +14,11 @@ otel:
 grpc:
   addr: "0.0.0.0:8098"
 
-postgres:
-  max_conns: 10
-  conn_timeout: 2s
-  attempt_timeout: 5s
-  conn_attempts: 3
-
-rabbitmq:
-  exchange: "tax.pipeline"
-  queue_render_requested: "report.render.requested"
-  routing_render_request: "ReportRenderRequested"
-  routing_rendered: "ReportRendered"
-  routing_render_failed: "ReportRenderFailed"
-  consumer_name_render_requested: "report-render-requested-consumer"
-  prefetch: 10
-  concurrency: 1
-  reconnect_interval: 2s
-  outbox_batch_size: 100
-  outbox_poll_interval: 1s
-  outbox_max_attempts: 10
-  handler_timeout: 60s
-  queue_durable: true
-  skip_queue_declare: true
+http:
+  addr: "0.0.0.0:8099"
+  shutdown_timeout: 5s
 
 minio:
   endpoint: "minio:9000"
   bucket: "tax-reports"
   use_ssl: false
-
-worker:
-  template_version: "v1"
-  max_preview_events: 20
-

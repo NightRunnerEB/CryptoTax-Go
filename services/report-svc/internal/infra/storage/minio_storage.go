@@ -3,8 +3,6 @@ package storage
 import (
 	"bytes"
 	"context"
-	"encoding/json"
-	"io"
 	"strings"
 
 	"github.com/minio/minio-go/v7"
@@ -59,7 +57,7 @@ func NewMinIOStorage(cfg config.MinIOConfig) (*MinIOStorage, error) {
 	}, nil
 }
 
-func (s *MinIOStorage) DownloadJSON(ctx context.Context, objectKey string, out any) error {
+func (s *MinIOStorage) UploadXML(ctx context.Context, objectKey string, payload []byte) error {
 	if s == nil || s.client == nil {
 		return apperr.Internal("storage client is not initialized", nil, nil)
 	}
@@ -70,56 +68,18 @@ func (s *MinIOStorage) DownloadJSON(ctx context.Context, objectKey string, out a
 			Description: "required",
 		})
 	}
-
-	obj, err := s.client.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
-	if err != nil {
-		return apperr.StorageUnavailable("download object failed", err, map[string]string{
-			"bucket":     s.bucket,
-			"object_key": objectKey,
-		})
-	}
-	defer obj.Close()
-
-	body, err := io.ReadAll(obj)
-	if err != nil {
-		return apperr.StorageUnavailable("read object failed", err, map[string]string{
-			"bucket":     s.bucket,
-			"object_key": objectKey,
-		})
-	}
-
-	if err := json.Unmarshal(body, out); err != nil {
-		return apperr.StorageBadResponse("decode dataset failed", err, map[string]string{
-			"bucket":     s.bucket,
-			"object_key": objectKey,
-		})
-	}
-	return nil
-}
-
-func (s *MinIOStorage) UploadPDF(ctx context.Context, objectKey string, pdf []byte) error {
-	if s == nil || s.client == nil {
-		return apperr.Internal("storage client is not initialized", nil, nil)
-	}
-	objectKey = strings.TrimSpace(objectKey)
-	if objectKey == "" {
-		return apperr.InvalidArgument("invalid object key", nil, apperr.FieldViolation{
-			Field:       "object_key",
-			Description: "required",
-		})
-	}
-	if len(pdf) == 0 {
-		return apperr.InvalidArgument("empty pdf payload", nil, apperr.FieldViolation{
-			Field:       "pdf",
+	if len(payload) == 0 {
+		return apperr.InvalidArgument("empty xml payload", nil, apperr.FieldViolation{
+			Field:       "xml",
 			Description: "required",
 		})
 	}
 
-	_, err := s.client.PutObject(ctx, s.bucket, objectKey, bytes.NewReader(pdf), int64(len(pdf)), minio.PutObjectOptions{
-		ContentType: "application/pdf",
+	_, err := s.client.PutObject(ctx, s.bucket, objectKey, bytes.NewReader(payload), int64(len(payload)), minio.PutObjectOptions{
+		ContentType: "application/xml",
 	})
 	if err != nil {
-		return apperr.StorageUnavailable("upload pdf failed", err, map[string]string{
+		return apperr.StorageUnavailable("upload xml failed", err, map[string]string{
 			"bucket":     s.bucket,
 			"object_key": objectKey,
 		})
