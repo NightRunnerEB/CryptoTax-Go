@@ -7,8 +7,10 @@
 package reportv1
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -21,32 +23,33 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type RequestRenderRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	ReportId         string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
-	UserId           string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Jurisdiction     string                 `protobuf:"bytes,3,opt,name=jurisdiction,proto3" json:"jurisdiction,omitempty"`
-	TaxYear          int32                  `protobuf:"varint,4,opt,name=tax_year,json=taxYear,proto3" json:"tax_year,omitempty"`
-	DatasetObjectKey string                 `protobuf:"bytes,5,opt,name=dataset_object_key,json=datasetObjectKey,proto3" json:"dataset_object_key,omitempty"`
-	TemplateVersion  string                 `protobuf:"bytes,6,opt,name=template_version,json=templateVersion,proto3" json:"template_version,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+type RenderNDFLRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ReportId       string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
+	UserId         string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Header         *NdflHeader            `protobuf:"bytes,3,opt,name=header,proto3" json:"header,omitempty"`
+	Section1       *NdflSection1          `protobuf:"bytes,4,opt,name=section1,proto3" json:"section1,omitempty"`
+	Section2       *NdflSection2          `protobuf:"bytes,5,opt,name=section2,proto3" json:"section2,omitempty"`
+	Appendix2Lines []*NdflAppendix2Line   `protobuf:"bytes,6,rep,name=appendix2_lines,json=appendix2Lines,proto3" json:"appendix2_lines,omitempty"`
+	Appendix6      *NdflAppendix6         `protobuf:"bytes,7,opt,name=appendix6,proto3" json:"appendix6,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
-func (x *RequestRenderRequest) Reset() {
-	*x = RequestRenderRequest{}
+func (x *RenderNDFLRequest) Reset() {
+	*x = RenderNDFLRequest{}
 	mi := &file_report_v1_report_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RequestRenderRequest) String() string {
+func (x *RenderNDFLRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RequestRenderRequest) ProtoMessage() {}
+func (*RenderNDFLRequest) ProtoMessage() {}
 
-func (x *RequestRenderRequest) ProtoReflect() protoreflect.Message {
+func (x *RenderNDFLRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_report_v1_report_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -58,73 +61,81 @@ func (x *RequestRenderRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RequestRenderRequest.ProtoReflect.Descriptor instead.
-func (*RequestRenderRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use RenderNDFLRequest.ProtoReflect.Descriptor instead.
+func (*RenderNDFLRequest) Descriptor() ([]byte, []int) {
 	return file_report_v1_report_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *RequestRenderRequest) GetReportId() string {
+func (x *RenderNDFLRequest) GetReportId() string {
 	if x != nil {
 		return x.ReportId
 	}
 	return ""
 }
 
-func (x *RequestRenderRequest) GetUserId() string {
+func (x *RenderNDFLRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *RequestRenderRequest) GetJurisdiction() string {
+func (x *RenderNDFLRequest) GetHeader() *NdflHeader {
 	if x != nil {
-		return x.Jurisdiction
+		return x.Header
 	}
-	return ""
+	return nil
 }
 
-func (x *RequestRenderRequest) GetTaxYear() int32 {
+func (x *RenderNDFLRequest) GetSection1() *NdflSection1 {
 	if x != nil {
-		return x.TaxYear
+		return x.Section1
 	}
-	return 0
+	return nil
 }
 
-func (x *RequestRenderRequest) GetDatasetObjectKey() string {
+func (x *RenderNDFLRequest) GetSection2() *NdflSection2 {
 	if x != nil {
-		return x.DatasetObjectKey
+		return x.Section2
 	}
-	return ""
+	return nil
 }
 
-func (x *RequestRenderRequest) GetTemplateVersion() string {
+func (x *RenderNDFLRequest) GetAppendix2Lines() []*NdflAppendix2Line {
 	if x != nil {
-		return x.TemplateVersion
+		return x.Appendix2Lines
 	}
-	return ""
+	return nil
 }
 
-type RequestRenderResponse struct {
+func (x *RenderNDFLRequest) GetAppendix6() *NdflAppendix6 {
+	if x != nil {
+		return x.Appendix6
+	}
+	return nil
+}
+
+type RenderNDFLResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	ObjectKey     string                 `protobuf:"bytes,1,opt,name=object_key,json=objectKey,proto3" json:"object_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RequestRenderResponse) Reset() {
-	*x = RequestRenderResponse{}
+func (x *RenderNDFLResponse) Reset() {
+	*x = RenderNDFLResponse{}
 	mi := &file_report_v1_report_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RequestRenderResponse) String() string {
+func (x *RenderNDFLResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RequestRenderResponse) ProtoMessage() {}
+func (*RenderNDFLResponse) ProtoMessage() {}
 
-func (x *RequestRenderResponse) ProtoReflect() protoreflect.Message {
+func (x *RenderNDFLResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_report_v1_report_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -136,26 +147,639 @@ func (x *RequestRenderResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RequestRenderResponse.ProtoReflect.Descriptor instead.
-func (*RequestRenderResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use RenderNDFLResponse.ProtoReflect.Descriptor instead.
+func (*RenderNDFLResponse) Descriptor() ([]byte, []int) {
 	return file_report_v1_report_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *RenderNDFLResponse) GetObjectKey() string {
+	if x != nil {
+		return x.ObjectKey
+	}
+	return ""
+}
+
+type NdflHeader struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	TaxYear          int32                  `protobuf:"varint,1,opt,name=tax_year,json=taxYear,proto3" json:"tax_year,omitempty"`
+	Inn              string                 `protobuf:"bytes,2,opt,name=inn,proto3" json:"inn,omitempty"`
+	LastName         string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
+	FirstName        string                 `protobuf:"bytes,4,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
+	MiddleName       string                 `protobuf:"bytes,5,opt,name=middle_name,json=middleName,proto3" json:"middle_name,omitempty"`
+	Phone            string                 `protobuf:"bytes,6,opt,name=phone,proto3" json:"phone,omitempty"`
+	Oktmo            string                 `protobuf:"bytes,7,opt,name=oktmo,proto3" json:"oktmo,omitempty"`
+	TaxResidency     string                 `protobuf:"bytes,8,opt,name=tax_residency,json=taxResidency,proto3" json:"tax_residency,omitempty"`
+	TaxPayerType     string                 `protobuf:"bytes,9,opt,name=tax_payer_type,json=taxPayerType,proto3" json:"tax_payer_type,omitempty"`
+	CorrectionNumber string                 `protobuf:"bytes,10,opt,name=correction_number,json=correctionNumber,proto3" json:"correction_number,omitempty"`
+	TaxPeriodCode    string                 `protobuf:"bytes,11,opt,name=tax_period_code,json=taxPeriodCode,proto3" json:"tax_period_code,omitempty"`
+	TaxOfficeCode    string                 `protobuf:"bytes,12,opt,name=tax_office_code,json=taxOfficeCode,proto3" json:"tax_office_code,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *NdflHeader) Reset() {
+	*x = NdflHeader{}
+	mi := &file_report_v1_report_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NdflHeader) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NdflHeader) ProtoMessage() {}
+
+func (x *NdflHeader) ProtoReflect() protoreflect.Message {
+	mi := &file_report_v1_report_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NdflHeader.ProtoReflect.Descriptor instead.
+func (*NdflHeader) Descriptor() ([]byte, []int) {
+	return file_report_v1_report_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *NdflHeader) GetTaxYear() int32 {
+	if x != nil {
+		return x.TaxYear
+	}
+	return 0
+}
+
+func (x *NdflHeader) GetInn() string {
+	if x != nil {
+		return x.Inn
+	}
+	return ""
+}
+
+func (x *NdflHeader) GetLastName() string {
+	if x != nil {
+		return x.LastName
+	}
+	return ""
+}
+
+func (x *NdflHeader) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *NdflHeader) GetMiddleName() string {
+	if x != nil {
+		return x.MiddleName
+	}
+	return ""
+}
+
+func (x *NdflHeader) GetPhone() string {
+	if x != nil {
+		return x.Phone
+	}
+	return ""
+}
+
+func (x *NdflHeader) GetOktmo() string {
+	if x != nil {
+		return x.Oktmo
+	}
+	return ""
+}
+
+func (x *NdflHeader) GetTaxResidency() string {
+	if x != nil {
+		return x.TaxResidency
+	}
+	return ""
+}
+
+func (x *NdflHeader) GetTaxPayerType() string {
+	if x != nil {
+		return x.TaxPayerType
+	}
+	return ""
+}
+
+func (x *NdflHeader) GetCorrectionNumber() string {
+	if x != nil {
+		return x.CorrectionNumber
+	}
+	return ""
+}
+
+func (x *NdflHeader) GetTaxPeriodCode() string {
+	if x != nil {
+		return x.TaxPeriodCode
+	}
+	return ""
+}
+
+func (x *NdflHeader) GetTaxOfficeCode() string {
+	if x != nil {
+		return x.TaxOfficeCode
+	}
+	return ""
+}
+
+type NdflSection1 struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Kbk           string                 `protobuf:"bytes,1,opt,name=kbk,proto3" json:"kbk,omitempty"`
+	Oktmo         string                 `protobuf:"bytes,2,opt,name=oktmo,proto3" json:"oktmo,omitempty"`
+	TaxToPay      string                 `protobuf:"bytes,3,opt,name=tax_to_pay,json=taxToPay,proto3" json:"tax_to_pay,omitempty"`
+	TaxToRefund   string                 `protobuf:"bytes,4,opt,name=tax_to_refund,json=taxToRefund,proto3" json:"tax_to_refund,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NdflSection1) Reset() {
+	*x = NdflSection1{}
+	mi := &file_report_v1_report_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NdflSection1) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NdflSection1) ProtoMessage() {}
+
+func (x *NdflSection1) ProtoReflect() protoreflect.Message {
+	mi := &file_report_v1_report_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NdflSection1.ProtoReflect.Descriptor instead.
+func (*NdflSection1) Descriptor() ([]byte, []int) {
+	return file_report_v1_report_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *NdflSection1) GetKbk() string {
+	if x != nil {
+		return x.Kbk
+	}
+	return ""
+}
+
+func (x *NdflSection1) GetOktmo() string {
+	if x != nil {
+		return x.Oktmo
+	}
+	return ""
+}
+
+func (x *NdflSection1) GetTaxToPay() string {
+	if x != nil {
+		return x.TaxToPay
+	}
+	return ""
+}
+
+func (x *NdflSection1) GetTaxToRefund() string {
+	if x != nil {
+		return x.TaxToRefund
+	}
+	return ""
+}
+
+type NdflSection2 struct {
+	state                     protoimpl.MessageState `protogen:"open.v1"`
+	IncomeGroupCode           string                 `protobuf:"bytes,1,opt,name=income_group_code,json=incomeGroupCode,proto3" json:"income_group_code,omitempty"`
+	TotalIncome               string                 `protobuf:"bytes,2,opt,name=total_income,json=totalIncome,proto3" json:"total_income,omitempty"`
+	NonTaxableIncome          string                 `protobuf:"bytes,3,opt,name=non_taxable_income,json=nonTaxableIncome,proto3" json:"non_taxable_income,omitempty"`
+	TaxableIncome             string                 `protobuf:"bytes,4,opt,name=taxable_income,json=taxableIncome,proto3" json:"taxable_income,omitempty"`
+	Deductions                string                 `protobuf:"bytes,5,opt,name=deductions,proto3" json:"deductions,omitempty"`
+	RecognizedExpenses        string                 `protobuf:"bytes,6,opt,name=recognized_expenses,json=recognizedExpenses,proto3" json:"recognized_expenses,omitempty"`
+	TaxBase                   string                 `protobuf:"bytes,7,opt,name=tax_base,json=taxBase,proto3" json:"tax_base,omitempty"`
+	CalculatedTax             string                 `protobuf:"bytes,8,opt,name=calculated_tax,json=calculatedTax,proto3" json:"calculated_tax,omitempty"`
+	WithheldAtSource          string                 `protobuf:"bytes,9,opt,name=withheld_at_source,json=withheldAtSource,proto3" json:"withheld_at_source,omitempty"`
+	MaterialBenefitTax        string                 `protobuf:"bytes,10,opt,name=material_benefit_tax,json=materialBenefitTax,proto3" json:"material_benefit_tax,omitempty"`
+	TradingFeeCredit          string                 `protobuf:"bytes,11,opt,name=trading_fee_credit,json=tradingFeeCredit,proto3" json:"trading_fee_credit,omitempty"`
+	FixedAdvanceCredit        string                 `protobuf:"bytes,12,opt,name=fixed_advance_credit,json=fixedAdvanceCredit,proto3" json:"fixed_advance_credit,omitempty"`
+	ForeignTaxCredit          string                 `protobuf:"bytes,13,opt,name=foreign_tax_credit,json=foreignTaxCredit,proto3" json:"foreign_tax_credit,omitempty"`
+	PatentTaxCredit           string                 `protobuf:"bytes,14,opt,name=patent_tax_credit,json=patentTaxCredit,proto3" json:"patent_tax_credit,omitempty"`
+	TaxToPay                  string                 `protobuf:"bytes,15,opt,name=tax_to_pay,json=taxToPay,proto3" json:"tax_to_pay,omitempty"`
+	TaxToRefund               string                 `protobuf:"bytes,16,opt,name=tax_to_refund,json=taxToRefund,proto3" json:"tax_to_refund,omitempty"`
+	SimplifiedDeductionRefund string                 `protobuf:"bytes,17,opt,name=simplified_deduction_refund,json=simplifiedDeductionRefund,proto3" json:"simplified_deduction_refund,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *NdflSection2) Reset() {
+	*x = NdflSection2{}
+	mi := &file_report_v1_report_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NdflSection2) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NdflSection2) ProtoMessage() {}
+
+func (x *NdflSection2) ProtoReflect() protoreflect.Message {
+	mi := &file_report_v1_report_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NdflSection2.ProtoReflect.Descriptor instead.
+func (*NdflSection2) Descriptor() ([]byte, []int) {
+	return file_report_v1_report_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *NdflSection2) GetIncomeGroupCode() string {
+	if x != nil {
+		return x.IncomeGroupCode
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetTotalIncome() string {
+	if x != nil {
+		return x.TotalIncome
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetNonTaxableIncome() string {
+	if x != nil {
+		return x.NonTaxableIncome
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetTaxableIncome() string {
+	if x != nil {
+		return x.TaxableIncome
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetDeductions() string {
+	if x != nil {
+		return x.Deductions
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetRecognizedExpenses() string {
+	if x != nil {
+		return x.RecognizedExpenses
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetTaxBase() string {
+	if x != nil {
+		return x.TaxBase
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetCalculatedTax() string {
+	if x != nil {
+		return x.CalculatedTax
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetWithheldAtSource() string {
+	if x != nil {
+		return x.WithheldAtSource
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetMaterialBenefitTax() string {
+	if x != nil {
+		return x.MaterialBenefitTax
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetTradingFeeCredit() string {
+	if x != nil {
+		return x.TradingFeeCredit
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetFixedAdvanceCredit() string {
+	if x != nil {
+		return x.FixedAdvanceCredit
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetForeignTaxCredit() string {
+	if x != nil {
+		return x.ForeignTaxCredit
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetPatentTaxCredit() string {
+	if x != nil {
+		return x.PatentTaxCredit
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetTaxToPay() string {
+	if x != nil {
+		return x.TaxToPay
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetTaxToRefund() string {
+	if x != nil {
+		return x.TaxToRefund
+	}
+	return ""
+}
+
+func (x *NdflSection2) GetSimplifiedDeductionRefund() string {
+	if x != nil {
+		return x.SimplifiedDeductionRefund
+	}
+	return ""
+}
+
+type NdflAppendix2Line struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	SourceCountryCode  string                 `protobuf:"bytes,1,opt,name=source_country_code,json=sourceCountryCode,proto3" json:"source_country_code,omitempty"`
+	PaymentCountryCode string                 `protobuf:"bytes,2,opt,name=payment_country_code,json=paymentCountryCode,proto3" json:"payment_country_code,omitempty"`
+	SourceName         string                 `protobuf:"bytes,3,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
+	CurrencyCode       string                 `protobuf:"bytes,4,opt,name=currency_code,json=currencyCode,proto3" json:"currency_code,omitempty"`
+	IncomeTypeCode     string                 `protobuf:"bytes,5,opt,name=income_type_code,json=incomeTypeCode,proto3" json:"income_type_code,omitempty"`
+	IncomeDate         *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=income_date,json=incomeDate,proto3" json:"income_date,omitempty"`
+	FxRate             string                 `protobuf:"bytes,7,opt,name=fx_rate,json=fxRate,proto3" json:"fx_rate,omitempty"`
+	IncomeForeign      string                 `protobuf:"bytes,8,opt,name=income_foreign,json=incomeForeign,proto3" json:"income_foreign,omitempty"`
+	IncomeRub          string                 `protobuf:"bytes,9,opt,name=income_rub,json=incomeRub,proto3" json:"income_rub,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *NdflAppendix2Line) Reset() {
+	*x = NdflAppendix2Line{}
+	mi := &file_report_v1_report_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NdflAppendix2Line) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NdflAppendix2Line) ProtoMessage() {}
+
+func (x *NdflAppendix2Line) ProtoReflect() protoreflect.Message {
+	mi := &file_report_v1_report_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NdflAppendix2Line.ProtoReflect.Descriptor instead.
+func (*NdflAppendix2Line) Descriptor() ([]byte, []int) {
+	return file_report_v1_report_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *NdflAppendix2Line) GetSourceCountryCode() string {
+	if x != nil {
+		return x.SourceCountryCode
+	}
+	return ""
+}
+
+func (x *NdflAppendix2Line) GetPaymentCountryCode() string {
+	if x != nil {
+		return x.PaymentCountryCode
+	}
+	return ""
+}
+
+func (x *NdflAppendix2Line) GetSourceName() string {
+	if x != nil {
+		return x.SourceName
+	}
+	return ""
+}
+
+func (x *NdflAppendix2Line) GetCurrencyCode() string {
+	if x != nil {
+		return x.CurrencyCode
+	}
+	return ""
+}
+
+func (x *NdflAppendix2Line) GetIncomeTypeCode() string {
+	if x != nil {
+		return x.IncomeTypeCode
+	}
+	return ""
+}
+
+func (x *NdflAppendix2Line) GetIncomeDate() *timestamppb.Timestamp {
+	if x != nil {
+		return x.IncomeDate
+	}
+	return nil
+}
+
+func (x *NdflAppendix2Line) GetFxRate() string {
+	if x != nil {
+		return x.FxRate
+	}
+	return ""
+}
+
+func (x *NdflAppendix2Line) GetIncomeForeign() string {
+	if x != nil {
+		return x.IncomeForeign
+	}
+	return ""
+}
+
+func (x *NdflAppendix2Line) GetIncomeRub() string {
+	if x != nil {
+		return x.IncomeRub
+	}
+	return ""
+}
+
+type NdflAppendix6 struct {
+	state                       protoimpl.MessageState `protogen:"open.v1"`
+	OtherPropertyDeduction      string                 `protobuf:"bytes,1,opt,name=other_property_deduction,json=otherPropertyDeduction,proto3" json:"other_property_deduction,omitempty"`
+	OtherPropertyAcquisitionExp string                 `protobuf:"bytes,2,opt,name=other_property_acquisition_exp,json=otherPropertyAcquisitionExp,proto3" json:"other_property_acquisition_exp,omitempty"`
+	TotalPropertyDeduction      string                 `protobuf:"bytes,3,opt,name=total_property_deduction,json=totalPropertyDeduction,proto3" json:"total_property_deduction,omitempty"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
+}
+
+func (x *NdflAppendix6) Reset() {
+	*x = NdflAppendix6{}
+	mi := &file_report_v1_report_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NdflAppendix6) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NdflAppendix6) ProtoMessage() {}
+
+func (x *NdflAppendix6) ProtoReflect() protoreflect.Message {
+	mi := &file_report_v1_report_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NdflAppendix6.ProtoReflect.Descriptor instead.
+func (*NdflAppendix6) Descriptor() ([]byte, []int) {
+	return file_report_v1_report_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *NdflAppendix6) GetOtherPropertyDeduction() string {
+	if x != nil {
+		return x.OtherPropertyDeduction
+	}
+	return ""
+}
+
+func (x *NdflAppendix6) GetOtherPropertyAcquisitionExp() string {
+	if x != nil {
+		return x.OtherPropertyAcquisitionExp
+	}
+	return ""
+}
+
+func (x *NdflAppendix6) GetTotalPropertyDeduction() string {
+	if x != nil {
+		return x.TotalPropertyDeduction
+	}
+	return ""
 }
 
 var File_report_v1_report_proto protoreflect.FileDescriptor
 
 const file_report_v1_report_proto_rawDesc = "" +
 	"\n" +
-	"\x16report/v1/report.proto\x12\treport.v1\"\xe4\x01\n" +
-	"\x14RequestRenderRequest\x12\x1b\n" +
+	"\x16report/v1/report.proto\x12\treport.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe1\x02\n" +
+	"\x11RenderNDFLRequest\x12\x1b\n" +
 	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\"\n" +
-	"\fjurisdiction\x18\x03 \x01(\tR\fjurisdiction\x12\x19\n" +
-	"\btax_year\x18\x04 \x01(\x05R\ataxYear\x12,\n" +
-	"\x12dataset_object_key\x18\x05 \x01(\tR\x10datasetObjectKey\x12)\n" +
-	"\x10template_version\x18\x06 \x01(\tR\x0ftemplateVersion\"\x17\n" +
-	"\x15RequestRenderResponse2\\\n" +
-	"\x06Report\x12R\n" +
-	"\rRequestRender\x12\x1f.report.v1.RequestRenderRequest\x1a .report.v1.RequestRenderResponseB<Z:github.com/NightRunner/CryptoTax-Go/gen/report/v1;reportv1b\x06proto3"
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12-\n" +
+	"\x06header\x18\x03 \x01(\v2\x15.report.v1.NdflHeaderR\x06header\x123\n" +
+	"\bsection1\x18\x04 \x01(\v2\x17.report.v1.NdflSection1R\bsection1\x123\n" +
+	"\bsection2\x18\x05 \x01(\v2\x17.report.v1.NdflSection2R\bsection2\x12E\n" +
+	"\x0fappendix2_lines\x18\x06 \x03(\v2\x1c.report.v1.NdflAppendix2LineR\x0eappendix2Lines\x126\n" +
+	"\tappendix6\x18\a \x01(\v2\x18.report.v1.NdflAppendix6R\tappendix6\"3\n" +
+	"\x12RenderNDFLResponse\x12\x1d\n" +
+	"\n" +
+	"object_key\x18\x01 \x01(\tR\tobjectKey\"\x8a\x03\n" +
+	"\n" +
+	"NdflHeader\x12\x19\n" +
+	"\btax_year\x18\x01 \x01(\x05R\ataxYear\x12\x10\n" +
+	"\x03inn\x18\x02 \x01(\tR\x03inn\x12\x1b\n" +
+	"\tlast_name\x18\x03 \x01(\tR\blastName\x12\x1d\n" +
+	"\n" +
+	"first_name\x18\x04 \x01(\tR\tfirstName\x12\x1f\n" +
+	"\vmiddle_name\x18\x05 \x01(\tR\n" +
+	"middleName\x12\x14\n" +
+	"\x05phone\x18\x06 \x01(\tR\x05phone\x12\x14\n" +
+	"\x05oktmo\x18\a \x01(\tR\x05oktmo\x12#\n" +
+	"\rtax_residency\x18\b \x01(\tR\ftaxResidency\x12$\n" +
+	"\x0etax_payer_type\x18\t \x01(\tR\ftaxPayerType\x12+\n" +
+	"\x11correction_number\x18\n" +
+	" \x01(\tR\x10correctionNumber\x12&\n" +
+	"\x0ftax_period_code\x18\v \x01(\tR\rtaxPeriodCode\x12&\n" +
+	"\x0ftax_office_code\x18\f \x01(\tR\rtaxOfficeCode\"x\n" +
+	"\fNdflSection1\x12\x10\n" +
+	"\x03kbk\x18\x01 \x01(\tR\x03kbk\x12\x14\n" +
+	"\x05oktmo\x18\x02 \x01(\tR\x05oktmo\x12\x1c\n" +
+	"\n" +
+	"tax_to_pay\x18\x03 \x01(\tR\btaxToPay\x12\"\n" +
+	"\rtax_to_refund\x18\x04 \x01(\tR\vtaxToRefund\"\xe1\x05\n" +
+	"\fNdflSection2\x12*\n" +
+	"\x11income_group_code\x18\x01 \x01(\tR\x0fincomeGroupCode\x12!\n" +
+	"\ftotal_income\x18\x02 \x01(\tR\vtotalIncome\x12,\n" +
+	"\x12non_taxable_income\x18\x03 \x01(\tR\x10nonTaxableIncome\x12%\n" +
+	"\x0etaxable_income\x18\x04 \x01(\tR\rtaxableIncome\x12\x1e\n" +
+	"\n" +
+	"deductions\x18\x05 \x01(\tR\n" +
+	"deductions\x12/\n" +
+	"\x13recognized_expenses\x18\x06 \x01(\tR\x12recognizedExpenses\x12\x19\n" +
+	"\btax_base\x18\a \x01(\tR\ataxBase\x12%\n" +
+	"\x0ecalculated_tax\x18\b \x01(\tR\rcalculatedTax\x12,\n" +
+	"\x12withheld_at_source\x18\t \x01(\tR\x10withheldAtSource\x120\n" +
+	"\x14material_benefit_tax\x18\n" +
+	" \x01(\tR\x12materialBenefitTax\x12,\n" +
+	"\x12trading_fee_credit\x18\v \x01(\tR\x10tradingFeeCredit\x120\n" +
+	"\x14fixed_advance_credit\x18\f \x01(\tR\x12fixedAdvanceCredit\x12,\n" +
+	"\x12foreign_tax_credit\x18\r \x01(\tR\x10foreignTaxCredit\x12*\n" +
+	"\x11patent_tax_credit\x18\x0e \x01(\tR\x0fpatentTaxCredit\x12\x1c\n" +
+	"\n" +
+	"tax_to_pay\x18\x0f \x01(\tR\btaxToPay\x12\"\n" +
+	"\rtax_to_refund\x18\x10 \x01(\tR\vtaxToRefund\x12>\n" +
+	"\x1bsimplified_deduction_refund\x18\x11 \x01(\tR\x19simplifiedDeductionRefund\"\x81\x03\n" +
+	"\x11NdflAppendix2Line\x12.\n" +
+	"\x13source_country_code\x18\x01 \x01(\tR\x11sourceCountryCode\x120\n" +
+	"\x14payment_country_code\x18\x02 \x01(\tR\x12paymentCountryCode\x12\x1f\n" +
+	"\vsource_name\x18\x03 \x01(\tR\n" +
+	"sourceName\x12#\n" +
+	"\rcurrency_code\x18\x04 \x01(\tR\fcurrencyCode\x12(\n" +
+	"\x10income_type_code\x18\x05 \x01(\tR\x0eincomeTypeCode\x12;\n" +
+	"\vincome_date\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"incomeDate\x12\x17\n" +
+	"\afx_rate\x18\a \x01(\tR\x06fxRate\x12%\n" +
+	"\x0eincome_foreign\x18\b \x01(\tR\rincomeForeign\x12\x1d\n" +
+	"\n" +
+	"income_rub\x18\t \x01(\tR\tincomeRub\"\xc8\x01\n" +
+	"\rNdflAppendix6\x128\n" +
+	"\x18other_property_deduction\x18\x01 \x01(\tR\x16otherPropertyDeduction\x12C\n" +
+	"\x1eother_property_acquisition_exp\x18\x02 \x01(\tR\x1botherPropertyAcquisitionExp\x128\n" +
+	"\x18total_property_deduction\x18\x03 \x01(\tR\x16totalPropertyDeduction2v\n" +
+	"\x06Report\x12l\n" +
+	"\n" +
+	"RenderNDFL\x12\x1c.report.v1.RenderNDFLRequest\x1a\x1d.report.v1.RenderNDFLResponse\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/v1/report/ndfl:renderB<Z:github.com/NightRunner/CryptoTax-Go/gen/report/v1;reportv1b\x06proto3"
 
 var (
 	file_report_v1_report_proto_rawDescOnce sync.Once
@@ -169,19 +793,31 @@ func file_report_v1_report_proto_rawDescGZIP() []byte {
 	return file_report_v1_report_proto_rawDescData
 }
 
-var file_report_v1_report_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_report_v1_report_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_report_v1_report_proto_goTypes = []any{
-	(*RequestRenderRequest)(nil),  // 0: report.v1.RequestRenderRequest
-	(*RequestRenderResponse)(nil), // 1: report.v1.RequestRenderResponse
+	(*RenderNDFLRequest)(nil),     // 0: report.v1.RenderNDFLRequest
+	(*RenderNDFLResponse)(nil),    // 1: report.v1.RenderNDFLResponse
+	(*NdflHeader)(nil),            // 2: report.v1.NdflHeader
+	(*NdflSection1)(nil),          // 3: report.v1.NdflSection1
+	(*NdflSection2)(nil),          // 4: report.v1.NdflSection2
+	(*NdflAppendix2Line)(nil),     // 5: report.v1.NdflAppendix2Line
+	(*NdflAppendix6)(nil),         // 6: report.v1.NdflAppendix6
+	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
 }
 var file_report_v1_report_proto_depIdxs = []int32{
-	0, // 0: report.v1.Report.RequestRender:input_type -> report.v1.RequestRenderRequest
-	1, // 1: report.v1.Report.RequestRender:output_type -> report.v1.RequestRenderResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2, // 0: report.v1.RenderNDFLRequest.header:type_name -> report.v1.NdflHeader
+	3, // 1: report.v1.RenderNDFLRequest.section1:type_name -> report.v1.NdflSection1
+	4, // 2: report.v1.RenderNDFLRequest.section2:type_name -> report.v1.NdflSection2
+	5, // 3: report.v1.RenderNDFLRequest.appendix2_lines:type_name -> report.v1.NdflAppendix2Line
+	6, // 4: report.v1.RenderNDFLRequest.appendix6:type_name -> report.v1.NdflAppendix6
+	7, // 5: report.v1.NdflAppendix2Line.income_date:type_name -> google.protobuf.Timestamp
+	0, // 6: report.v1.Report.RenderNDFL:input_type -> report.v1.RenderNDFLRequest
+	1, // 7: report.v1.Report.RenderNDFL:output_type -> report.v1.RenderNDFLResponse
+	7, // [7:8] is the sub-list for method output_type
+	6, // [6:7] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_report_v1_report_proto_init() }
@@ -195,7 +831,7 @@ func file_report_v1_report_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_report_v1_report_proto_rawDesc), len(file_report_v1_report_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
