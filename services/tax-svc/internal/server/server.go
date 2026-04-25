@@ -72,6 +72,7 @@ func (s *TaxServer) UpsertTaxProfile(ctx context.Context, req *taxv1.UpsertTaxPr
 	profile := domain.TaxProfile{
 		UserID:             userID,
 		INN:                profileReq.GetInn(),
+		OKTMO:              profileReq.GetOktmo(),
 		LastName:           profileReq.GetLastName(),
 		FirstName:          profileReq.GetFirstName(),
 		MiddleName:         profileReq.GetMiddleName(),
@@ -250,6 +251,7 @@ func toProtoTaxProfile(profile domain.TaxProfile) *taxv1.TaxProfile {
 	return &taxv1.TaxProfile{
 		UserId:             profile.UserID.String(),
 		Inn:                profile.INN,
+		Oktmo:              profile.OKTMO,
 		LastName:           profile.LastName,
 		FirstName:          profile.FirstName,
 		MiddleName:         profile.MiddleName,
@@ -299,11 +301,24 @@ func toProtoTaxSummary(summary *domain.TaxSummary) *taxv1.TaxSummary {
 	if summary == nil {
 		return nil
 	}
+	p2p := make([]*taxv1.TaxSummaryP2PIncome, 0, len(summary.TotalP2P))
+	for _, item := range summary.TotalP2P {
+		line := &taxv1.TaxSummaryP2PIncome{
+			Qty:      item.Qty.String(),
+			GainFiat: item.GainFiat.String(),
+		}
+		if !item.OccurredAt.IsZero() {
+			line.OccurredAt = timestamppb.New(item.OccurredAt)
+		}
+		p2p = append(p2p, line)
+	}
 	return &taxv1.TaxSummary{
 		TotalIncomeFiat:  summary.TotalIncome.String(),
 		TotalExpenseFiat: summary.TotalExpense.String(),
 		TaxBaseFiat:      summary.TaxBase.String(),
 		TaxDueFiat:       summary.TaxDue.String(),
+		TotalTradeFiat:   summary.TotalTrade.String(),
+		TotalP2P:         p2p,
 	}
 }
 

@@ -27,7 +27,8 @@ func TestTaxServer_UpsertTaxProfile_MissingUserHeader(t *testing.T) {
 
 	req := &taxv1.UpsertTaxProfileRequest{
 		Profile: &taxv1.TaxProfileInput{
-			Inn:                "123456789012",
+			Inn:                "123456789047",
+			Oktmo:              "12345678",
 			LastName:           "Petrov",
 			FirstName:          "Ivan",
 			Timezone:           "Europe/Moscow",
@@ -67,12 +68,16 @@ func TestTaxServer_UpsertTaxProfile_Success(t *testing.T) {
 		if got.TaxPayerType != domain.INDIVIDUAL {
 			t.Fatalf("taxpayer type mismatch: %s", got.TaxPayerType)
 		}
+		if got.OKTMO != "12345678" {
+			t.Fatalf("oktmo mismatch: %q", got.OKTMO)
+		}
 		return nil
 	}).Times(1)
 
 	profileUC.EXPECT().Get(gomock.Any(), userID).Return(domain.TaxProfile{
 		UserID:             userID,
-		INN:                "123456789012",
+		INN:                "123456789047",
+		OKTMO:              "12345678",
 		LastName:           "Petrov",
 		FirstName:          "Ivan",
 		Timezone:           "Europe/Moscow",
@@ -82,7 +87,8 @@ func TestTaxServer_UpsertTaxProfile_Success(t *testing.T) {
 
 	resp, err := srv.UpsertTaxProfile(ctx, &taxv1.UpsertTaxProfileRequest{
 		Profile: &taxv1.TaxProfileInput{
-			Inn:                "123456789012",
+			Inn:                "123456789047",
+			Oktmo:              "12345678",
 			LastName:           "Petrov",
 			FirstName:          "Ivan",
 			Timezone:           "Europe/Moscow",

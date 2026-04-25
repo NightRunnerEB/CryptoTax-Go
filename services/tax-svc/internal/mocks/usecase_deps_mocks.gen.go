@@ -344,11 +344,12 @@ func (m *MockReportClient) EXPECT() *MockReportClientMockRecorder {
 }
 
 // RequestRender mocks base method.
-func (m *MockReportClient) RequestRender(ctx context.Context, req domain.ReportRenderRequest) error {
+func (m *MockReportClient) RequestRender(ctx context.Context, req domain.ReportRenderRequest) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RequestRender", ctx, req)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RequestRender indicates an expected call of RequestRender.

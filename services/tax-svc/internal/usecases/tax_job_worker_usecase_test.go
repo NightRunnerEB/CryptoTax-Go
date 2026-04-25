@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/error"
+	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/events"
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/engines"
 	enginesru "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/engines/ru"
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/mocks"
@@ -67,7 +69,8 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_Success(t *testing.T) {
 	}
 	profile := domain.TaxProfile{
 		UserID:             userID,
-		INN:                "123456789012",
+		INN:                "123456789047",
+		OKTMO:              "12345678",
 		LastName:           "Petrov",
 		FirstName:          "Ivan",
 		Timezone:           "Europe/Moscow",
@@ -94,9 +97,10 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_Success(t *testing.T) {
 		return nil
 	}).Times(1)
 
-	report.EXPECT().RequestRender(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+	expectedReportKey := "reports/user/report.xml"
+	report.EXPECT().RequestRender(gomock.Any(), gomock.Any()).Return(expectedReportKey, nil).Times(1)
 
-	jobRepo.EXPECT().SaveResult(gomock.Any(), jobID, gomock.Any(), gomock.Any(), gomock.Nil()).DoAndReturn(
+	jobRepo.EXPECT().SaveResult(gomock.Any(), jobID, gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
 		func(_ context.Context, gotID uuid.UUID, summary domain.TaxSummary, auditObjectKey *string, reportObjectKey *string) error {
 			if gotID != jobID {
 				t.Fatalf("job id mismatch: got %s want %s", gotID, jobID)
@@ -107,8 +111,8 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_Success(t *testing.T) {
 			if auditObjectKey == nil || *auditObjectKey == "" {
 				t.Fatal("audit object key must be saved")
 			}
-			if reportObjectKey != nil {
-				t.Fatalf("report_object_key must be nil for stub renderer, got %v", *reportObjectKey)
+			if reportObjectKey == nil || *reportObjectKey != expectedReportKey {
+				t.Fatalf("report_object_key mismatch: got=%v want=%s", reportObjectKey, expectedReportKey)
 			}
 			return nil
 		},
@@ -227,6 +231,85 @@ func TestTaxJobWorkerUC_ProcessNextQueuedJob_NonRetryableMarksFailed(t *testing.
 	}
 	if !processed {
 		t.Fatal("expected processed=true")
+	}
+}
+
+func TestSummarizeResult_SplitsTradeAndP2PIncome(t *testing.T) {
+	userID := uuid.New()
+	now := time.Date(2026, time.January, 10, 12, 0, 0, 0, time.UTC)
+
+	job := domain.TaxJob{
+		UserID:  userID,
+		TaxYear: 2026,
+		PolicySnapshot: domain.TaxPolicy{
+			Jurisdiction: domain.JurisdictionRU,
+		},
+	}
+	profile := domain.TaxProfile{
+		UserID:             userID,
+		TaxResidencyStatus: domain.Resident,
+	}
+
+	result := engines.BuildResult{
+		RealizationEvents: []events.RealizationEvent{
+			{
+				Asset:         "BTC",
+				Qty:           decimal.RequireFromString("0.2"),
+				ProceedsFiat:  decimal.RequireFromString("100"),
+				CostBasisFiat: decimal.RequireFromString("60"),
+				Kind:          events.RealizationSellFiat,
+			},
+			{
+				OccurredAt:    now,
+				Asset:         "USDT",
+				Qty:           decimal.RequireFromString("500"),
+				ProceedsFiat:  decimal.RequireFromString("50"),
+				CostBasisFiat: decimal.RequireFromString("40"),
+				Kind:          events.RealizationP2PSell,
+			},
+		},
+		IncomeEvents: []events.IncomeEvent{
+			{
+				AmountFiat: decimal.RequireFromString("20"),
+			},
+		},
+		ExpenseEvents: []events.ExpenseEvent{
+			{
+				AmountFiat: decimal.RequireFromString("5"),
+			},
+		},
+	}
+
+	summary := summarizeResult(job, profile, result)
+
+	if !summary.TotalIncome.Equal(decimal.RequireFromString("170")) {
+		t.Fatalf("total income mismatch: got %s want 170", summary.TotalIncome)
+	}
+	if !summary.TotalTrade.Equal(decimal.RequireFromString("100")) {
+		t.Fatalf("total trade mismatch: got %s want 100", summary.TotalTrade)
+	}
+	if !summary.TotalExpense.Equal(decimal.RequireFromString("105")) {
+		t.Fatalf("total expense mismatch: got %s want 105", summary.TotalExpense)
+	}
+	if !summary.TaxBase.Equal(decimal.RequireFromString("65")) {
+		t.Fatalf("tax base mismatch: got %s want 65", summary.TaxBase)
+	}
+	if !summary.TaxDue.Equal(calculateTaxDue(job.PolicySnapshot.Jurisdiction, profile, summary.TaxBase)) {
+		t.Fatalf("tax due mismatch: got %s", summary.TaxDue)
+	}
+
+	if len(summary.TotalP2P) != 1 {
+		t.Fatalf("total p2p lines mismatch: got %d want 1", len(summary.TotalP2P))
+	}
+	line := summary.TotalP2P[0]
+	if !line.OccurredAt.Equal(now) {
+		t.Fatalf("occurred_at mismatch: got %s want %s", line.OccurredAt, now)
+	}
+	if !line.Qty.Equal(decimal.RequireFromString("500")) {
+		t.Fatalf("qty mismatch: got %s want 500", line.Qty)
+	}
+	if !line.GainFiat.Equal(decimal.RequireFromString("10")) {
+		t.Fatalf("gain mismatch: got %s want 10", line.GainFiat)
 	}
 }
 
