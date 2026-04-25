@@ -5,6 +5,7 @@ const authClient = new HttpClient(API_CONFIG.gatewayBaseUrl)
 
 export interface RegisterTaxProfile {
   inn: string
+  oktmo: string
   last_name: string
   first_name: string
   middle_name: string
