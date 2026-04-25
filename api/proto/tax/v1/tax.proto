@@ -59,6 +59,7 @@ message TaxProfile {
   string last_name = 3;
   string first_name = 4;
   string middle_name = 5;
+  string oktmo = 6;
   reserved 7;
   reserved "jurisdiction";
   string timezone = 8;
@@ -66,6 +67,8 @@ message TaxProfile {
   repeated string wallets = 10;
   string tax_residency_status = 11;
   string taxpayer_type = 12;
+  reserved 13;
+  reserved "tax_office_code";
 }
 
 message TaxProfileInput {
@@ -80,6 +83,9 @@ message TaxProfileInput {
   repeated string wallets = 8;
   string tax_residency_status = 9;
   string taxpayer_type = 10;
+  string oktmo = 11;
+  reserved 12;
+  reserved "tax_office_code";
 }
 
 message TaxSummary {
@@ -87,6 +93,14 @@ message TaxSummary {
   string total_expense_fiat = 2;
   string tax_base_fiat = 3;
   string tax_due_fiat = 4;
+  string total_trade_fiat = 5;
+  repeated TaxSummaryP2PIncome total_p2p = 6;
+}
+
+message TaxSummaryP2PIncome {
+  google.protobuf.Timestamp occurred_at = 1;
+  string qty = 2;
+  string gain_fiat = 3;
 }
 
 message TaxJob {
