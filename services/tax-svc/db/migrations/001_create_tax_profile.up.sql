@@ -2,6 +2,7 @@ CREATE TABLE
   IF NOT EXISTS tax_profile (
     user_id uuid PRIMARY KEY,
     inn text NOT NULL,
+    oktmo text NOT NULL,
     last_name text NOT NULL,
     first_name text NOT NULL,
     middle_name text NOT NULL,

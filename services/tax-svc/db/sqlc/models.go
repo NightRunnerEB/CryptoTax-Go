@@ -30,6 +30,7 @@ type TaxJob struct {
 type TaxProfile struct {
 	UserID             uuid.UUID          `json:"userId"`
 	Inn                string             `json:"inn"`
+	Oktmo              string             `json:"oktmo"`
 	LastName           string             `json:"lastName"`
 	FirstName          string             `json:"firstName"`
 	MiddleName         string             `json:"middleName"`

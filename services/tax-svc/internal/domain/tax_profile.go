@@ -28,12 +28,11 @@ type TaxPayerType string
 const (
 	INDIVIDUAL      TaxPayerType = "INDIVIDUAL"
 	SOLE_PROPRIETOR TaxPayerType = "SOLE_PROPRIETOR"
-	LEGAL_ENTITY    TaxPayerType = "LEGAL_ENTITY"
 )
 
 func (t TaxPayerType) Validate() error {
 	switch t {
-	case INDIVIDUAL, SOLE_PROPRIETOR, LEGAL_ENTITY:
+	case INDIVIDUAL, SOLE_PROPRIETOR:
 		return nil
 	default:
 		return fmt.Errorf("unsupported taxpayer type: %s", t)
@@ -45,6 +44,7 @@ type Wallet string
 type TaxProfile struct {
 	UserID             uuid.UUID    `json:"user_id"`
 	INN                string       `json:"inn"`
+	OKTMO              string       `json:"oktmo"`
 	LastName           string       `json:"last_name"`
 	FirstName          string       `json:"first_name"`
 	MiddleName         string       `json:"middle_name"`

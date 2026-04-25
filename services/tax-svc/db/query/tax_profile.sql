@@ -2,6 +2,7 @@
 SELECT
   user_id,
   inn,
+  oktmo,
   last_name,
   first_name,
   middle_name,
@@ -19,6 +20,7 @@ WHERE user_id = $1;
 INSERT INTO tax_profile (
   user_id,
   inn,
+  oktmo,
   last_name,
   first_name,
   middle_name,
@@ -28,10 +30,11 @@ INSERT INTO tax_profile (
   tax_residency_status,
   taxpayer_type
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (user_id)
 DO UPDATE SET
   inn = EXCLUDED.inn,
+  oktmo = EXCLUDED.oktmo,
   last_name = EXCLUDED.last_name,
   first_name = EXCLUDED.first_name,
   middle_name = EXCLUDED.middle_name,
@@ -44,6 +47,7 @@ DO UPDATE SET
 RETURNING
   user_id,
   inn,
+  oktmo,
   last_name,
   first_name,
   middle_name,

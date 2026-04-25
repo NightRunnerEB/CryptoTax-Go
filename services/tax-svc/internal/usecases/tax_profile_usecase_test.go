@@ -31,8 +31,11 @@ func TestTaxProfileUC_Upsert_NormalizesAndPersists(t *testing.T) {
 		if got.LastName != "Petrov" {
 			t.Fatalf("last_name not normalized: %q", got.LastName)
 		}
-		if got.INN != "123456789012" {
+		if got.INN != "123456789047" {
 			t.Fatalf("inn not normalized: %q", got.INN)
+		}
+		if got.OKTMO != "12345678" {
+			t.Fatalf("oktmo not normalized: %q", got.OKTMO)
 		}
 		if got.TaxResidencyStatus != domain.Resident {
 			t.Fatalf("tax_residency_status not normalized: %s", got.TaxResidencyStatus)
@@ -54,7 +57,8 @@ func TestTaxProfileUC_Upsert_NormalizesAndPersists(t *testing.T) {
 
 	err := uc.Upsert(context.Background(), domain.TaxProfile{
 		UserID:             userID,
-		INN:                " 123456789012 ",
+		INN:                " 123456789047 ",
+		OKTMO:              " 12345678 ",
 		LastName:           " Petrov ",
 		FirstName:          " Ivan ",
 		MiddleName:         " Ivanovich ",
@@ -78,10 +82,65 @@ func TestTaxProfileUC_Upsert_InvalidTimezone(t *testing.T) {
 
 	err := uc.Upsert(context.Background(), domain.TaxProfile{
 		UserID:             uuid.New(),
-		INN:                "123456789012",
+		INN:                "123456789047",
+		OKTMO:              "12345678",
 		LastName:           "Petrov",
 		FirstName:          "Ivan",
 		Timezone:           "Mars/Colony",
+		TaxResidencyStatus: domain.Resident,
+		TaxPayerType:       domain.INDIVIDUAL,
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var ae *apperr.Error
+	if !errors.As(err, &ae) || ae.Code != apperr.ErrInvalidArgument {
+		t.Fatalf("expected INVALID_ARGUMENT, got %v", err)
+	}
+}
+
+func TestTaxProfileUC_Upsert_InvalidINN(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	repo := mocks.NewMockTaxProfileRepo(ctrl)
+	uc := NewTaxProfileUC(repo)
+
+	err := uc.Upsert(context.Background(), domain.TaxProfile{
+		UserID:             uuid.New(),
+		INN:                "1234",
+		OKTMO:              "12345678",
+		LastName:           "Petrov",
+		FirstName:          "Ivan",
+		Timezone:           "Europe/Moscow",
+		TaxResidencyStatus: domain.Resident,
+		TaxPayerType:       domain.INDIVIDUAL,
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var ae *apperr.Error
+	if !errors.As(err, &ae) || ae.Code != apperr.ErrInvalidArgument {
+		t.Fatalf("expected INVALID_ARGUMENT, got %v", err)
+	}
+}
+
+func TestTaxProfileUC_Upsert_InvalidINNChecksum(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	repo := mocks.NewMockTaxProfileRepo(ctrl)
+	uc := NewTaxProfileUC(repo)
+
+	err := uc.Upsert(context.Background(), domain.TaxProfile{
+		UserID:             uuid.New(),
+		INN:                "123456789012",
+		OKTMO:              "12345678",
+		LastName:           "Petrov",
+		FirstName:          "Ivan",
+		Timezone:           "Europe/Moscow",
 		TaxResidencyStatus: domain.Resident,
 		TaxPayerType:       domain.INDIVIDUAL,
 	})

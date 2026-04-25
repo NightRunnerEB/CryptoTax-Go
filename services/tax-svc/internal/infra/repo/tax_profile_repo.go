@@ -30,6 +30,7 @@ func (r *TaxProfileRepo) Upsert(ctx context.Context, p domain.TaxProfile) error 
 	_, err = r.store.UpsertTaxProfile(ctx, db.UpsertTaxProfileParams{
 		UserID:             p.UserID,
 		Inn:                p.INN,
+		Oktmo:              p.OKTMO,
 		LastName:           p.LastName,
 		FirstName:          p.FirstName,
 		MiddleName:         p.MiddleName,
@@ -94,6 +95,7 @@ func mapTaxProfileRow(row db.TaxProfile) (domain.TaxProfile, error) {
 	return domain.TaxProfile{
 		UserID:             row.UserID,
 		INN:                row.Inn,
+		OKTMO:              row.Oktmo,
 		LastName:           row.LastName,
 		FirstName:          row.FirstName,
 		MiddleName:         row.MiddleName,

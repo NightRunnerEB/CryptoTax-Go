@@ -28,6 +28,7 @@ const getTaxProfile = `-- name: GetTaxProfile :one
 SELECT
   user_id,
   inn,
+  oktmo,
   last_name,
   first_name,
   middle_name,
@@ -48,6 +49,7 @@ func (q *Queries) GetTaxProfile(ctx context.Context, userID uuid.UUID) (TaxProfi
 	err := row.Scan(
 		&i.UserID,
 		&i.Inn,
+		&i.Oktmo,
 		&i.LastName,
 		&i.FirstName,
 		&i.MiddleName,
@@ -66,6 +68,7 @@ const upsertTaxProfile = `-- name: UpsertTaxProfile :one
 INSERT INTO tax_profile (
   user_id,
   inn,
+  oktmo,
   last_name,
   first_name,
   middle_name,
@@ -75,10 +78,11 @@ INSERT INTO tax_profile (
   tax_residency_status,
   taxpayer_type
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (user_id)
 DO UPDATE SET
   inn = EXCLUDED.inn,
+  oktmo = EXCLUDED.oktmo,
   last_name = EXCLUDED.last_name,
   first_name = EXCLUDED.first_name,
   middle_name = EXCLUDED.middle_name,
@@ -91,6 +95,7 @@ DO UPDATE SET
 RETURNING
   user_id,
   inn,
+  oktmo,
   last_name,
   first_name,
   middle_name,
@@ -106,6 +111,7 @@ RETURNING
 type UpsertTaxProfileParams struct {
 	UserID             uuid.UUID `json:"userId"`
 	Inn                string    `json:"inn"`
+	Oktmo              string    `json:"oktmo"`
 	LastName           string    `json:"lastName"`
 	FirstName          string    `json:"firstName"`
 	MiddleName         string    `json:"middleName"`
@@ -120,6 +126,7 @@ func (q *Queries) UpsertTaxProfile(ctx context.Context, arg UpsertTaxProfilePara
 	row := q.db.QueryRow(ctx, upsertTaxProfile,
 		arg.UserID,
 		arg.Inn,
+		arg.Oktmo,
 		arg.LastName,
 		arg.FirstName,
 		arg.MiddleName,
@@ -133,6 +140,7 @@ func (q *Queries) UpsertTaxProfile(ctx context.Context, arg UpsertTaxProfilePara
 	err := row.Scan(
 		&i.UserID,
 		&i.Inn,
+		&i.Oktmo,
 		&i.LastName,
 		&i.FirstName,
 		&i.MiddleName,
