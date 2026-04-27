@@ -25,7 +25,7 @@
       },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"price-svc\", level=~\"error|ERROR\"}[5m]))",
+          "expr": "sum(count_over_time({service_name=\"price-svc\", level=~\"warn|error|WARN|ERROR\"}[5m]))",
           "refId": "A"
         }
       ]

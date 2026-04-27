@@ -5,17 +5,20 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.opentelemetry.io/contrib/bridges/otelzap"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
@@ -160,11 +163,74 @@ func Run(cfg *config.Config) {
 		historicalPriceUC,
 		userSymbolUC,
 	)
+	runGateway(ctx, waitGroup, &cfg.HTTP, cfg.GRPC.Addr)
 
 	err = waitGroup.Wait()
 	if err != nil {
 		log.Fatal("error from wait group", zap.Error(err))
 	}
+}
+
+func runGateway(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
+	cfg *config.HTTP,
+	grpcAddr string,
+) {
+	log := logger.FromContext(ctx)
+	grpcAddr = normalizeGRPCAddr(grpcAddr)
+
+	mux := runtime.NewServeMux()
+
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	if err := pricev1.RegisterPriceHandlerFromEndpoint(ctx, mux, grpcAddr, opts); err != nil {
+		log.Fatal("failed to register gateway", zap.Error(err))
+	}
+
+	httpServer := &http.Server{
+		Addr:              cfg.Addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	waitGroup.Go(func() error {
+		log.Info("start HTTP gateway", zap.String("addr", httpServer.Addr))
+		if err := httpServer.ListenAndServe(); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				return nil
+			}
+			log.Error("HTTP gateway failed to serve", zap.Error(err))
+			return err
+		}
+		return nil
+	})
+
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+		log.Info("graceful shutdown HTTP gateway")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+		defer cancel()
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			log.Error("HTTP gateway shutdown failed", zap.Error(err))
+			return err
+		}
+		log.Info("HTTP gateway is stopped")
+		return nil
+	})
+}
+
+func normalizeGRPCAddr(addr string) string {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return addr
+	}
+	if host == "" || host == "0.0.0.0" || host == "::" {
+		return net.JoinHostPort("127.0.0.1", port)
+	}
+	if parsed, err := netip.ParseAddr(host); err == nil && parsed.IsUnspecified() {
+		return net.JoinHostPort("127.0.0.1", port)
+	}
+	return addr
 }
 
 func runGrpcServer(

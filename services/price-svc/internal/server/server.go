@@ -226,7 +226,7 @@ func (server PriceServer) UpsertUserSymbol(ctx context.Context, req *v1.UpsertUs
 		zap.String("source", req.Source),
 		zap.String("symbol", req.Symbol),
 	)
-	return nil, apperr.Internal("method not implemented", nil, nil)
+	return &v1.UpsertUserSymbolResponse{}, nil
 }
 
 func parseUUID(s string) (uuid.UUID, error) {

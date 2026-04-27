@@ -4,17 +4,28 @@ package price.v1;
 
 option go_package = "github.com/NightRunner/CryptoTax-Go/gen/price/v1;pricev1";
 
+import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // Price provides transaction valuation APIs and user symbol mapping APIs.
 service Price {
   // Valuates batch of transactions and returns calculated prices.
   rpc ValuateTransactionsBatch(ValuateTransactionsRequest)
-  returns (ValuateTransactionsResponse);
+  returns (ValuateTransactionsResponse) {
+    option (google.api.http) = {
+      post: "/v1/price/transactions:valuate"
+      body: "*"
+    };
+  }
 
   // Creates or updates user symbol.
   rpc UpsertUserSymbol(UpsertUserSymbolRequest)
-  returns (UpsertUserSymbolResponse);
+  returns (UpsertUserSymbolResponse) {
+    option (google.api.http) = {
+      put: "/v1/price/user-symbols"
+      body: "*"
+    };
+  }
 }
 
 message MoneyLeg {
