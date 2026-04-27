@@ -2,8 +2,7 @@
 
 This directory contains hand-maintained OpenAPI contracts for **REST** endpoints only.
 
-- `frontend.openapi.yaml` — endpoints intended for UI/frontend traffic (via Nginx + grpc-gateway).
-- `internal.openapi.yaml` — REST endpoints intended for internal platform usage.
+- `openapi.yaml` — unified contract with **all** REST methods (frontend + internal).
 
 ## Scope
 
@@ -15,8 +14,7 @@ OpenAPI is intentionally limited to REST. Service-to-service gRPC contracts rema
 - `api/proto/report/v1/report.proto`
 
 `auth-svc` and `ledger-svc` source routes/status mappings live in the Rust repository
-`../CryptoTax`. Their endpoints are documented inside these two specs (frontend/internal)
-and synchronized manually.
+`../CryptoTax`. Their endpoints are documented in `openapi.yaml` and synchronized manually.
 
 ## Security model
 

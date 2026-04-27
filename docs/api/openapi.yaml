@@ -1,37 +1,50 @@
 openapi: 3.1.0
 info:
-  title: CryptoTax Frontend REST API
+  title: CryptoTax Unified REST API
   version: 1.0.0
-  description: |
-    Frontend-facing REST API exposed through grpc-gateway behind Nginx.
-    Authenticated user-facing endpoints derive identity context on the backend from validated auth data.
+  description: 'Unified OpenAPI spec containing both frontend-facing and internal
+    in-cluster REST endpoints.
+
+    Primary service-to-service contracts remain gRPC; REST routes are documented for
+    testing and integration via Swagger.'
 servers:
-  - url: https://api.cryptotax.example.com
-    description: Production
-  - url: http://localhost:8080
-    description: Local gateway
+- url: https://api.cryptotax.example.com
+  description: Production
+- url: http://localhost:8080
+  description: Local gateway
 security:
-  - bearerAuth: []
+- bearerAuth: []
 tags:
-  - name: Aggregation
-    description: Read-model transactions and aggregation settings for UI.
-  - name: Tax
-    description: Tax profile and tax report job lifecycle.
-  - name: Auth
-    description: User auth flows from auth-svc.
-  - name: Ledger
-    description: Import upload endpoints from ledger-svc.
+- name: Aggregation
+  description: Read-model transactions and aggregation settings for UI.
+- name: Tax
+  description: Tax profile and tax report job lifecycle.
+- name: Auth
+  description: User auth flows from auth-svc.
+- name: Ledger
+  description: Import upload endpoints from ledger-svc.
+- name: AggregationInternal
+  description: Internal aggregation read-model access for tax/report workflows.
+- name: PriceInternal
+  description: Internal valuation and user symbol APIs from price-svc.
+- name: ReportInternal
+  description: Internal report rendering APIs from report-svc.
+- name: LedgerInternal
+  description: Internal ledger query endpoints used by other services.
+- name: AuthInternal
+  description: Internal auth endpoints (Rust auth-svc).
 paths:
   /auth/register:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       operationId: authRegister
       summary: Register user
       servers:
-        - url: https://auth.cryptotax.example.com
-          description: Auth service production
-        - url: http://localhost:8082
-          description: Local auth-svc
+      - url: https://auth.cryptotax.example.com
+        description: Auth service production
+      - url: http://localhost:8082
+        description: Local auth-svc
       requestBody:
         required: true
         content:
@@ -55,17 +68,17 @@ paths:
           $ref: '#/components/responses/AuthUnavailable'
         '500':
           $ref: '#/components/responses/AuthInternal'
-
   /auth/login:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       operationId: authLogin
       summary: Login and create session
       servers:
-        - url: https://auth.cryptotax.example.com
-          description: Auth service production
-        - url: http://localhost:8082
-          description: Local auth-svc
+      - url: https://auth.cryptotax.example.com
+        description: Auth service production
+      - url: http://localhost:8082
+        description: Local auth-svc
       requestBody:
         required: true
         content:
@@ -87,17 +100,17 @@ paths:
           $ref: '#/components/responses/AuthUnprocessable'
         '500':
           $ref: '#/components/responses/AuthInternal'
-
   /auth/refresh:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       operationId: authRefresh
       summary: Rotate refresh token and issue new tokens
       servers:
-        - url: https://auth.cryptotax.example.com
-          description: Auth service production
-        - url: http://localhost:8082
-          description: Local auth-svc
+      - url: https://auth.cryptotax.example.com
+        description: Auth service production
+      - url: http://localhost:8082
+        description: Local auth-svc
       requestBody:
         required: true
         content:
@@ -115,19 +128,19 @@ paths:
           $ref: '#/components/responses/AuthUnauthorized'
         '500':
           $ref: '#/components/responses/AuthInternal'
-
   /auth/logout:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       operationId: authLogout
       summary: Logout by access token
       servers:
-        - url: https://auth.cryptotax.example.com
-          description: Auth service production
-        - url: http://localhost:8082
-          description: Local auth-svc
+      - url: https://auth.cryptotax.example.com
+        description: Auth service production
+      - url: http://localhost:8082
+        description: Local auth-svc
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       responses:
         '200':
           description: Logout completed
@@ -139,23 +152,23 @@ paths:
           $ref: '#/components/responses/AuthUnauthorized'
         '500':
           $ref: '#/components/responses/AuthInternal'
-
   /auth/verify:
     get:
-      tags: [Auth]
+      tags:
+      - Auth
       operationId: authVerifyEmail
       summary: Verify email by one-time token
       servers:
-        - url: https://auth.cryptotax.example.com
-          description: Auth service production
-        - url: http://localhost:8082
-          description: Local auth-svc
+      - url: https://auth.cryptotax.example.com
+        description: Auth service production
+      - url: http://localhost:8082
+        description: Local auth-svc
       parameters:
-        - name: token
-          in: query
-          required: true
-          schema:
-            type: string
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: Email verified
@@ -167,24 +180,24 @@ paths:
           $ref: '#/components/responses/AuthUnauthorized'
         '500':
           $ref: '#/components/responses/AuthInternal'
-
   /mexc/csv:
     post:
-      tags: [Ledger]
+      tags:
+      - Ledger
       operationId: uploadMexcCsv
       summary: Upload and parse MEXC CSV
       servers:
-        - url: https://ledger.cryptotax.example.com
-          description: Ledger service production
-        - url: http://localhost:8086
-          description: Local ledger-svc
+      - url: https://ledger.cryptotax.example.com
+        description: Ledger service production
+      - url: http://localhost:8086
+        description: Local ledger-svc
       parameters:
-        - name: X-User-Id
-          in: header
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: X-User-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -195,7 +208,8 @@ paths:
                 file:
                   type: string
                   format: binary
-              required: [file]
+              required:
+              - file
       responses:
         '200':
           description: CSV parsed
@@ -215,17 +229,17 @@ paths:
           $ref: '#/components/responses/LedgerInternal'
         '503':
           $ref: '#/components/responses/LedgerUnavailable'
-
   /exchanges/supported:
     get:
-      tags: [Ledger]
+      tags:
+      - Ledger
       operationId: listSupportedExchanges
       summary: List supported exchanges
       servers:
-        - url: https://ledger.cryptotax.example.com
-          description: Ledger service production
-        - url: http://localhost:8086
-          description: Local ledger-svc
+      - url: https://ledger.cryptotax.example.com
+        description: Ledger service production
+      - url: http://localhost:8086
+        description: Local ledger-svc
       responses:
         '200':
           description: Supported exchange IDs
@@ -235,17 +249,13 @@ paths:
                 $ref: '#/components/schemas/SupportedExchangesResponse'
         '500':
           $ref: '#/components/responses/LedgerInternal'
-
   /fiat-currencies:
     get:
-      tags: [Aggregation]
+      tags:
+      - Aggregation
       operationId: listSupportedFiatCurrencies
       summary: List supported fiat currencies
       description: Returns fiat currencies supported by aggregation/valuation pipeline.
-      parameters:
-        - $ref: '#/components/parameters/XUserId'
-        - $ref: '#/components/parameters/XUserId'
-        - $ref: '#/components/parameters/XRoles'
       responses:
         '200':
           description: Supported currencies
@@ -257,21 +267,21 @@ paths:
           $ref: '#/components/responses/GrpcInvalidArgument'
         '500':
           $ref: '#/components/responses/GrpcInternal'
-
   /transactions:
     get:
-      tags: [Aggregation]
+      tags:
+      - Aggregation
       operationId: listTransactions
       summary: List aggregated transactions (cursor-based)
       parameters:
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/PageToken'
-        - $ref: '#/components/parameters/DateFrom'
-        - $ref: '#/components/parameters/DateTo'
-        - $ref: '#/components/parameters/ImportIdQuery'
-        - $ref: '#/components/parameters/SourceQuery'
-        - $ref: '#/components/parameters/KindQuery'
-        - $ref: '#/components/parameters/TargetFiat'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/PageToken'
+      - $ref: '#/components/parameters/DateFrom'
+      - $ref: '#/components/parameters/DateTo'
+      - $ref: '#/components/parameters/ImportIdQuery'
+      - $ref: '#/components/parameters/SourceQuery'
+      - $ref: '#/components/parameters/KindQuery'
+      - $ref: '#/components/parameters/TargetFiat'
       responses:
         '200':
           description: Cursor-based list response
@@ -283,13 +293,12 @@ paths:
           $ref: '#/components/responses/GrpcInvalidArgument'
         '500':
           $ref: '#/components/responses/GrpcInternal'
-
   /settings:
     get:
-      tags: [Aggregation]
+      tags:
+      - Aggregation
       operationId: getUserSettings
       summary: Get aggregation settings for the authenticated user
-      parameters:
       responses:
         '200':
           description: User settings
@@ -302,7 +311,8 @@ paths:
         '500':
           $ref: '#/components/responses/GrpcInternal'
     put:
-      tags: [Aggregation]
+      tags:
+      - Aggregation
       operationId: upsertUserSettings
       summary: Create or update aggregation settings for the authenticated user
       requestBody:
@@ -322,10 +332,10 @@ paths:
           $ref: '#/components/responses/GrpcInvalidArgument'
         '500':
           $ref: '#/components/responses/GrpcInternal'
-
   /tax/profile:
     get:
-      tags: [Tax]
+      tags:
+      - Tax
       operationId: getTaxProfile
       summary: Get tax profile
       responses:
@@ -342,7 +352,8 @@ paths:
         '500':
           $ref: '#/components/responses/GrpcInternal'
     put:
-      tags: [Tax]
+      tags:
+      - Tax
       operationId: upsertTaxProfile
       summary: Create or update tax profile
       requestBody:
@@ -362,10 +373,10 @@ paths:
           $ref: '#/components/responses/GrpcInvalidArgument'
         '500':
           $ref: '#/components/responses/GrpcInternal'
-
   /tax/reports:start:
     post:
-      tags: [Tax]
+      tags:
+      - Tax
       operationId: startReport
       summary: Start tax report job
       requestBody:
@@ -387,14 +398,14 @@ paths:
           $ref: '#/components/responses/GrpcNotFound'
         '500':
           $ref: '#/components/responses/GrpcInternal'
-
   /tax/reports/{report_id}:
     get:
-      tags: [Tax]
+      tags:
+      - Tax
       operationId: getReportStatus
       summary: Get tax report job status
       parameters:
-        - $ref: '#/components/parameters/ReportIdPath'
+      - $ref: '#/components/parameters/ReportIdPath'
       responses:
         '200':
           description: Tax report job
@@ -408,15 +419,15 @@ paths:
           $ref: '#/components/responses/GrpcNotFound'
         '500':
           $ref: '#/components/responses/GrpcInternal'
-
   /tax/reports:
     get:
-      tags: [Tax]
+      tags:
+      - Tax
       operationId: listReports
       summary: List tax report jobs
       parameters:
-        - $ref: '#/components/parameters/PaginationLimit'
-        - $ref: '#/components/parameters/PaginationOffset'
+      - $ref: '#/components/parameters/PaginationLimit'
+      - $ref: '#/components/parameters/PaginationOffset'
       responses:
         '200':
           description: Paginated report jobs
@@ -428,13 +439,170 @@ paths:
           $ref: '#/components/responses/GrpcInvalidArgument'
         '500':
           $ref: '#/components/responses/GrpcInternal'
+  /v1/price/transactions:valuate:
+    post:
+      tags:
+      - PriceInternal
+      operationId: internalPriceValuateTransactionsBatch
+      summary: Valuate batch of transactions
+      servers:
+      - url: http://price-svc:8092
+        description: In-cluster price-svc gateway
+      - url: http://localhost:8092
+        description: Local price-svc gateway
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceValuateTransactionsRequest'
+      responses:
+        '200':
+          description: Valuated transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceValuateTransactionsResponse'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgumentOrPrecondition'
+        '503':
+          $ref: '#/components/responses/GrpcUnavailable'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
+  /v1/price/user-symbols:
+    put:
+      tags:
+      - PriceInternal
+      operationId: internalPriceUpsertUserSymbol
+      summary: Create or update user symbol mapping
+      servers:
+      - url: http://price-svc:8092
+        description: In-cluster price-svc gateway
+      - url: http://localhost:8092
+        description: Local price-svc gateway
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceUpsertUserSymbolRequest'
+      responses:
+        '200':
+          description: Upsert completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceUpsertUserSymbolResponse'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgumentOrPrecondition'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
+  /v1/report/ndfl:render:
+    post:
+      tags:
+      - ReportInternal
+      operationId: internalReportRenderNDFL
+      summary: Render 3-NDFL report XML and return object key
+      servers:
+      - url: http://report-svc:8099
+        description: In-cluster report-svc gateway
+      - url: http://localhost:8099
+        description: Local report-svc gateway
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenderNDFLRequest'
+      responses:
+        '200':
+          description: Render result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderNDFLResponse'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgumentOrPrecondition'
+        '503':
+          $ref: '#/components/responses/GrpcUnavailable'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
+  /v1/transactions:
+    get:
+      tags:
+      - AggregationInternal
+      operationId: listTransactionsByRange
+      summary: List aggregated transactions by UTC range
+      description: 'Internal read endpoint for user transactions in time range `[from_utc,
+        to_utc)`.
 
+        Supports optional `target_fiat` revaluation without mutating stored read-model.
+
+        '
+      parameters:
+      - $ref: '#/components/parameters/XUserId'
+      - $ref: '#/components/parameters/FromUtc'
+      - $ref: '#/components/parameters/ToUtc'
+      - $ref: '#/components/parameters/PaginationLimitInternal'
+      - $ref: '#/components/parameters/PaginationOffset'
+      - $ref: '#/components/parameters/TargetFiat'
+      responses:
+        '200':
+          description: Paginated transactions in range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTransactionsByRangeResponse'
+        '400':
+          $ref: '#/components/responses/GrpcInvalidArgumentOrPrecondition'
+        '503':
+          $ref: '#/components/responses/GrpcUnavailable'
+        '500':
+          $ref: '#/components/responses/GrpcInternal'
+  /v1/imports/{import_id}/transactions:
+    get:
+      tags:
+      - LedgerInternal
+      operationId: ledgerListImportTransactions
+      summary: List ledger import transactions
+      servers:
+      - url: http://ledger-svc:8086
+        description: In-cluster ledger-svc
+      - url: http://localhost:8086
+        description: Local ledger-svc
+      parameters:
+      - $ref: '#/components/parameters/XUserId'
+      - $ref: '#/components/parameters/ImportIdPath'
+      responses:
+        '200':
+          description: Transactions for import
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        '400':
+          $ref: '#/components/responses/LedgerImportBadRequest'
+        '403':
+          $ref: '#/components/responses/LedgerImportForbidden'
+        '404':
+          $ref: '#/components/responses/LedgerImportNotFound'
+        '500':
+          $ref: '#/components/responses/LedgerImportInternal'
+        '503':
+          $ref: '#/components/responses/LedgerUnavailable'
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    userHeader:
+      type: apiKey
+      in: header
+      name: X-User-Id
   parameters:
     ImportIdPath:
       name: import_id
@@ -523,7 +691,40 @@ components:
       required: false
       schema:
         type: string
-      description: Optional fiat override for on-the-fly revaluation (e.g. RUB, USD, KZT).
+      description: Optional fiat override for on-the-fly revaluation (e.g. RUB, USD,
+        KZT).
+    PaginationLimitInternal:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 10000
+    FromUtc:
+      name: from_utc
+      in: query
+      required: true
+      schema:
+        type: string
+        format: date-time
+      description: Inclusive UTC lower bound.
+    ToUtc:
+      name: to_utc
+      in: query
+      required: true
+      schema:
+        type: string
+        format: date-time
+      description: Exclusive UTC upper bound.
+    XUserId:
+      name: X-User-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
   responses:
     Error:
       description: Generic grpc-gateway error response.
@@ -538,7 +739,8 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     GrpcFailedPrecondition:
-      description: Request is valid but data is not ready (gRPC `FailedPrecondition`, code `9`).
+      description: Request is valid but data is not ready (gRPC `FailedPrecondition`,
+        code `9`).
       content:
         application/json:
           schema:
@@ -556,7 +758,8 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     GrpcUnavailable:
-      description: Temporary upstream/dependency outage (gRPC `Unavailable`, code `14`).
+      description: Temporary upstream/dependency outage (gRPC `Unavailable`, code
+        `14`).
       content:
         application/json:
           schema:
@@ -568,7 +771,8 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     AuthUnauthorized:
-      description: Unauthorized (`TokenInvalid`, `TokenExpired`, `InvalidCredentials`, ...).
+      description: Unauthorized (`TokenInvalid`, `TokenExpired`, `InvalidCredentials`,
+        ...).
       content:
         application/json:
           schema:
@@ -615,16 +819,16 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: '#/components/schemas/SimpleErrorResponse'
-              - $ref: '#/components/schemas/LedgerErrorResponse'
+            - $ref: '#/components/schemas/SimpleErrorResponse'
+            - $ref: '#/components/schemas/LedgerErrorResponse'
     LedgerForbidden:
       description: Missing/invalid user header or permission denied.
       content:
         application/json:
           schema:
             oneOf:
-              - $ref: '#/components/schemas/SimpleErrorResponse'
-              - $ref: '#/components/schemas/LedgerErrorResponse'
+            - $ref: '#/components/schemas/SimpleErrorResponse'
+            - $ref: '#/components/schemas/LedgerErrorResponse'
     LedgerNotFound:
       description: Exchange parser not configured.
       content:
@@ -649,6 +853,37 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/LedgerErrorResponse'
+    LedgerImportBadRequest:
+      description: Bad request (invalid UUID in path/header params).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorResponse'
+    LedgerImportForbidden:
+      description: Missing or invalid user header (`X-User-Id`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorResponse'
+    LedgerImportInternal:
+      description: Internal server error from ledger-svc.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LedgerErrorResponse'
+    LedgerImportNotFound:
+      description: Import not found (or belongs to another user).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorResponse'
+    GrpcInvalidArgumentOrPrecondition:
+      description: Invalid input or unresolved dependency data (gRPC `InvalidArgument`/`FailedPrecondition`,
+        code `3`/`9`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
   schemas:
     ErrorResponse:
       type: object
@@ -666,11 +901,13 @@ components:
           description: Optional gRPC rich error details.
           items:
             oneOf:
-              - $ref: '#/components/schemas/GrpcErrorInfoDetail'
-              - $ref: '#/components/schemas/GrpcBadRequestDetail'
-              - $ref: '#/components/schemas/GrpcResourceInfoDetail'
-              - $ref: '#/components/schemas/GrpcAnyDetail'
-      required: [code, message]
+            - $ref: '#/components/schemas/GrpcErrorInfoDetail'
+            - $ref: '#/components/schemas/GrpcBadRequestDetail'
+            - $ref: '#/components/schemas/GrpcResourceInfoDetail'
+            - $ref: '#/components/schemas/GrpcAnyDetail'
+      required:
+      - code
+      - message
     GrpcErrorInfoDetail:
       type: object
       properties:
@@ -679,7 +916,8 @@ components:
           example: type.googleapis.com/google.rpc.ErrorInfo
         reason:
           type: string
-          description: Stable machine-readable error reason (e.g. INVALID_ARGUMENT, DATA_NOT_READY).
+          description: Stable machine-readable error reason (e.g. INVALID_ARGUMENT,
+            DATA_NOT_READY).
         domain:
           type: string
           description: Service domain that produced the error.
@@ -687,7 +925,10 @@ components:
           type: object
           additionalProperties:
             type: string
-      required: ['@type', reason, domain]
+      required:
+      - '@type'
+      - reason
+      - domain
     GrpcBadRequestDetail:
       type: object
       properties:
@@ -703,8 +944,12 @@ components:
                 type: string
               description:
                 type: string
-            required: [field, description]
-      required: ['@type', fieldViolations]
+            required:
+            - field
+            - description
+      required:
+      - '@type'
+      - fieldViolations
     GrpcResourceInfoDetail:
       type: object
       properties:
@@ -715,7 +960,8 @@ components:
           type: string
         resourceName:
           type: string
-      required: ['@type']
+      required:
+      - '@type'
     GrpcAnyDetail:
       type: object
       description: Fallback for other google.rpc detail types.
@@ -728,13 +974,16 @@ components:
           format: int32
         message:
           type: string
-      required: [code, message]
+      required:
+      - code
+      - message
     SimpleErrorResponse:
       type: object
       properties:
         error:
           type: string
-      required: [error]
+      required:
+      - error
     LedgerErrorResponse:
       type: object
       properties:
@@ -743,19 +992,23 @@ components:
           format: int32
         message:
           type: string
-      required: [code, message]
+      required:
+      - code
+      - message
     AckResponse:
       type: object
       properties:
         ok:
           type: boolean
-      required: [ok]
+      required:
+      - ok
     ParseSuccessResponse:
       type: object
       properties:
         status:
           type: string
-      required: [status]
+      required:
+      - status
     SupportedExchangesResponse:
       type: object
       properties:
@@ -764,8 +1017,11 @@ components:
           items:
             type: string
           description: Sorted lowercase exchange identifiers from ledger registry.
-          example: [mexc, okx]
-      required: [exchanges]
+          example:
+          - mexc
+          - okx
+      required:
+      - exchanges
     RegisterTaxProfile:
       type: object
       properties:
@@ -792,13 +1048,13 @@ components:
         taxpayer_type:
           type: string
       required:
-        - inn
-        - last_name
-        - first_name
-        - jurisdiction
-        - timezone
-        - tax_residency_status
-        - taxpayer_type
+      - inn
+      - last_name
+      - first_name
+      - jurisdiction
+      - timezone
+      - tax_residency_status
+      - taxpayer_type
     RegisterReq:
       type: object
       properties:
@@ -809,7 +1065,10 @@ components:
           type: string
         tax_profile:
           $ref: '#/components/schemas/RegisterTaxProfile'
-      required: [email, password, tax_profile]
+      required:
+      - email
+      - password
+      - tax_profile
     LoginReq:
       type: object
       properties:
@@ -824,13 +1083,16 @@ components:
         ua:
           type: string
           nullable: true
-      required: [email, password]
+      required:
+      - email
+      - password
     RefreshReq:
       type: object
       properties:
         refresh_token:
           type: string
-      required: [refresh_token]
+      required:
+      - refresh_token
     User:
       type: object
       properties:
@@ -842,11 +1104,18 @@ components:
           format: email
         status:
           type: string
-          enum: [Active, Pending, Blocked]
+          enum:
+          - Active
+          - Pending
+          - Blocked
         created_at:
           type: string
           format: date-time
-      required: [id, email, status, created_at]
+      required:
+      - id
+      - email
+      - status
+      - created_at
     Session:
       type: object
       properties:
@@ -858,7 +1127,10 @@ components:
           format: uuid
         status:
           type: string
-          enum: [Active, Revoked, Closed]
+          enum:
+          - Active
+          - Revoked
+          - Closed
         created_at:
           type: string
           format: date-time
@@ -871,7 +1143,12 @@ components:
         user_agent:
           type: string
           nullable: true
-      required: [id, user_id, status, created_at, last_seen_at]
+      required:
+      - id
+      - user_id
+      - status
+      - created_at
+      - last_seen_at
     Tokens:
       type: object
       properties:
@@ -885,7 +1162,11 @@ components:
         refresh_expires_in:
           type: integer
           format: int64
-      required: [access_token, refresh_token, access_expires_in, refresh_expires_in]
+      required:
+      - access_token
+      - refresh_token
+      - access_expires_in
+      - refresh_expires_in
     LoginResult:
       type: object
       properties:
@@ -895,8 +1176,10 @@ components:
           $ref: '#/components/schemas/Session'
         tokens:
           $ref: '#/components/schemas/Tokens'
-      required: [user, session, tokens]
-
+      required:
+      - user
+      - session
+      - tokens
     SupportedFiatCurrency:
       type: object
       properties:
@@ -906,7 +1189,9 @@ components:
         displayName:
           type: string
           example: Russian Ruble
-      required: [code, displayName]
+      required:
+      - code
+      - displayName
     ListSupportedFiatCurrenciesResponse:
       type: object
       properties:
@@ -914,8 +1199,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SupportedFiatCurrency'
-      required: [currencies]
-
+      required:
+      - currencies
     FiatLegErrorCandidate:
       type: object
       properties:
@@ -943,7 +1228,9 @@ components:
           type: string
         error:
           $ref: '#/components/schemas/FiatLegError'
-      required: [symbol, crypto_amount]
+      required:
+      - symbol
+      - crypto_amount
       additionalProperties: true
     AggregatedTx:
       type: object
@@ -985,15 +1272,15 @@ components:
         txFingerprint:
           type: string
       required:
-        - txId
-        - userId
-        - source
-        - importId
-        - timeUtc
-        - kind
-        - note
-        - derivativeKind
-        - txFingerprint
+      - txId
+      - userId
+      - source
+      - importId
+      - timeUtc
+      - kind
+      - note
+      - derivativeKind
+      - txFingerprint
     ListTransactionsResponse:
       type: object
       properties:
@@ -1003,8 +1290,8 @@ components:
             $ref: '#/components/schemas/AggregatedTx'
         nextPageToken:
           type: string
-      required: [items]
-
+      required:
+      - items
     UserSettings:
       type: object
       properties:
@@ -1017,7 +1304,10 @@ components:
         timezone:
           type: string
           example: Europe/Moscow
-      required: [userId, fiatCurrency, timezone]
+      required:
+      - userId
+      - fiatCurrency
+      - timezone
     UpsertUserSettingsBody:
       type: object
       properties:
@@ -1027,20 +1317,23 @@ components:
         timezone:
           type: string
           description: IANA timezone.
-      required: [fiatCurrency, timezone]
+      required:
+      - fiatCurrency
+      - timezone
     GetUserSettingsResponse:
       type: object
       properties:
         settings:
           $ref: '#/components/schemas/UserSettings'
-      required: [settings]
+      required:
+      - settings
     UpsertUserSettingsResponse:
       type: object
       properties:
         settings:
           $ref: '#/components/schemas/UserSettings'
-      required: [settings]
-
+      required:
+      - settings
     TaxPolicy:
       type: object
       properties:
@@ -1048,11 +1341,17 @@ components:
           type: boolean
         costBasisMethod:
           type: string
-          enum: [FIFO, LIFO, AVG]
+          enum:
+          - FIFO
+          - LIFO
+          - AVG
         jurisdiction:
           type: string
           example: RU
-      required: [treatCryptoCryptoAsDisposal, costBasisMethod, jurisdiction]
+      required:
+      - treatCryptoCryptoAsDisposal
+      - costBasisMethod
+      - jurisdiction
     TaxProfile:
       type: object
       properties:
@@ -1082,16 +1381,16 @@ components:
           type: string
           example: INDIVIDUAL
       required:
-        - userId
-        - inn
-        - lastName
-        - firstName
-        - middleName
-        - timezone
-        - phone
-        - wallets
-        - taxResidencyStatus
-        - taxpayerType
+      - userId
+      - inn
+      - lastName
+      - firstName
+      - middleName
+      - timezone
+      - phone
+      - wallets
+      - taxResidencyStatus
+      - taxpayerType
     TaxProfileInput:
       type: object
       properties:
@@ -1116,28 +1415,29 @@ components:
         taxpayerType:
           type: string
       required:
-        - inn
-        - lastName
-        - firstName
-        - middleName
-        - timezone
-        - phone
-        - wallets
-        - taxResidencyStatus
-        - taxpayerType
+      - inn
+      - lastName
+      - firstName
+      - middleName
+      - timezone
+      - phone
+      - wallets
+      - taxResidencyStatus
+      - taxpayerType
     GetTaxProfileResponse:
       type: object
       properties:
         profile:
           $ref: '#/components/schemas/TaxProfile'
-      required: [profile]
+      required:
+      - profile
     UpsertTaxProfileResponse:
       type: object
       properties:
         profile:
           $ref: '#/components/schemas/TaxProfile'
-      required: [profile]
-
+      required:
+      - profile
     StartReportParams:
       type: object
       properties:
@@ -1146,7 +1446,9 @@ components:
           format: int32
         taxPolicy:
           $ref: '#/components/schemas/TaxPolicy'
-      required: [taxYear, taxPolicy]
+      required:
+      - taxYear
+      - taxPolicy
     StartReportResponse:
       type: object
       properties:
@@ -1155,7 +1457,9 @@ components:
           format: uuid
         status:
           type: string
-      required: [reportId, status]
+      required:
+      - reportId
+      - status
     TaxSummary:
       type: object
       properties:
@@ -1167,7 +1471,11 @@ components:
           type: string
         taxDueFiat:
           type: string
-      required: [totalIncomeFiat, totalExpenseFiat, taxBaseFiat, taxDueFiat]
+      required:
+      - totalIncomeFiat
+      - totalExpenseFiat
+      - taxBaseFiat
+      - taxDueFiat
     TaxJob:
       type: object
       properties:
@@ -1207,18 +1515,19 @@ components:
         summary:
           $ref: '#/components/schemas/TaxSummary'
       required:
-        - reportId
-        - userId
-        - taxYear
-        - policySnapshot
-        - status
-        - attempts
+      - reportId
+      - userId
+      - taxYear
+      - policySnapshot
+      - status
+      - attempts
     GetReportStatusResponse:
       type: object
       properties:
         job:
           $ref: '#/components/schemas/TaxJob'
-      required: [job]
+      required:
+      - job
     ListReportsResponse:
       type: object
       properties:
@@ -1229,4 +1538,341 @@ components:
         total:
           type: integer
           format: int64
-      required: [jobs, total]
+      required:
+      - jobs
+      - total
+    ListTransactionsByRangeResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AggregatedTx'
+        total:
+          type: integer
+          format: int64
+      required:
+      - transactions
+      - total
+    PriceMoneyLeg:
+      type: object
+      properties:
+        symbol:
+          type: string
+        amount:
+          type: string
+          description: Decimal amount as string.
+      required:
+      - symbol
+      - amount
+    PriceTxToValuate:
+      type: object
+      properties:
+        txId:
+          type: string
+        timeUtc:
+          type: string
+          format: date-time
+        inMoney:
+          $ref: '#/components/schemas/PriceMoneyLeg'
+        outMoney:
+          $ref: '#/components/schemas/PriceMoneyLeg'
+        feeMoney:
+          $ref: '#/components/schemas/PriceMoneyLeg'
+      required:
+      - txId
+      - timeUtc
+    PriceValuateTransactionsRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        source:
+          type: string
+        fiatCurrency:
+          type: string
+          example: RUB
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceTxToValuate'
+      required:
+      - userId
+      - source
+      - fiatCurrency
+      - transactions
+    PriceCoinCandidate:
+      type: object
+      properties:
+        coinId:
+          type: string
+        name:
+          type: string
+      required:
+      - coinId
+      - name
+    PriceAssetError:
+      type: object
+      properties:
+        symbol:
+          type: string
+        code:
+          type: string
+          enum:
+          - ASSET_UNKNOWN
+          - ASSET_AMBIGUOUS
+          - RATE_NOT_FOUND
+          - PROVIDER_ERROR
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceCoinCandidate'
+      required:
+      - symbol
+      - code
+    PriceFiatLeg:
+      type: object
+      properties:
+        fiat:
+          type: string
+          description: Decimal fiat value as string.
+        error:
+          $ref: '#/components/schemas/PriceAssetError'
+    PriceValuatedTx:
+      type: object
+      properties:
+        txId:
+          type: string
+        inFiat:
+          $ref: '#/components/schemas/PriceFiatLeg'
+        outFiat:
+          $ref: '#/components/schemas/PriceFiatLeg'
+        feeFiat:
+          $ref: '#/components/schemas/PriceFiatLeg'
+      required:
+      - txId
+    PriceValuateTransactionsResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceValuatedTx'
+      required:
+      - transactions
+    PriceUpsertUserSymbolRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        source:
+          type: string
+        symbol:
+          type: string
+        coinId:
+          type: string
+      required:
+      - userId
+      - source
+      - symbol
+      - coinId
+    PriceUpsertUserSymbolResponse:
+      type: object
+      description: Empty success payload.
+      additionalProperties: false
+    ReportNDFLHeader:
+      type: object
+      properties:
+        taxYear:
+          type: integer
+          format: int32
+        inn:
+          type: string
+        lastName:
+          type: string
+        firstName:
+          type: string
+        middleName:
+          type: string
+        phone:
+          type: string
+        oktmo:
+          type: string
+        taxResidency:
+          type: string
+        taxPayerType:
+          type: string
+        correctionNumber:
+          type: string
+        taxPeriodCode:
+          type: string
+        taxOfficeCode:
+          type: string
+      required:
+      - taxYear
+      - inn
+      - lastName
+      - firstName
+      - middleName
+      - phone
+      - oktmo
+      - taxResidency
+      - taxPayerType
+      - correctionNumber
+      - taxPeriodCode
+      - taxOfficeCode
+    ReportNDFLSection1:
+      type: object
+      properties:
+        kbk:
+          type: string
+        oktmo:
+          type: string
+        taxToPay:
+          type: string
+        taxToRefund:
+          type: string
+      required:
+      - kbk
+      - oktmo
+      - taxToPay
+      - taxToRefund
+    ReportNDFLSection2:
+      type: object
+      properties:
+        incomeGroupCode:
+          type: string
+        totalIncome:
+          type: string
+        nonTaxableIncome:
+          type: string
+        taxableIncome:
+          type: string
+        deductions:
+          type: string
+        recognizedExpenses:
+          type: string
+        taxBase:
+          type: string
+        calculatedTax:
+          type: string
+        withheldAtSource:
+          type: string
+        materialBenefitTax:
+          type: string
+        tradingFeeCredit:
+          type: string
+        fixedAdvanceCredit:
+          type: string
+        foreignTaxCredit:
+          type: string
+        patentTaxCredit:
+          type: string
+        taxToPay:
+          type: string
+        taxToRefund:
+          type: string
+        simplifiedDeductionRefund:
+          type: string
+      required:
+      - incomeGroupCode
+      - totalIncome
+      - nonTaxableIncome
+      - taxableIncome
+      - deductions
+      - recognizedExpenses
+      - taxBase
+      - calculatedTax
+      - withheldAtSource
+      - materialBenefitTax
+      - tradingFeeCredit
+      - fixedAdvanceCredit
+      - foreignTaxCredit
+      - patentTaxCredit
+      - taxToPay
+      - taxToRefund
+      - simplifiedDeductionRefund
+    ReportNDFLAppendix2Line:
+      type: object
+      properties:
+        sourceCountryCode:
+          type: string
+        paymentCountryCode:
+          type: string
+        sourceName:
+          type: string
+        currencyCode:
+          type: string
+        incomeTypeCode:
+          type: string
+        incomeDate:
+          type: string
+          format: date-time
+        fxRate:
+          type: string
+        incomeForeign:
+          type: string
+        incomeRub:
+          type: string
+      required:
+      - sourceCountryCode
+      - paymentCountryCode
+      - sourceName
+      - currencyCode
+      - incomeTypeCode
+      - incomeDate
+      - fxRate
+      - incomeForeign
+      - incomeRub
+    ReportNDFLAppendix6:
+      type: object
+      properties:
+        otherPropertyDeduction:
+          type: string
+        otherPropertyAcquisitionExp:
+          type: string
+        totalPropertyDeduction:
+          type: string
+      required:
+      - otherPropertyDeduction
+      - otherPropertyAcquisitionExp
+      - totalPropertyDeduction
+    RenderNDFLRequest:
+      type: object
+      properties:
+        reportId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        header:
+          $ref: '#/components/schemas/ReportNDFLHeader'
+        section1:
+          $ref: '#/components/schemas/ReportNDFLSection1'
+        section2:
+          $ref: '#/components/schemas/ReportNDFLSection2'
+        appendix2Lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportNDFLAppendix2Line'
+        appendix6:
+          $ref: '#/components/schemas/ReportNDFLAppendix6'
+      required:
+      - reportId
+      - userId
+      - header
+      - section1
+      - section2
+      - appendix2Lines
+      - appendix6
+    RenderNDFLResponse:
+      type: object
+      properties:
+        objectKey:
+          type: string
+          description: MinIO object key for generated report.
+      required:
+      - objectKey

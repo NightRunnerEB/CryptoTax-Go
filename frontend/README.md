@@ -58,4 +58,4 @@ The UI depends on these services and contracts:
   - `/tax/reports`
   - `/tax/reports/{report_id}`
 
-Source of truth for frontend contracts: `docs/api/frontend.openapi.yaml`.
+Source of truth for REST contracts (frontend + internal): `docs/api/openapi.yaml`.
