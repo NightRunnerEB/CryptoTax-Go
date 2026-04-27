@@ -37,7 +37,7 @@ type AggregationClient interface {
 	// with cursor-based pagination and optional server-side filters.
 	ListTransactions(ctx context.Context, in *ListTransactionsRequest, opts ...grpc.CallOption) (*ListTransactionsResponse, error)
 	// ListTransactionsByRange returns paginated aggregated transactions
-	// for a specific user and UTC time range [from_utc, to_utc).
+	// for the authenticated user and UTC time range [from_utc, to_utc).
 	ListTransactionsByRange(ctx context.Context, in *ListTransactionsByRangeRequest, opts ...grpc.CallOption) (*ListTransactionsByRangeResponse, error)
 	// GetUserSettings returns aggregation settings for the authenticated user.
 	GetUserSettings(ctx context.Context, in *GetUserSettingsRequest, opts ...grpc.CallOption) (*GetUserSettingsResponse, error)
@@ -116,7 +116,7 @@ type AggregationServer interface {
 	// with cursor-based pagination and optional server-side filters.
 	ListTransactions(context.Context, *ListTransactionsRequest) (*ListTransactionsResponse, error)
 	// ListTransactionsByRange returns paginated aggregated transactions
-	// for a specific user and UTC time range [from_utc, to_utc).
+	// for the authenticated user and UTC time range [from_utc, to_utc).
 	ListTransactionsByRange(context.Context, *ListTransactionsByRangeRequest) (*ListTransactionsByRangeResponse, error)
 	// GetUserSettings returns aggregation settings for the authenticated user.
 	GetUserSettings(context.Context, *GetUserSettingsRequest) (*GetUserSettingsResponse, error)

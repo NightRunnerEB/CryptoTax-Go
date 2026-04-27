@@ -89,7 +89,6 @@ func (c *Client) ListTransactionsByRange(
 	}
 	ctx = metadata.AppendToOutgoingContext(ctx, headerUserID, userID.String())
 	resp, err := c.client.ListTransactionsByRange(ctx, &aggregationv1.ListTransactionsByRangeRequest{
-		UserId:     userID.String(),
 		FromUtc:    timestamppb.New(fromUTC),
 		ToUtc:      timestamppb.New(toUTC),
 		Limit:      1_000_000, // unlimited for now, can add pagination later if needed
