@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM golang:1.25.1 AS build
 
 WORKDIR /workspace
@@ -10,13 +11,17 @@ COPY pkg/go.mod pkg/go.sum ./pkg/
 COPY services/tax-svc/go.mod services/tax-svc/go.sum ./services/tax-svc/
 
 WORKDIR /workspace/services/tax-svc
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
 
 COPY gen /workspace/gen
 COPY pkg /workspace/pkg
 COPY services/tax-svc /workspace/services/tax-svc
 
-RUN go build -o /out/tax-svc ./cmd/app
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go build -o /out/tax-svc ./cmd/app
 
 FROM gcr.io/distroless/base-debian12:nonroot
 WORKDIR /app
