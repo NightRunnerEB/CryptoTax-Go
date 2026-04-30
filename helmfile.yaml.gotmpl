@@ -28,6 +28,11 @@ releases:
     createNamespace: true
     chart: ./deploy/helm/tax-svc
 
+  - name: report-svc
+    namespace: {{ .Values.namespace }}
+    createNamespace: true
+    chart: ./deploy/helm/report-svc
+
   - name: auth-svc
     namespace: {{ .Values.namespace }}
     createNamespace: true
