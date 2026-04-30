@@ -62,3 +62,16 @@ spec:
       mode: ISTIO_MUTUAL
     loadBalancer:
       simple: LEAST_REQUEST
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: report-svc
+  namespace: cryptotax
+spec:
+  host: report-svc.cryptotax.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST

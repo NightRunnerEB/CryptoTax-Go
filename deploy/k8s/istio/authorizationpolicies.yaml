@@ -143,3 +143,21 @@ spec:
       to:
         - operation:
             ports: ["8093"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: report-svc-allow
+  namespace: cryptotax
+spec:
+  selector:
+    matchLabels:
+      app: report-svc
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces: ["cryptotax"]
+      to:
+        - operation:
+            ports: ["8098"]
