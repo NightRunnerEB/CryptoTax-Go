@@ -1,0 +1,30 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title CryptoTax Platform - System Context
+LAYOUT_LEFT_RIGHT()
+
+Person(user, "User", "Taxpayer / Operator using web application")
+
+System(cryptotax, "CryptoTax Platform", "Cryptocurrency tax accounting and reporting platform")
+
+System_Ext(coingecko, "CoinGecko API", "Market prices and FX-related data")
+System_Ext(smtp, "SMTP Provider", "Transactional e-mail delivery")
+System_Ext(postgres, "PostgreSQL", "Persistent relational storage")
+System_Ext(redis, "Redis", "Cache and short-lived data")
+System_Ext(rabbitmq, "RabbitMQ", "Asynchronous message broker")
+System_Ext(s3, "S3-Compatible Object Storage", "Report and file storage")
+System_Ext(grafana, "Grafana / Observability Stack", "Metrics, logs, traces")
+
+Rel(user, cryptotax, "Uses", "HTTPS")
+Rel(cryptotax, coingecko, "Requests market data", "HTTPS REST")
+Rel(cryptotax, smtp, "Sends e-mails", "SMTP / SMTPS")
+Rel(cryptotax, postgres, "Reads and writes data", "SQL")
+Rel(cryptotax, redis, "Reads and writes cache", "RESP")
+Rel(cryptotax, rabbitmq, "Publishes and consumes events", "AMQP 0-9-1")
+Rel(cryptotax, s3, "Reads and writes files", "S3 API")
+Rel(cryptotax, grafana, "Exports telemetry", "OTLP")
+
+SHOW_LEGEND()
+@enduml
+
