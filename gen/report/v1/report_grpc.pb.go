@@ -19,17 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Report_RequestRender_FullMethodName = "/report.v1.Report/RequestRender"
+	Report_RenderNDFL_FullMethodName = "/report.v1.Report/RenderNDFL"
 )
 
 // ReportClient is the client API for Report service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Report handles report rendering requests from tax-svc.
+// Report handles synchronous report rendering requests from tax-svc.
 type ReportClient interface {
-	// RequestRender asks report-svc to render a report from a prepared dataset.
-	RequestRender(ctx context.Context, in *RequestRenderRequest, opts ...grpc.CallOption) (*RequestRenderResponse, error)
+	// RenderNDFL renders 3-NDFL XML and returns object key in MinIO.
+	RenderNDFL(ctx context.Context, in *RenderNDFLRequest, opts ...grpc.CallOption) (*RenderNDFLResponse, error)
 }
 
 type reportClient struct {
@@ -40,10 +40,10 @@ func NewReportClient(cc grpc.ClientConnInterface) ReportClient {
 	return &reportClient{cc}
 }
 
-func (c *reportClient) RequestRender(ctx context.Context, in *RequestRenderRequest, opts ...grpc.CallOption) (*RequestRenderResponse, error) {
+func (c *reportClient) RenderNDFL(ctx context.Context, in *RenderNDFLRequest, opts ...grpc.CallOption) (*RenderNDFLResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RequestRenderResponse)
-	err := c.cc.Invoke(ctx, Report_RequestRender_FullMethodName, in, out, cOpts...)
+	out := new(RenderNDFLResponse)
+	err := c.cc.Invoke(ctx, Report_RenderNDFL_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,10 +54,10 @@ func (c *reportClient) RequestRender(ctx context.Context, in *RequestRenderReque
 // All implementations must embed UnimplementedReportServer
 // for forward compatibility.
 //
-// Report handles report rendering requests from tax-svc.
+// Report handles synchronous report rendering requests from tax-svc.
 type ReportServer interface {
-	// RequestRender asks report-svc to render a report from a prepared dataset.
-	RequestRender(context.Context, *RequestRenderRequest) (*RequestRenderResponse, error)
+	// RenderNDFL renders 3-NDFL XML and returns object key in MinIO.
+	RenderNDFL(context.Context, *RenderNDFLRequest) (*RenderNDFLResponse, error)
 	mustEmbedUnimplementedReportServer()
 }
 
@@ -68,8 +68,8 @@ type ReportServer interface {
 // pointer dereference when methods are called.
 type UnimplementedReportServer struct{}
 
-func (UnimplementedReportServer) RequestRender(context.Context, *RequestRenderRequest) (*RequestRenderResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RequestRender not implemented")
+func (UnimplementedReportServer) RenderNDFL(context.Context, *RenderNDFLRequest) (*RenderNDFLResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RenderNDFL not implemented")
 }
 func (UnimplementedReportServer) mustEmbedUnimplementedReportServer() {}
 func (UnimplementedReportServer) testEmbeddedByValue()                {}
@@ -92,20 +92,20 @@ func RegisterReportServer(s grpc.ServiceRegistrar, srv ReportServer) {
 	s.RegisterService(&Report_ServiceDesc, srv)
 }
 
-func _Report_RequestRender_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RequestRenderRequest)
+func _Report_RenderNDFL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RenderNDFLRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ReportServer).RequestRender(ctx, in)
+		return srv.(ReportServer).RenderNDFL(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Report_RequestRender_FullMethodName,
+		FullMethod: Report_RenderNDFL_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ReportServer).RequestRender(ctx, req.(*RequestRenderRequest))
+		return srv.(ReportServer).RenderNDFL(ctx, req.(*RenderNDFLRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -118,8 +118,8 @@ var Report_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ReportServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "RequestRender",
-			Handler:    _Report_RequestRender_Handler,
+			MethodName: "RenderNDFL",
+			Handler:    _Report_RenderNDFL_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

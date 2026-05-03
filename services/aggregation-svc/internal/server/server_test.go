@@ -17,7 +17,7 @@ import (
 	"github.com/NightRunner/CryptoTax-Go/services/aggregation-svc/internal/mocks"
 )
 
-func TestListTransactionsByRange_SucceedsWithoutUserHeader(t *testing.T) {
+func TestListTransactionsByRange_SucceedsWithUserHeader(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
@@ -29,13 +29,13 @@ func TestListTransactionsByRange_SucceedsWithoutUserHeader(t *testing.T) {
 	userID := uuid.New()
 	fromUTC := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	toUTC := time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerUserID, userID.String()))
 
 	aggUC.EXPECT().
 		ListTransactionsByRange(gomock.Any(), userID, fromUTC, toUTC, int32(100), int32(0), "").
 		Return(domain.AggregatedTxPage{}, nil)
 
-	_, err := s.ListTransactionsByRange(context.Background(), &aggregationv1.ListTransactionsByRangeRequest{
-		UserId:  userID.String(),
+	_, err := s.ListTransactionsByRange(ctx, &aggregationv1.ListTransactionsByRangeRequest{
 		FromUtc: timestamppb.New(fromUTC),
 		ToUtc:   timestamppb.New(toUTC),
 		Limit:   100,
@@ -120,12 +120,13 @@ func TestListTransactions_InvalidImportID(t *testing.T) {
 	assertServerErrorCode(t, err, apperr.ErrInvalidArgument)
 }
 
-func TestListTransactionsByRange_InvalidUserID(t *testing.T) {
+func TestListTransactionsByRange_InvalidUserHeader(t *testing.T) {
 	t.Parallel()
 
 	s := NewAggregationServer(nil, nil)
-	_, err := s.ListTransactionsByRange(context.Background(), &aggregationv1.ListTransactionsByRangeRequest{
-		UserId:  "bad-uuid",
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(headerUserID, "bad-uuid"))
+
+	_, err := s.ListTransactionsByRange(ctx, &aggregationv1.ListTransactionsByRangeRequest{
 		FromUtc: timestamppb.New(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)),
 		ToUtc:   timestamppb.New(time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)),
 	})

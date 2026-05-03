@@ -7,6 +7,7 @@
 package pricev1
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -654,7 +655,7 @@ var File_price_v1_price_proto protoreflect.FileDescriptor
 
 const file_price_v1_price_proto_rawDesc = "" +
 	"\n" +
-	"\x14price/v1/price.proto\x12\bprice.v1\x1a\x1fgoogle/protobuf/timestamp.proto\":\n" +
+	"\x14price/v1/price.proto\x12\bprice.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\":\n" +
 	"\bMoneyLeg\x12\x16\n" +
 	"\x06symbol\x18\x01 \x01(\tR\x06symbol\x12\x16\n" +
 	"\x06amount\x18\x02 \x01(\tR\x06amount\"X\n" +
@@ -710,10 +711,10 @@ const file_price_v1_price_proto_rawDesc = "" +
 	"\rASSET_UNKNOWN\x10\x00\x12\x13\n" +
 	"\x0fASSET_AMBIGUOUS\x10\x01\x12\x12\n" +
 	"\x0eRATE_NOT_FOUND\x10\x02\x12\x12\n" +
-	"\x0ePROVIDER_ERROR\x10\x032\xcb\x01\n" +
-	"\x05Price\x12g\n" +
-	"\x18ValuateTransactionsBatch\x12$.price.v1.ValuateTransactionsRequest\x1a%.price.v1.ValuateTransactionsResponse\x12Y\n" +
-	"\x10UpsertUserSymbol\x12!.price.v1.UpsertUserSymbolRequest\x1a\".price.v1.UpsertUserSymbolResponseB:Z8github.com/NightRunner/CryptoTax-Go/gen/price/v1;pricev1b\x06proto3"
+	"\x0ePROVIDER_ERROR\x10\x032\x9a\x02\n" +
+	"\x05Price\x12\x92\x01\n" +
+	"\x18ValuateTransactionsBatch\x12$.price.v1.ValuateTransactionsRequest\x1a%.price.v1.ValuateTransactionsResponse\")\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/price/transactions:valuate\x12|\n" +
+	"\x10UpsertUserSymbol\x12!.price.v1.UpsertUserSymbolRequest\x1a\".price.v1.UpsertUserSymbolResponse\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\x1a\x16/v1/price/user-symbolsB:Z8github.com/NightRunner/CryptoTax-Go/gen/price/v1;pricev1b\x06proto3"
 
 var (
 	file_price_v1_price_proto_rawDescOnce sync.Once

@@ -13,6 +13,7 @@ interface RegistrationFormState {
   password: string
   confirmPassword: string
   inn: string
+  oktmo: string
   lastName: string
   firstName: string
   middleName: string
@@ -29,6 +30,7 @@ const INITIAL_FORM: RegistrationFormState = {
   password: '',
   confirmPassword: '',
   inn: '',
+  oktmo: '',
   lastName: '',
   firstName: '',
   middleName: '',
@@ -49,7 +51,7 @@ function splitWallets(raw: string): string[] {
 
 const JURISDICTIONS = new Set(['RU', 'KZ'])
 const TAX_RESIDENCY_STATUSES = new Set(['RESIDENT', 'NON_RESIDENT'])
-const TAXPAYER_TYPES = new Set(['INDIVIDUAL', 'SOLE_PROPRIETOR', 'LEGAL_ENTITY'])
+const TAXPAYER_TYPES = new Set(['INDIVIDUAL', 'SOLE_PROPRIETOR'])
 
 function validateRegistrationForm(form: RegistrationFormState): string[] {
   const errors: string[] = []
@@ -74,6 +76,9 @@ function validateRegistrationForm(form: RegistrationFormState): string[] {
 
   if (form.inn.trim().length === 0) {
     errors.push('INN is required.')
+  }
+  if (form.oktmo.trim().length === 0) {
+    errors.push('OKTMO is required.')
   }
   if (form.lastName.trim().length === 0) {
     errors.push('Last name is required.')
@@ -107,6 +112,7 @@ function toRegisterPayload(form: RegistrationFormState): RegisterRequest {
     password: form.password,
     tax_profile: {
       inn: form.inn.trim(),
+      oktmo: form.oktmo.trim(),
       last_name: form.lastName.trim(),
       first_name: form.firstName.trim(),
       middle_name: form.middleName.trim(),
@@ -188,18 +194,18 @@ export function RegisterPage() {
         {theme === 'dark' ? <Sun className="w-5 h-5 text-foreground" /> : <Moon className="w-5 h-5 text-foreground" />}
       </button>
 
-      <div className="hidden lg:flex lg:w-1/2 bg-primary p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[42%] bg-primary p-8 flex-col justify-between relative overflow-hidden">
         <div className="relative z-10">
-          <h1 className="text-primary-foreground mb-4">CryptoTax</h1>
-          <p className="text-primary-foreground/80 text-lg max-w-md">
+          <h1 className="text-primary-foreground mb-3">CryptoTax</h1>
+          <p className="text-primary-foreground/80 text-base max-w-md">
             Join thousands of professionals who trust CryptoTax for accurate cryptocurrency tax reporting
           </p>
         </div>
 
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center flex-shrink-0 border border-primary-foreground/20">
-              <User className="w-5 h-5 text-primary-foreground" />
+        <div className="relative z-10 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-primary-foreground/10 flex items-center justify-center flex-shrink-0 border border-primary-foreground/20">
+              <User className="w-4.5 h-4.5 text-primary-foreground" />
             </div>
             <div>
               <h4 className="text-primary-foreground font-medium mb-1">Multi-exchange support</h4>
@@ -207,9 +213,9 @@ export function RegisterPage() {
             </div>
           </div>
 
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center flex-shrink-0 border border-primary-foreground/20">
-              <Building2 className="w-5 h-5 text-primary-foreground" />
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-primary-foreground/10 flex items-center justify-center flex-shrink-0 border border-primary-foreground/20">
+              <Building2 className="w-4.5 h-4.5 text-primary-foreground" />
             </div>
             <div>
               <h4 className="text-primary-foreground font-medium mb-1">Automated calculations</h4>
@@ -217,9 +223,9 @@ export function RegisterPage() {
             </div>
           </div>
 
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center flex-shrink-0 border border-primary-foreground/20">
-              <ArrowRight className="w-5 h-5 text-primary-foreground" />
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-primary-foreground/10 flex items-center justify-center flex-shrink-0 border border-primary-foreground/20">
+              <ArrowRight className="w-4.5 h-4.5 text-primary-foreground" />
             </div>
             <div>
               <h4 className="text-primary-foreground font-medium mb-1">Professional reports</h4>
@@ -231,17 +237,17 @@ export function RegisterPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary-light/20 to-transparent" />
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 lg:py-10">
-        <div className="w-full max-w-2xl">
-          <div className="mb-8">
+      <div className="flex-1 flex items-center justify-center p-6 lg:py-6">
+        <div className="w-full max-w-3xl">
+          <div className="mb-6">
             <h2 className="text-foreground mb-2">Create your account</h2>
-            <p className="text-muted-foreground">Start managing your crypto taxes professionally</p>
+            <p className="text-muted-foreground text-sm">Start managing your crypto taxes professionally</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-foreground mb-2">First name</label>
+                <label className="block text-foreground text-sm mb-1.5">First name</label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                   <input
@@ -249,7 +255,7 @@ export function RegisterPage() {
                     value={form.firstName}
                     onChange={(event) => setField('firstName', event.target.value)}
                     placeholder="John"
-                    className="w-full pl-12 pr-4 py-3 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    className="w-full pl-12 pr-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     style={{ paddingLeft: '3rem' }}
                     required
                   />
@@ -257,46 +263,70 @@ export function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-foreground mb-2">Last name</label>
+                <label className="block text-foreground text-sm mb-1.5">Last name</label>
                 <input
                   type="text"
                   value={form.lastName}
                   onChange={(event) => setField('lastName', event.target.value)}
                   placeholder="Doe"
-                  className="w-full px-4 py-3 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   required
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-foreground mb-2">Middle name</label>
+                <label className="block text-foreground text-sm mb-1.5">Middle name</label>
                 <input
                   type="text"
                   value={form.middleName}
                   onChange={(event) => setField('middleName', event.target.value)}
                   placeholder="Sergeevich"
-                  className="w-full px-4 py-3 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   required
                 />
               </div>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-foreground mb-2">INN</label>
+                <label className="block text-foreground text-sm mb-1.5">INN</label>
                 <input
                   type="text"
                   value={form.inn}
                   onChange={(event) => setField('inn', event.target.value)}
                   placeholder="7730123456789"
-                  className="w-full px-4 py-3 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-foreground text-sm mb-1.5">OKTMO</label>
+                <input
+                  type="text"
+                  value={form.oktmo}
+                  onChange={(event) => setField('oktmo', event.target.value)}
+                  placeholder="45382000"
+                  className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-foreground text-sm mb-1.5">Timezone</label>
+                <input
+                  type="text"
+                  value={form.timezone}
+                  onChange={(event) => setField('timezone', event.target.value)}
+                  placeholder="Europe/Moscow"
+                  className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-foreground mb-2">Email address</label>
+              <label className="block text-foreground text-sm mb-1.5">Email address</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                 <input
@@ -304,7 +334,7 @@ export function RegisterPage() {
                   value={form.email}
                   onChange={(event) => setField('email', event.target.value)}
                   placeholder="you@example.com"
-                  className="w-full pl-12 pr-4 py-3 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   style={{ paddingLeft: '3rem' }}
                   autoComplete="email"
                   required
@@ -312,17 +342,17 @@ export function RegisterPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-foreground mb-2">Password</label>
+                <label className="block text-foreground text-sm mb-1.5">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                   <input
                     type="password"
                     value={form.password}
                     onChange={(event) => setField('password', event.target.value)}
-                    placeholder="Create a strong password"
-                    className={`w-full pl-12 pr-4 py-3 bg-input-background border rounded-lg text-foreground focus:outline-none focus:ring-2 transition-all ${
+                    placeholder="Create a password"
+                    className={`w-full pl-12 pr-4 py-2.5 bg-input-background border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 transition-all ${
                       !passwordsMatch
                         ? 'border-[var(--status-failed)] focus:ring-[var(--status-failed)]'
                         : 'border-input-border focus:ring-primary focus:border-transparent'
@@ -335,7 +365,7 @@ export function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-foreground mb-2">Confirm password</label>
+                <label className="block text-foreground text-sm mb-1.5">Confirm password</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                   <input
@@ -343,7 +373,7 @@ export function RegisterPage() {
                     value={form.confirmPassword}
                     onChange={(event) => setField('confirmPassword', event.target.value)}
                     placeholder="Confirm your password"
-                    className={`w-full pl-12 pr-4 py-3 bg-input-background border rounded-lg text-foreground focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full pl-12 pr-4 py-2.5 bg-input-background border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 transition-all ${
                       !passwordsMatch
                         ? 'border-[var(--status-failed)] focus:ring-[var(--status-failed)]'
                         : 'border-input-border focus:ring-primary focus:border-transparent'
@@ -354,19 +384,30 @@ export function RegisterPage() {
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-foreground text-sm mb-1.5">Phone</label>
+                <input
+                  type="text"
+                  value={form.phone}
+                  onChange={(event) => setField('phone', event.target.value)}
+                  placeholder="+7 (495) 123-45-67"
+                  className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
             </div>
 
             {!passwordsMatch ? <p className="text-sm text-[var(--status-failed)]">Passwords do not match</p> : null}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-foreground mb-2">Jurisdiction</label>
+                <label className="block text-foreground text-sm mb-1.5">Jurisdiction</label>
                 <div className="relative">
                   <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                   <select
                     value={form.jurisdiction}
                     onChange={(event) => setField('jurisdiction', event.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    className="w-full pl-12 pr-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     style={{ paddingLeft: '3rem' }}
                   >
                     <option value="RU">RU</option>
@@ -376,25 +417,11 @@ export function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-foreground mb-2">Timezone</label>
-                <input
-                  type="text"
-                  value={form.timezone}
-                  onChange={(event) => setField('timezone', event.target.value)}
-                  placeholder="Europe/Moscow"
-                  className="w-full px-4 py-3 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-foreground mb-2">Tax residency</label>
+                <label className="block text-foreground text-sm mb-1.5">Tax residency</label>
                 <select
                   value={form.taxResidencyStatus}
                   onChange={(event) => setField('taxResidencyStatus', event.target.value)}
-                  className="w-full px-4 py-3 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 >
                   <option value="RESIDENT">RESIDENT</option>
                   <option value="NON_RESIDENT">NON_RESIDENT</option>
@@ -402,38 +429,26 @@ export function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-foreground mb-2">Taxpayer type</label>
+                <label className="block text-foreground text-sm mb-1.5">Taxpayer type</label>
                 <select
                   value={form.taxpayerType}
                   onChange={(event) => setField('taxpayerType', event.target.value)}
-                  className="w-full px-4 py-3 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 >
                   <option value="INDIVIDUAL">INDIVIDUAL</option>
                   <option value="SOLE_PROPRIETOR">SOLE_PROPRIETOR</option>
-                  <option value="LEGAL_ENTITY">LEGAL_ENTITY</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label className="block text-foreground mb-2">Phone</label>
-              <input
-                type="text"
-                value={form.phone}
-                onChange={(event) => setField('phone', event.target.value)}
-                placeholder="+7 (495) 123-45-67"
-                className="w-full px-4 py-3 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-foreground mb-2">Wallets</label>
+              <label className="block text-foreground text-sm mb-1.5">Wallets</label>
               <textarea
-                rows={4}
+                rows={3}
                 value={form.wallets}
                 onChange={(event) => setField('wallets', event.target.value)}
                 placeholder="0xabc..., 0xdef..."
-                className="w-full px-4 py-3 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-y"
+                className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-y"
               />
             </div>
 
@@ -450,7 +465,7 @@ export function RegisterPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-dark text-primary-foreground rounded-lg font-medium transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-primary-dark text-primary-foreground rounded-lg font-medium transition-all disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
@@ -466,8 +481,8 @@ export function RegisterPage() {
             </button>
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-muted-foreground">
+          <div className="mt-6 text-center">
+            <p className="text-muted-foreground text-sm">
               Already have an account?{' '}
               <Link to="/login" className="text-primary hover:text-primary-dark font-medium transition-colors">
                 Sign in

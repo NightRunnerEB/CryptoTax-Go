@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -14,7 +15,12 @@ import (
 
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/error"
+	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/events"
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/engines"
+)
+
+const (
+	ndflKBK = "18210102010011000110"
 )
 
 type TaxJobWorkerUC struct {
@@ -162,21 +168,31 @@ func (uc *TaxJobWorkerUC) processJob(ctx context.Context, job domain.TaxJob) err
 		})
 	}
 
-	if err := uc.report.RequestRender(ctx, domain.ReportRenderRequest{
-		ReportID:         job.ID,
-		UserID:           job.UserID,
-		Jurisdiction:     string(job.PolicySnapshot.Jurisdiction),
-		TaxYear:          int32(job.TaxYear),
-		DatasetObjectKey: objectKey,
-		TemplateVersion:  "",
-	}); err != nil {
-		return apperr.Internal("request report render failed", err, map[string]string{
-			"user_id":   job.UserID.String(),
-			"report_id": job.ID.String(),
-		})
+	var reportObjectKey *string
+	if job.PolicySnapshot.Jurisdiction == domain.JurisdictionRU {
+		ndflPayload, err := buildNDFLPayload(job, profile, summary)
+		if err != nil {
+			return err
+		}
+		renderReq := domain.ReportRenderRequest{
+			ReportID:     job.ID,
+			UserID:       job.UserID,
+			Jurisdiction: string(job.PolicySnapshot.Jurisdiction),
+			NDFL:         ndflPayload,
+		}
+		key, err := uc.report.RequestRender(ctx, renderReq)
+		if err != nil {
+			return apperr.Internal("request report render failed", err, map[string]string{
+				"user_id":   job.UserID.String(),
+				"report_id": job.ID.String(),
+			})
+		}
+		if strings.TrimSpace(key) != "" {
+			reportObjectKey = &key
+		}
 	}
 
-	return uc.jobRepo.SaveResult(ctx, job.ID, summary, &objectKey, nil)
+	return uc.jobRepo.SaveResult(ctx, job.ID, summary, &objectKey, reportObjectKey)
 }
 
 func taxYearBoundsUTC(year int, timezone string) (time.Time, time.Time, error) {
@@ -195,6 +211,190 @@ func errorForJob(err error) (string, string) {
 		return string(ae.Code), ae.Error()
 	}
 	return string(apperr.ErrInternal), err.Error()
+}
+
+func summarizeResult(job domain.TaxJob, profile domain.TaxProfile, result engines.BuildResult) domain.TaxSummary {
+	totalIncome := decimal.Zero
+	totalTrade := decimal.Zero
+	totalExpense := decimal.Zero
+	totalP2P := make([]domain.P2PIncome, 0)
+
+	for _, item := range result.RealizationEvents {
+		totalIncome = totalIncome.Add(item.ProceedsFiat)
+		totalExpense = totalExpense.Add(item.CostBasisFiat)
+		if item.Kind == events.RealizationP2PSell {
+			totalP2P = append(totalP2P, domain.P2PIncome{
+				OccurredAt: item.OccurredAt,
+				Qty:        item.Qty,
+				GainFiat:   item.ProceedsFiat.Sub(item.CostBasisFiat),
+			})
+			continue
+		}
+		totalTrade = totalTrade.Add(item.ProceedsFiat)
+	}
+	for _, item := range result.IncomeEvents {
+		totalIncome = totalIncome.Add(item.AmountFiat)
+	}
+	for _, item := range result.ExpenseEvents {
+		totalExpense = totalExpense.Add(item.AmountFiat)
+	}
+
+	taxBase := totalIncome.Sub(totalExpense)
+	taxDue := calculateTaxDue(job.PolicySnapshot.Jurisdiction, profile, taxBase)
+
+	return domain.TaxSummary{
+		UserID:       job.UserID,
+		TaxYear:      job.TaxYear,
+		TotalIncome:  totalIncome,
+		TotalTrade:   totalTrade,
+		TotalP2P:     totalP2P,
+		TotalExpense: totalExpense,
+		TaxBase:      taxBase,
+		TaxDue:       taxDue,
+	}
+}
+
+func buildNDFLPayload(job domain.TaxJob, profile domain.TaxProfile, summary domain.TaxSummary) (domain.NDFLReportPayload, error) {
+	taxToPay := decimal.Zero
+	if summary.TaxDue.GreaterThan(decimal.Zero) {
+		taxToPay = summary.TaxDue
+	}
+
+	inn, err := normalizeINN(profile.INN)
+	if err != nil {
+		return domain.NDFLReportPayload{}, err
+	}
+
+	oktmo, err := normalizeOKTMO(profile.OKTMO)
+	if err != nil {
+		return domain.NDFLReportPayload{}, err
+	}
+
+	taxOfficeCode := deriveTaxOfficeCode(inn)
+
+	reportDate := time.Date(job.TaxYear, time.December, 31, 0, 0, 0, 0, time.UTC)
+
+	appendix2 := make([]domain.NDFLAppendix2Line, 0, len(summary.TotalP2P)+1)
+	if summary.TotalTrade.GreaterThan(decimal.Zero) {
+		appendix2 = append(appendix2, domain.NDFLAppendix2Line{
+			SourceCountryCode:  "999",
+			PaymentCountryCode: "643",
+			SourceName:         "CRYPTO",
+			CurrencyCode:       "643",
+			IncomeTypeCode:     "1530",
+			IncomeDate:         reportDate,
+			FXRate:             decimal.NewFromInt(1),
+			IncomeForeign:      summary.TotalTrade,
+			IncomeRub:          summary.TotalTrade,
+		})
+	}
+	for _, line := range summary.TotalP2P {
+		if line.GainFiat.LessThanOrEqual(decimal.Zero) {
+			continue
+		}
+		if line.OccurredAt.IsZero() {
+			return domain.NDFLReportPayload{}, apperr.Internal("p2p income occurred_at is required for ndfl payload", nil, map[string]string{
+				"user_id":  job.UserID.String(),
+				"tax_year": fmt.Sprintf("%d", job.TaxYear),
+			})
+		}
+		appendix2 = append(appendix2, domain.NDFLAppendix2Line{
+			SourceCountryCode:  "999",
+			PaymentCountryCode: "643",
+			SourceName:         "CRYPTO P2P",
+			CurrencyCode:       "643",
+			IncomeTypeCode:     "1530",
+			IncomeDate:         line.OccurredAt.UTC(),
+			FXRate:             decimal.NewFromInt(1),
+			IncomeForeign:      line.GainFiat,
+			IncomeRub:          line.GainFiat,
+		})
+	}
+
+	return domain.NDFLReportPayload{
+		Header: domain.NDFLHeader{
+			TaxYear:          job.TaxYear,
+			INN:              inn,
+			LastName:         profile.LastName,
+			FirstName:        profile.FirstName,
+			MiddleName:       profile.MiddleName,
+			Phone:            profile.Phone,
+			OKTMO:            oktmo,
+			TaxResidency:     string(profile.TaxResidencyStatus),
+			TaxPayerType:     string(profile.TaxPayerType),
+			CorrectionNumber: "0",
+			TaxPeriodCode:    "34",
+			TaxOfficeCode:    taxOfficeCode,
+		},
+		Section1: domain.NDFLSection1{
+			KBK:         ndflKBK,
+			OKTMO:       oktmo,
+			TaxToPay:    taxToPay,
+			TaxToRefund: decimal.Zero,
+		},
+		Section2: domain.NDFLSection2{
+			IncomeGroupCode: "13",
+
+			TotalIncome:        summary.TotalIncome,
+			NonTaxableIncome:   decimal.Zero,
+			TaxableIncome:      summary.TotalIncome,
+			Deductions:         decimal.Zero,
+			RecognizedExpenses: summary.TotalExpense,
+			TaxBase:            summary.TaxBase,
+
+			CalculatedTax:      summary.TaxDue,
+			WithheldAtSource:   decimal.Zero,
+			MaterialBenefitTax: decimal.Zero,
+			TradingFeeCredit:   decimal.Zero,
+			FixedAdvanceCredit: decimal.Zero,
+			ForeignTaxCredit:   decimal.Zero,
+			PatentTaxCredit:    decimal.Zero,
+
+			TaxToPay:    taxToPay,
+			TaxToRefund: decimal.Zero,
+
+			SimplifiedDeductionRefund: decimal.Zero,
+		},
+		Appendix2: appendix2,
+		Appendix6: domain.NDFLAppendix6{
+			OtherPropertyDeduction:      summary.TotalExpense,
+			OtherPropertyAcquisitionExp: summary.TotalExpense,
+			TotalPropertyDeduction:      summary.TotalExpense,
+		},
+	}, nil
+}
+
+func normalizeINN(inn string) (string, error) {
+	value := strings.TrimSpace(inn)
+	if len(value) != 12 || !isDigits(value) || !isValidIndividualINN(value) {
+		return "", apperr.Internal("invalid INN for ndfl payload", nil, map[string]string{
+			"field": "tax_profile.inn",
+		})
+	}
+	return value, nil
+}
+
+func normalizeOKTMO(oktmo string) (string, error) {
+	value := strings.TrimSpace(oktmo)
+	if (len(value) == 8 || len(value) == 11) && isDigits(value) {
+		return value, nil
+	}
+	return "", apperr.Internal("invalid OKTMO for ndfl payload", nil, map[string]string{
+		"field": "tax_profile.oktmo",
+	})
+}
+
+func deriveTaxOfficeCode(inn string) string {
+	return inn[:4]
+}
+
+func isDigits(value string) bool {
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func (uc *TaxJobWorkerUC) shouldRetry(err error, attempts int) bool {
@@ -276,34 +476,6 @@ func grpcCodeFromErrorChain(err error) (codes.Code, bool) {
 		}
 	}
 	return codes.OK, false
-}
-
-func summarizeResult(job domain.TaxJob, profile domain.TaxProfile, result engines.BuildResult) domain.TaxSummary {
-	totalIncome := decimal.Zero
-	totalExpense := decimal.Zero
-
-	for _, item := range result.RealizationEvents {
-		totalIncome = totalIncome.Add(item.ProceedsFiat)
-		totalExpense = totalExpense.Add(item.CostBasisFiat)
-	}
-	for _, item := range result.IncomeEvents {
-		totalIncome = totalIncome.Add(item.AmountFiat)
-	}
-	for _, item := range result.ExpenseEvents {
-		totalExpense = totalExpense.Add(item.AmountFiat)
-	}
-
-	taxBase := totalIncome.Sub(totalExpense)
-	taxDue := calculateTaxDue(job.PolicySnapshot.Jurisdiction, profile, taxBase)
-
-	return domain.TaxSummary{
-		UserID:       job.UserID,
-		TaxYear:      job.TaxYear,
-		TotalIncome:  totalIncome,
-		TotalExpense: totalExpense,
-		TaxBase:      taxBase,
-		TaxDue:       taxDue,
-	}
 }
 
 func calculateTaxDue(jurisdiction domain.Jurisdiction, profile domain.TaxProfile, taxBase decimal.Decimal) decimal.Decimal {

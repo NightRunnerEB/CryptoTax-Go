@@ -18,6 +18,7 @@ type (
 		OTel     OTelConfig         `yaml:"otel"`
 		PG       PG                 `yaml:"postgres"`
 		GRPC     GRPC               `yaml:"grpc"`
+		HTTP     HTTP               `yaml:"http"`
 		Redis    Redis              `yaml:"redis"`
 		CG       coingecko.CGConfig `yaml:"coingecko"`
 		Resolver Resolver           `yaml:"resolver"`
@@ -35,6 +36,11 @@ type (
 
 	GRPC struct {
 		Addr string `yaml:"addr"`
+	}
+
+	HTTP struct {
+		Addr            string        `yaml:"addr"`
+		ShutdownTimeout time.Duration `yaml:"shutdown_timeout"`
 	}
 
 	PG struct {
@@ -79,5 +85,16 @@ func NewConfig(path string) (*Config, error) {
 		return nil, apperr.Internal("read environment failed", err, nil)
 	}
 
+	applyDefaults(&cfg)
+
 	return &cfg, nil
+}
+
+func applyDefaults(cfg *Config) {
+	if cfg.HTTP.Addr == "" {
+		cfg.HTTP.Addr = "0.0.0.0:8092"
+	}
+	if cfg.HTTP.ShutdownTimeout == 0 {
+		cfg.HTTP.ShutdownTimeout = 5 * time.Second
+	}
 }

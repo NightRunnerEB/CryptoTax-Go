@@ -350,7 +350,6 @@ func (x *ListTransactionsResponse) GetNextPageToken() string {
 
 type ListTransactionsByRangeRequest struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
-	UserId  string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	FromUtc *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=from_utc,json=fromUtc,proto3" json:"from_utc,omitempty"`
 	ToUtc   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=to_utc,json=toUtc,proto3" json:"to_utc,omitempty"`
 	Limit   int32                  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
@@ -391,13 +390,6 @@ func (x *ListTransactionsByRangeRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListTransactionsByRangeRequest.ProtoReflect.Descriptor instead.
 func (*ListTransactionsByRangeRequest) Descriptor() ([]byte, []int) {
 	return file_aggregation_v1_aggregation_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *ListTransactionsByRangeRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
 }
 
 func (x *ListTransactionsByRangeRequest) GetFromUtc() *timestamppb.Timestamp {
@@ -913,15 +905,14 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"targetFiat\"v\n" +
 	"\x18ListTransactionsResponse\x122\n" +
 	"\x05items\x18\x01 \x03(\v2\x1c.aggregation.v1.AggregatedTxR\x05items\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xf2\x01\n" +
-	"\x1eListTransactionsByRangeRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x125\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xdf\x01\n" +
+	"\x1eListTransactionsByRangeRequest\x125\n" +
 	"\bfrom_utc\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\afromUtc\x121\n" +
 	"\x06to_utc\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x05toUtc\x12\x14\n" +
 	"\x05limit\x18\x04 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x05 \x01(\x05R\x06offset\x12\x1f\n" +
 	"\vtarget_fiat\x18\x06 \x01(\tR\n" +
-	"targetFiat\"y\n" +
+	"targetFiatJ\x04\b\x01\x10\x02\"y\n" +
 	"\x1fListTransactionsByRangeResponse\x12@\n" +
 	"\ftransactions\x18\x01 \x03(\v2\x1c.aggregation.v1.AggregatedTxR\ftransactions\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\"h\n" +
@@ -946,10 +937,10 @@ const file_aggregation_v1_aggregation_proto_rawDesc = "" +
 	"#ListSupportedFiatCurrenciesResponse\x12E\n" +
 	"\n" +
 	"currencies\x18\x01 \x03(\v2%.aggregation.v1.SupportedFiatCurrencyR\n" +
-	"currencies2\xd0\x05\n" +
+	"currencies2\xc0\x05\n" +
 	"\vAggregation\x12|\n" +
-	"\x10ListTransactions\x12'.aggregation.v1.ListTransactionsRequest\x1a(.aggregation.v1.ListTransactionsResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\x12\r/transactions\x12\xa4\x01\n" +
-	"\x17ListTransactionsByRange\x12..aggregation.v1.ListTransactionsByRangeRequest\x1a/.aggregation.v1.ListTransactionsByRangeResponse\"(\x82\xd3\xe4\x93\x02\"\x12 /v1/users/{user_id}/transactions\x12u\n" +
+	"\x10ListTransactions\x12'.aggregation.v1.ListTransactionsRequest\x1a(.aggregation.v1.ListTransactionsResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\x12\r/transactions\x12\x94\x01\n" +
+	"\x17ListTransactionsByRange\x12..aggregation.v1.ListTransactionsByRangeRequest\x1a/.aggregation.v1.ListTransactionsByRangeResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/transactions\x12u\n" +
 	"\x0fGetUserSettings\x12&.aggregation.v1.GetUserSettingsRequest\x1a'.aggregation.v1.GetUserSettingsResponse\"\x11\x82\xd3\xe4\x93\x02\v\x12\t/settings\x12\x81\x01\n" +
 	"\x12UpsertUserSettings\x12).aggregation.v1.UpsertUserSettingsRequest\x1a*.aggregation.v1.UpsertUserSettingsResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\x1a\t/settings\x12\xa0\x01\n" +
 	"\x1bListSupportedFiatCurrencies\x122.aggregation.v1.ListSupportedFiatCurrenciesRequest\x1a3.aggregation.v1.ListSupportedFiatCurrenciesResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/fiat-currenciesBFZDgithub.com/NightRunner/CryptoTax-Go/gen/aggregation/v1;aggregationv1b\x06proto3"

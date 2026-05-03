@@ -10,9 +10,8 @@ This is a desktop-first product demo, not a production web app.
 - Keep this file in `/frontend/AGENTS.md` and treat it as implementation guardrails.
 
 ## Contract sources (priority order)
-1. `/docs/api/frontend.openapi.yaml` (source of truth for UI-facing REST)
-2. `/docs/api/internal.openapi.yaml` (for internal-only routes and gap analysis)
-3. Service code when contracts are ambiguous:
+1. `/docs/api/openapi.yaml` (source of truth for all REST routes)
+2. Service code when contracts are ambiguous:
    - `/services/tax-svc`
    - `/services/aggregation-svc`
    - `/Users/evgeniybukharev/Desktop/CryptoTax/auth-svc`
@@ -27,7 +26,7 @@ This is a desktop-first product demo, not a production web app.
 ## Known contract gaps (do not hide these)
 - No current-user endpoint (`/auth/me`-style route is absent).
 - `/mexc/csv` returns only status; it does not return `import_id`.
-- Aggregation range/filter endpoint (`/v1/users/{user_id}/transactions`) exists in internal API, not frontend API.
+- Aggregation range/filter endpoint (`/v1/transactions` + `X-User-Id`) exists in internal API, not frontend API.
 
 ## Integration rules
 - Do not invent endpoints or DTO fields.

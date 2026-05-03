@@ -4,20 +4,94 @@ package report.v1;
 
 option go_package = "github.com/NightRunner/CryptoTax-Go/gen/report/v1;reportv1";
 
-// Report handles report rendering requests from tax-svc.
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// Report handles synchronous report rendering requests from tax-svc.
 service Report {
-  // RequestRender asks report-svc to render a report from a prepared dataset.
-  rpc RequestRender(RequestRenderRequest) returns (RequestRenderResponse);
+  // RenderNDFL renders 3-NDFL XML and returns object key in MinIO.
+  rpc RenderNDFL(RenderNDFLRequest) returns (RenderNDFLResponse) {
+    option (google.api.http) = {
+      post: "/v1/report/ndfl:render"
+      body: "*"
+    };
+  }
 }
 
-message RequestRenderRequest {
+message RenderNDFLRequest {
   string report_id = 1;
   string user_id = 2;
-  string jurisdiction = 3;
-  int32 tax_year = 4;
-  string dataset_object_key = 5;
-  string template_version = 6;
+  NdflHeader header = 3;
+  NdflSection1 section1 = 4;
+  NdflSection2 section2 = 5;
+  repeated NdflAppendix2Line appendix2_lines = 6;
+  NdflAppendix6 appendix6 = 7;
 }
 
-message RequestRenderResponse {}
+message RenderNDFLResponse {
+  string object_key = 1;
+}
 
+message NdflHeader {
+  int32 tax_year = 1;
+  string inn = 2;
+  string last_name = 3;
+  string first_name = 4;
+  string middle_name = 5;
+  string phone = 6;
+  string oktmo = 7;
+  string tax_residency = 8;
+  string tax_payer_type = 9;
+  string correction_number = 10;
+  string tax_period_code = 11;
+  string tax_office_code = 12;
+}
+
+message NdflSection1 {
+  string kbk = 1;
+  string oktmo = 2;
+  string tax_to_pay = 3;
+  string tax_to_refund = 4;
+}
+
+message NdflSection2 {
+  string income_group_code = 1;
+
+  string total_income = 2;
+  string non_taxable_income = 3;
+  string taxable_income = 4;
+  string deductions = 5;
+  string recognized_expenses = 6;
+  string tax_base = 7;
+
+  string calculated_tax = 8;
+  string withheld_at_source = 9;
+  string material_benefit_tax = 10;
+  string trading_fee_credit = 11;
+  string fixed_advance_credit = 12;
+  string foreign_tax_credit = 13;
+  string patent_tax_credit = 14;
+
+  string tax_to_pay = 15;
+  string tax_to_refund = 16;
+
+  string simplified_deduction_refund = 17;
+}
+
+message NdflAppendix2Line {
+  string source_country_code = 1;
+  string payment_country_code = 2;
+  string source_name = 3;
+  string currency_code = 4;
+  string income_type_code = 5;
+  google.protobuf.Timestamp income_date = 6;
+  string fx_rate = 7;
+  string income_foreign = 8;
+  string income_rub = 9;
+}
+
+message NdflAppendix6 {
+  string other_property_deduction = 1;
+  string other_property_acquisition_exp = 2;
+  string total_property_deduction = 3;
+}

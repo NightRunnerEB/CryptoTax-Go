@@ -100,7 +100,7 @@ func TestSmoke_ListSupportedFiatCurrencies_Success(t *testing.T) {
 	}
 }
 
-func TestSmoke_ListTransactionsByRange_SucceedsWithoutUserHeader(t *testing.T) {
+func TestSmoke_ListTransactionsByRange_SucceedsWithUserHeader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -114,11 +114,11 @@ func TestSmoke_ListTransactionsByRange_SucceedsWithoutUserHeader(t *testing.T) {
 	client, cleanup := startTestServer(t, aggUC, nil)
 	defer cleanup()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("x-user-id", userID.String()))
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	_, err := client.ListTransactionsByRange(ctx, &aggregationv1.ListTransactionsByRangeRequest{
-		UserId:  userID.String(),
 		FromUtc: timestamppb.New(fromUTC),
 		ToUtc:   timestamppb.New(toUTC),
 	})

@@ -21,6 +21,10 @@
 # Go cache
 .gocache/
 **/.gocache/
+.golangci-cache
 
 # Env
 .env
+    
+# AI prompts
+code_style

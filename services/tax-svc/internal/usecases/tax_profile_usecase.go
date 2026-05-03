@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"regexp"
 	"strings"
 	"time"
 
@@ -9,6 +10,11 @@ import (
 
 	"github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain"
 	apperr "github.com/NightRunner/CryptoTax-Go/services/tax-svc/internal/domain/error"
+)
+
+var (
+	innPattern   = regexp.MustCompile(`^\d{12}$`)
+	oktmoPattern = regexp.MustCompile(`^\d{8}(\d{3})?$`)
 )
 
 type TaxProfileUC struct {
@@ -39,6 +45,7 @@ func validateAndNormalizeTaxProfile(p domain.TaxProfile) (domain.TaxProfile, err
 	}
 
 	p.INN = strings.TrimSpace(p.INN)
+	p.OKTMO = strings.TrimSpace(p.OKTMO)
 	p.LastName = strings.TrimSpace(p.LastName)
 	p.FirstName = strings.TrimSpace(p.FirstName)
 	p.MiddleName = strings.TrimSpace(p.MiddleName)
@@ -62,7 +69,30 @@ func validateAndNormalizeTaxProfile(p domain.TaxProfile) (domain.TaxProfile, err
 			Description: "required",
 		})
 	}
-
+	if !innPattern.MatchString(p.INN) {
+		return domain.TaxProfile{}, apperr.InvalidArgument("invalid inn", nil, apperr.FieldViolation{
+			Field:       "inn",
+			Description: "must be 12 digits",
+		})
+	}
+	if !isValidIndividualINN(p.INN) {
+		return domain.TaxProfile{}, apperr.InvalidArgument("invalid inn", nil, apperr.FieldViolation{
+			Field:       "inn",
+			Description: "control digits do not match",
+		})
+	}
+	if p.OKTMO == "" {
+		return domain.TaxProfile{}, apperr.InvalidArgument("invalid oktmo", nil, apperr.FieldViolation{
+			Field:       "oktmo",
+			Description: "required",
+		})
+	}
+	if !oktmoPattern.MatchString(p.OKTMO) {
+		return domain.TaxProfile{}, apperr.InvalidArgument("invalid oktmo", nil, apperr.FieldViolation{
+			Field:       "oktmo",
+			Description: "must be 8 or 11 digits",
+		})
+	}
 	p.Timezone = strings.TrimSpace(p.Timezone)
 	if p.Timezone == "" {
 		return domain.TaxProfile{}, apperr.InvalidArgument("invalid timezone", nil, apperr.FieldViolation{
@@ -136,6 +166,31 @@ func (uc *TaxProfileUC) Delete(ctx context.Context, userID uuid.UUID) error {
 		})
 	}
 	return uc.repo.Delete(ctx, userID)
+}
+
+func isValidIndividualINN(inn string) bool {
+	if len(inn) != 12 {
+		return false
+	}
+	digits := make([]int, 12)
+	for i := range len(inn) {
+		digits[i] = int(inn[i] - '0')
+	}
+
+	check11 := checksumMod11Mod10(digits[:10], []int{7, 2, 4, 10, 3, 5, 9, 4, 6, 8})
+	if check11 != digits[10] {
+		return false
+	}
+	check12 := checksumMod11Mod10(digits[:11], []int{3, 7, 2, 4, 10, 3, 5, 9, 4, 6, 8})
+	return check12 == digits[11]
+}
+
+func checksumMod11Mod10(digits []int, coeffs []int) int {
+	sum := 0
+	for i := range len(coeffs) {
+		sum += digits[i] * coeffs[i]
+	}
+	return (sum % 11) % 10
 }
 
 var _ domain.TaxProfileUseCase = (*TaxProfileUC)(nil)

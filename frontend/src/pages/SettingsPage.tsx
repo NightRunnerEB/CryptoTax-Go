@@ -9,6 +9,7 @@ import { toErrorMessage } from '../utils/errors'
 
 interface ProfileFormState {
   inn: string
+  oktmo: string
   lastName: string
   firstName: string
   middleName: string
@@ -21,6 +22,7 @@ interface ProfileFormState {
 
 const INITIAL_PROFILE_FORM: ProfileFormState = {
   inn: '',
+  oktmo: '',
   lastName: '',
   firstName: '',
   middleName: '',
@@ -32,7 +34,7 @@ const INITIAL_PROFILE_FORM: ProfileFormState = {
 }
 
 const TAX_RESIDENCY_OPTIONS = ['RESIDENT', 'NON_RESIDENT'] as const
-const TAXPAYER_TYPE_OPTIONS = ['INDIVIDUAL', 'SOLE_PROPRIETOR', 'LEGAL_ENTITY'] as const
+const TAXPAYER_TYPE_OPTIONS = ['INDIVIDUAL', 'SOLE_PROPRIETOR'] as const
 
 function normalizeWallets(wallets: string[]): string[] {
   return wallets.map((wallet) => wallet.trim()).filter((wallet) => wallet.length > 0)
@@ -41,6 +43,7 @@ function normalizeWallets(wallets: string[]): string[] {
 function toProfileForm(profile: TaxProfile): ProfileFormState {
   return {
     inn: profile.inn,
+    oktmo: profile.oktmo,
     lastName: profile.lastName,
     firstName: profile.firstName,
     middleName: profile.middleName,
@@ -55,6 +58,7 @@ function toProfileForm(profile: TaxProfile): ProfileFormState {
 function toTaxProfileInput(form: ProfileFormState): TaxProfileInput {
   return {
     inn: form.inn.trim(),
+    oktmo: form.oktmo.trim(),
     lastName: form.lastName.trim(),
     firstName: form.firstName.trim(),
     middleName: form.middleName.trim(),
@@ -80,6 +84,9 @@ function validateForm(form: ProfileFormState): string[] {
 
   if (form.inn.trim() === '') {
     errors.push('INN is required.')
+  }
+  if (form.oktmo.trim() === '') {
+    errors.push('OKTMO is required.')
   }
   if (form.lastName.trim() === '') {
     errors.push('Last name is required.')
@@ -279,23 +286,25 @@ export function SettingsPage() {
       </div>
 
         <div
-          className="bg-surface rounded-xl border border-border p-12 text-center"
+          className="bg-surface rounded-xl border border-border p-12"
           style={{ boxShadow: 'var(--shadow-md)' }}
         >
-          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-muted-foreground" />
+          <div className="mx-auto flex max-w-md flex-col items-center text-center gap-4">
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+              <User className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-foreground">No Tax Profile Configured</h3>
+            <p className="text-muted-foreground text-center max-w-md">
+              Set up your tax profile to enable accurate tax calculations and reporting
+            </p>
+            <button
+              type="button"
+              onClick={handleCreate}
+              className="mt-2 px-6 py-2.5 bg-primary hover:bg-primary-dark text-primary-foreground rounded-lg font-medium transition-all"
+            >
+              Create Tax Profile
+            </button>
           </div>
-          <h3 className="text-foreground mb-2">No Tax Profile Configured</h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Set up your tax profile to enable accurate tax calculations and reporting
-          </p>
-          <button
-            type="button"
-            onClick={handleCreate}
-            className="px-6 py-2.5 bg-primary hover:bg-primary-dark text-primary-foreground rounded-lg font-medium transition-all"
-          >
-            Create Tax Profile
-          </button>
         </div>
       </div>
     )
@@ -354,6 +363,17 @@ export function SettingsPage() {
                 </div>
 
                 <div>
+                  <label className="block text-foreground mb-2">OKTMO</label>
+                  <input
+                    type="text"
+                    value={profileForm.oktmo}
+                    onChange={(event) => setProfileForm((prev) => ({ ...prev, oktmo: event.target.value }))}
+                    placeholder="45382000"
+                    className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-foreground mb-2">Phone Number</label>
                   <input
                     type="tel"
@@ -376,7 +396,6 @@ export function SettingsPage() {
                     className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
-
                 <div>
                   <label className="block text-foreground mb-2">First Name</label>
                   <input
@@ -387,7 +406,6 @@ export function SettingsPage() {
                     className="w-full px-4 py-2.5 bg-input-background border border-input-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
-
                 <div>
                   <label className="block text-foreground mb-2">Middle Name</label>
                   <input
@@ -502,14 +520,18 @@ export function SettingsPage() {
               <div>
                 <h4 className="text-muted-foreground text-xs uppercase tracking-wider mb-0">Personal Information</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4 mt-4">
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-1">INN</div>
-                    <div className="text-foreground font-medium font-mono">{profile.inn || '—'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-1">Phone</div>
-                    <div className="text-foreground font-medium">{profile.phone || '—'}</div>
-                  </div>
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">INN</div>
+                  <div className="text-foreground font-medium font-mono">{profile.inn || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">OKTMO</div>
+                  <div className="text-foreground font-medium font-mono">{profile.oktmo || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Phone</div>
+                  <div className="text-foreground font-medium">{profile.phone || '—'}</div>
+                </div>
                   <div>
                     <div className="text-sm text-muted-foreground mb-1">Full Name</div>
                     <div className="text-foreground font-medium">{fullName(profile)}</div>

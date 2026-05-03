@@ -11,6 +11,7 @@ export interface TaxPolicy {
 
 export interface TaxProfile {
   inn: string
+  oktmo: string
   lastName: string
   firstName: string
   middleName: string
@@ -23,6 +24,7 @@ export interface TaxProfile {
 
 export interface TaxProfileInput {
   inn: string
+  oktmo: string
   lastName: string
   firstName: string
   middleName: string

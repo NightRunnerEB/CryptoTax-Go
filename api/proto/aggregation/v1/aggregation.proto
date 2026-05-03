@@ -21,11 +21,11 @@ service Aggregation {
   }
 
   // ListTransactionsByRange returns paginated aggregated transactions
-  // for a specific user and UTC time range [from_utc, to_utc).
+  // for the authenticated user and UTC time range [from_utc, to_utc).
   rpc ListTransactionsByRange(ListTransactionsByRangeRequest)
   returns (ListTransactionsByRangeResponse) {
     option (google.api.http) = {
-      get: "/v1/users/{user_id}/transactions"
+      get: "/v1/transactions"
     };
   }
 
@@ -99,7 +99,8 @@ message ListTransactionsResponse {
 }
 
 message ListTransactionsByRangeRequest {
-  string                    user_id = 1;
+  // user_id is taken from x-user-id metadata/header.
+  reserved 1;
   google.protobuf.Timestamp from_utc  = 2;
   google.protobuf.Timestamp to_utc    = 3;
   int32                     limit     = 4;

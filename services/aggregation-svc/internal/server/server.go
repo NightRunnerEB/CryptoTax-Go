@@ -113,7 +113,6 @@ func (s *AggregationServer) ListTransactions(
 }
 
 func (s *AggregationServer) ListTransactionsByRange(ctx context.Context, req *aggregationv1.ListTransactionsByRangeRequest) (*aggregationv1.ListTransactionsByRangeResponse, error) {
-	log := logger.FromContext(ctx)
 	if req == nil {
 		return nil, apperr.InvalidArgument(
 			"invalid request",
@@ -121,14 +120,9 @@ func (s *AggregationServer) ListTransactionsByRange(ctx context.Context, req *ag
 			apperr.FieldViolation{Field: "request", Description: "required"},
 		)
 	}
-	userID, err := parseUUID(req.UserId)
+	userID, err := userIDFromHeader(ctx)
 	if err != nil {
-		log.Warn("ListTransactionsByRange: invalid user ID", zap.Error(err))
-		return nil, apperr.InvalidArgument(
-			"invalid user id",
-			err,
-			apperr.FieldViolation{Field: "user_id", Description: "invalid format"},
-		)
+		return nil, err
 	}
 	if req.GetFromUtc() == nil || req.GetToUtc() == nil {
 		return nil, apperr.InvalidArgument(

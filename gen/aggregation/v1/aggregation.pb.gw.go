@@ -70,24 +70,15 @@ func local_request_Aggregation_ListTransactions_0(ctx context.Context, marshaler
 	return msg, metadata, err
 }
 
-var filter_Aggregation_ListTransactionsByRange_0 = &utilities.DoubleArray{Encoding: map[string]int{"user_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+var filter_Aggregation_ListTransactionsByRange_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_Aggregation_ListTransactionsByRange_0(ctx context.Context, marshaler runtime.Marshaler, client AggregationClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq ListTransactionsByRangeRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
-	}
-	val, ok := pathParams["user_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "user_id")
-	}
-	protoReq.UserId, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "user_id", err)
 	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -103,16 +94,7 @@ func local_request_Aggregation_ListTransactionsByRange_0(ctx context.Context, ma
 	var (
 		protoReq ListTransactionsByRangeRequest
 		metadata runtime.ServerMetadata
-		err      error
 	)
-	val, ok := pathParams["user_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "user_id")
-	}
-	protoReq.UserId, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "user_id", err)
-	}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -238,7 +220,7 @@ func RegisterAggregationHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/aggregation.v1.Aggregation/ListTransactionsByRange", runtime.WithHTTPPathPattern("/v1/users/{user_id}/transactions"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/aggregation.v1.Aggregation/ListTransactionsByRange", runtime.WithHTTPPathPattern("/v1/transactions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -373,7 +355,7 @@ func RegisterAggregationHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/aggregation.v1.Aggregation/ListTransactionsByRange", runtime.WithHTTPPathPattern("/v1/users/{user_id}/transactions"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/aggregation.v1.Aggregation/ListTransactionsByRange", runtime.WithHTTPPathPattern("/v1/transactions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -442,7 +424,7 @@ func RegisterAggregationHandlerClient(ctx context.Context, mux *runtime.ServeMux
 
 var (
 	pattern_Aggregation_ListTransactions_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"transactions"}, ""))
-	pattern_Aggregation_ListTransactionsByRange_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "users", "user_id", "transactions"}, ""))
+	pattern_Aggregation_ListTransactionsByRange_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "transactions"}, ""))
 	pattern_Aggregation_GetUserSettings_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"settings"}, ""))
 	pattern_Aggregation_UpsertUserSettings_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"settings"}, ""))
 	pattern_Aggregation_ListSupportedFiatCurrencies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"fiat-currencies"}, ""))

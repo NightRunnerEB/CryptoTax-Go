@@ -79,18 +79,6 @@ function resolveArtifactUrl(value?: string): string | null {
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       return null
     }
-
-    const hostname = url.hostname.trim().toLowerCase()
-    if (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname === '0.0.0.0' ||
-      hostname === 'host.docker.internal' ||
-      hostname.endsWith('.local')
-    ) {
-      return null
-    }
-
     return url.toString()
   } catch {
     return null
@@ -687,19 +675,40 @@ export function ReportsPage() {
                   ))}
                 </select>
               </div>
-              <label className="inline-flex items-center gap-3 text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  checked={createForm.treatCryptoCryptoAsDisposal}
-                  onChange={(event) =>
-                    setCreateForm((prev) => ({
-                      ...prev,
-                      treatCryptoCryptoAsDisposal: event.target.checked,
-                    }))
-                  }
-                  disabled={isCreating}
-                />
-                Treat crypto-to-crypto as disposal
+              <label
+                className={`flex items-center justify-between gap-4 rounded-lg border border-border px-4 py-3 transition-colors ${
+                  isCreating ? 'opacity-70' : 'cursor-pointer hover:bg-muted/40'
+                }`}
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-foreground">Treat crypto-to-crypto as disposal</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Count crypto swaps as taxable disposal events in the generated report.
+                  </div>
+                </div>
+                <span
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors ${
+                    createForm.treatCryptoCryptoAsDisposal ? 'bg-primary' : 'bg-muted'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={createForm.treatCryptoCryptoAsDisposal}
+                    onChange={(event) =>
+                      setCreateForm((prev) => ({
+                        ...prev,
+                        treatCryptoCryptoAsDisposal: event.target.checked,
+                      }))
+                    }
+                    disabled={isCreating}
+                    className="sr-only"
+                  />
+                  <span
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                      createForm.treatCryptoCryptoAsDisposal ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </span>
               </label>
               {createError ? <p className="text-sm text-[var(--status-failed)]">{createError}</p> : null}
               <div className="flex items-center gap-3">

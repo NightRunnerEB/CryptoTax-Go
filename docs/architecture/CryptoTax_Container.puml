@@ -1,0 +1,70 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title CryptoTax Platform - Container Diagram
+LAYOUT_LEFT_RIGHT()
+
+Person(user, "User", "Taxpayer / Operator")
+
+System_Ext(coingecko, "CoinGecko API", "Market prices and FX-related data")
+System_Ext(smtp, "SMTP Provider", "Transactional e-mail delivery")
+System_Ext(postgres, "PostgreSQL", "Persistent relational storage")
+System_Ext(redis, "Redis", "Cache and short-lived data")
+System_Ext(rabbitmq, "RabbitMQ", "Asynchronous message broker")
+System_Ext(s3, "S3-Compatible Object Storage", "Report and file storage")
+System_Ext(grafana, "Grafana / Observability Stack", "Metrics, logs, traces")
+
+System_Boundary(cryptotax_boundary, "CryptoTax Platform") {
+  Container(frontend, "Frontend", "TypeScript, React, Vite", "Web client application")
+  Container(gateway, "API Gateway / Ingress", "Istio Ingress Gateway", "Public HTTP entrypoint and routing")
+
+  Container(auth, "auth-svc", "Rust", "Authentication, JWT, profile bootstrap")
+  Container(ledger, "ledger-svc", "Rust", "Exchange import and normalization")
+  Container(aggregation, "aggregation-svc", "Go", "Aggregation and enrichment")
+  Container(price, "price-svc", "Go", "Price and FX provider")
+  Container(tax, "tax-svc", "Go", "Tax engine and orchestration")
+  Container(report, "report-svc", "Go", "NDFL XML rendering")
+}
+
+Rel(user, frontend, "Uses", "HTTPS")
+Rel(frontend, gateway, "Calls public API", "HTTPS REST")
+
+Rel(gateway, auth, "Routes /auth/*", "HTTP REST")
+Rel(gateway, ledger, "Routes /mexc/csv, /exchanges/*", "HTTP REST")
+Rel(gateway, aggregation, "Routes /transactions, /imports/*", "HTTP REST")
+Rel(gateway, tax, "Routes /tax/*", "HTTP REST")
+
+Rel(auth, tax, "Tax profile upsert", "HTTP REST")
+Rel(tax, aggregation, "Requests aggregated data", "gRPC")
+Rel(tax, report, "Requests report rendering", "gRPC")
+Rel(aggregation, ledger, "Requests import/transaction data", "HTTP REST")
+Rel(aggregation, price, "Requests prices and FX", "gRPC")
+
+Rel(price, coingecko, "Fetches market data", "HTTPS REST")
+Rel(auth, smtp, "Sends verification e-mails", "SMTP / SMTPS")
+Rel(report, s3, "Uploads generated XML", "S3 API")
+Rel(tax, s3, "Reads/writes report artifacts", "S3 API")
+
+Rel(ledger, rabbitmq, "Publishes import events", "AMQP 0-9-1")
+Rel(aggregation, rabbitmq, "Consumes import events", "AMQP 0-9-1")
+
+Rel(auth, postgres, "Reads/writes data", "SQL")
+Rel(ledger, postgres, "Reads/writes data", "SQL")
+Rel(aggregation, postgres, "Reads/writes data", "SQL")
+Rel(tax, postgres, "Reads/writes data", "SQL")
+Rel(price, postgres, "Reads/writes data", "SQL")
+
+Rel(auth, redis, "Reads/writes cache", "RESP")
+Rel(aggregation, redis, "Reads/writes cache", "RESP")
+Rel(price, redis, "Reads/writes cache", "RESP")
+
+Rel(auth, grafana, "Exports telemetry", "OTLP")
+Rel(ledger, grafana, "Exports telemetry", "OTLP")
+Rel(aggregation, grafana, "Exports telemetry", "OTLP")
+Rel(price, grafana, "Exports telemetry", "OTLP")
+Rel(tax, grafana, "Exports telemetry", "OTLP")
+Rel(report, grafana, "Exports telemetry", "OTLP")
+
+SHOW_LEGEND()
+@enduml
+

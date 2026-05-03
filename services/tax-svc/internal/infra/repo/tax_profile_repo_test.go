@@ -27,6 +27,9 @@ func TestTaxProfileRepo_Upsert_Success(t *testing.T) {
 		if arg.UserID != userID {
 			t.Fatalf("user mismatch: got %s want %s", arg.UserID, userID)
 		}
+		if arg.Oktmo != "12345678" {
+			t.Fatalf("oktmo mismatch: got %q want %q", arg.Oktmo, "12345678")
+		}
 		if len(arg.Wallets) == 0 {
 			t.Fatal("wallets json should not be empty")
 		}
@@ -35,7 +38,8 @@ func TestTaxProfileRepo_Upsert_Success(t *testing.T) {
 
 	err := repo.Upsert(context.Background(), domain.TaxProfile{
 		UserID:             userID,
-		INN:                "123456789012",
+		INN:                "123456789047",
+		OKTMO:              "12345678",
 		LastName:           "Petrov",
 		FirstName:          "Ivan",
 		Timezone:           "Europe/Moscow",

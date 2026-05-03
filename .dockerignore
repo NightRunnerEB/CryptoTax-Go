@@ -8,6 +8,14 @@
 
 # Build artifacts
 **/bin
+**/.gocache
+**/.golangci-cache
+**/coverage.out
+**/coverage.*
+**/tmp
+**/target
+**/dist
+**/node_modules
 
 # Logs and env
 **/*.log
